@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import importlib
-from collections import defaultdict
 
 COMMAND_TARGETS: dict[tuple[str, str], tuple[str, str]] = {
     ("harm", "seed-preferences"): ("src.experiments.harm_kl.seed_preferences", "main"),
@@ -11,11 +10,6 @@ COMMAND_TARGETS: dict[tuple[str, str], tuple[str, str]] = {
     ("harm", "plot"): ("src.experiments.harm_kl.plot", "main"),
     ("harm", "analyze-jumps"): ("src.experiments.harm_kl.analyze_jumps", "main"),
     ("harm", "plot-crossover"): ("src.experiments.harm_kl.plot_crossover", "main"),
-    ("dpo", "train-hh-token"): ("src.experiments.dpo_hh_token.train", "main"),
-    ("fairmt", "generate"): ("src.experiments.fairmt.generate", "main"),
-    ("fairmt", "judge-heuristic"): ("src.experiments.fairmt.judge_compare", "main"),
-    ("fairmt", "judge-pairwise-llm"): ("src.experiments.fairmt.judge_pairwise_llm", "main"),
-    ("token", "expound-hh-token-delta"): ("src.experiments.token_semantics.expound_hh_token_delta", "main"),
 }
 
 
@@ -23,9 +17,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Unified experiment runner. Usage: python -m src.run <suite> <command> [args...]"
     )
-    suites: dict[str, list[str]] = defaultdict(list)
+    suites: dict[str, list[str]] = {}
     for suite, command in COMMAND_TARGETS:
-        suites[suite].append(command)
+        suites.setdefault(suite, []).append(command)
 
     suite_subparsers = parser.add_subparsers(dest="suite", required=True)
     for suite, commands in sorted(suites.items()):

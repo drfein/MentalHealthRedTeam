@@ -28,3 +28,5 @@ harm_kl/results/
 .venv/
 venv/
 .env
+
+./slurm/

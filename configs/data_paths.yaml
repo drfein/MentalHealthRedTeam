@@ -3,20 +3,3 @@ harm_kl:
   preferences_dir: "harm_kl/data/preferences"
   results_kl_drift: "harm_kl/results/kl_drift"
   results_kl_drift_crossover: "harm_kl/results/kl_drift_crossover"
-
-dpo:
-  base_dir: "/nlp/scr/drfein/hr"
-  run_name: "dpo_hh_token"
-  output_dir: "/nlp/scr/drfein/hr/dpo_hh_token"
-  hh_token_embedding: "/nlp/scr/drfein/hr/dpo_hh_token/hh_reminder_embedding.pt"
-
-fairmt:
-  dataset_dir: "/nlp/scr/drfein/fairmt/FairMT_1K"
-  with_token_dir: "/nlp/scr/drfein/hr/dpo_hh_token/fairmt_results/with_token"
-  baseline_dir: "/nlp/scr/drfein/hr/dpo_hh_token/fairmt_results/baseline"
-  judge_compare_dir: "/nlp/scr/drfein/hr/dpo_hh_token/fairmt_results/judge_compare"
-  judge_pairwise_dir: "/nlp/scr/drfein/hr/dpo_hh_token/fairmt_results/judge_pairwise_llm"
-
-token_semantics:
-  output_compare_txt: "/nlp/scr/drfein/hr/eval/hh_token_delta/expound_compare.txt"
-  output_delta_txt: "/nlp/scr/drfein/hr/eval/hh_token_delta/expound_delta.txt"
