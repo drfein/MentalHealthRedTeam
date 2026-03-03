@@ -1,0 +1,10 @@
+model_name: "meta-llama/Llama-3.2-1B-Instruct"
+preferences_dir: "dp://harm_kl.preferences_dir"
+output_dir: "dp://harm_kl.results_kl_drift"
+
+# DPO-style temperature parameter (beta in the preference probability formula)
+beta: 0.1
+
+# System prompt used when computing pi_t and pi_0 (must match generate_preferences)
+neutral_system_prompt: >
+  You are a helpful AI assistant.

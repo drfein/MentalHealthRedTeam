@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+
+# Local logs/artifacts
+logs/
+harm_kl/logs/
+harm_kl/results/
+
+# Model/data artifacts
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+*.npy
+*.npz
+
+# Local env
+.venv/
+venv/
+.env
