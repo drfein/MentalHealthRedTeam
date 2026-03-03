@@ -1,0 +1,8 @@
+run_mode: "run-all"
+skip_crossover: false
+
+generate_conversations:
+  config_path: "configs/harm_kl/generate_preferences.yaml"
+
+compute_drift:
+  config_path: "configs/harm_kl/kl_drift.yaml"

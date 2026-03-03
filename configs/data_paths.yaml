@@ -1,5 +1,0 @@
-harm_kl:
-  raw_test_cases: "harm_kl/data/raw/test_cases.json"
-  preferences_dir: "harm_kl/data/preferences"
-  results_kl_drift: "harm_kl/results/kl_drift"
-  results_kl_drift_crossover: "harm_kl/results/kl_drift_crossover"

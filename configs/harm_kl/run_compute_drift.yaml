@@ -1,0 +1,4 @@
+run_mode: "compute-drift"
+
+compute_drift:
+  config_path: "configs/harm_kl/kl_drift.yaml"

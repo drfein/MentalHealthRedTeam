@@ -13,16 +13,11 @@ export REPO="/sailhome/drfein/hr"
 source "${REPO}/slurm/helpers/common_env.sh"
 prepare_job_env
 
-CONFIG_PATH="${REPO}/configs/harm_kl/generate_preferences.yaml"
+RUN_CONFIG="${REPO}/configs/harm_kl/run_generate_conversations.yaml"
 
 mkdir -p logs harm_kl/data/preferences
 
-echo "Seeding preference pairs: $(date)"
-python -m src.run harm seed-preferences "$@"
-
-echo "Generating conversations: $(date)"
-python -m src.run harm generate-conversations \
-  --config "${CONFIG_PATH}" \
-  "$@"
+echo "Generating conversations for existing preference files: $(date)"
+HR_RUN_CONFIG="${RUN_CONFIG}" python -m src.run
 
 echo "Done: $(date)"

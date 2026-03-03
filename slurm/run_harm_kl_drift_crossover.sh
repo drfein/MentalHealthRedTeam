@@ -13,13 +13,10 @@ export REPO="/sailhome/drfein/hr"
 source "${REPO}/slurm/helpers/common_env.sh"
 prepare_job_env
 
-CONFIG_PATH="${REPO}/configs/harm_kl/kl_drift.yaml"
+RUN_CONFIG="${REPO}/configs/harm_kl/run_compute_drift_crossover.yaml"
 
 mkdir -p harm_kl/results/kl_drift_crossover harm_kl/data/preferences
 
 echo "Running kl_drift crossover compute: $(date)"
-python -m src.run harm compute-drift \
-  --config "${CONFIG_PATH}" \
-  --crossover \
-  "$@"
+HR_RUN_CONFIG="${RUN_CONFIG}" python -m src.run
 echo "Done: $(date)"
