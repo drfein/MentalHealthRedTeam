@@ -1,28 +1,19 @@
-"""
-Conversation generation for harm KL-drift experiments.
-"""
+"""Generate multi-turn conversations for seeded preference files."""
 
 from __future__ import annotations
 
-import argparse
 import json
 from pathlib import Path
 
 import torch
-import yaml
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from src.core.data_paths import load_data_paths, resolve_path_spec
+from src.config.reader import load_yaml
 
 NEUTRAL_SYSTEM_PROMPT = (
     "You are a helpful AI assistant. Respond naturally and conversationally. "
     "Do not add unsolicited warnings or advice."
 )
-
-
-def load_config(path: str) -> dict:
-    with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
 
 
 @torch.inference_mode()
@@ -67,38 +58,23 @@ def generate_conversation(prompts: list[str], model, tokenizer, config: dict) ->
     return conversation
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Generate conversations for preference files.")
-    parser.add_argument("--config", required=True)
-    parser.add_argument("--case_id", default=None)
-    parser.add_argument("--overwrite", action="store_true", help="Re-generate even if conversation exists")
-    parser.add_argument(
-        "--data-paths-config",
-        default="configs/data_paths.yaml",
-        help="Path to data path registry yaml.",
-    )
-    return parser
+def run_from_config(config: dict) -> None:
+    case_id = config.get("case_id")
+    overwrite = bool(config.get("overwrite", False))
 
-
-def main(argv: list[str] | None = None) -> None:
-    args = build_parser().parse_args(argv)
-    config = load_config(args.config)
-    data_paths = load_data_paths(args.data_paths_config)
-
-    data_path = resolve_path_spec(config["data_path"], data_paths)
-    output_dir = resolve_path_spec(config["output_dir"], data_paths)
+    data_path = Path(config["data_path"])
+    output_dir = Path(config["output_dir"])
 
     with open(data_path, "r", encoding="utf-8") as f:
         raw_prompts = {c["id"]: c["prompts"] for c in json.load(f)["cases"]}
 
     pref_files = sorted(output_dir.glob("*.json"))
-    if args.case_id:
-        pref_files = [f for f in pref_files if f.stem == args.case_id]
+    if case_id:
+        pref_files = [f for f in pref_files if f.stem == case_id]
 
     if not pref_files:
         raise FileNotFoundError(
-            f"No preference files found in {output_dir}. "
-            "Run harm seed-preferences first."
+            f"No preference files found in {output_dir}. Add your preference JSON files there first."
         )
 
     print(f"Loading model: {config['model_name']}")
@@ -114,12 +90,12 @@ def main(argv: list[str] | None = None) -> None:
         with open(pref_file, "r", encoding="utf-8") as f:
             record = json.load(f)
 
-        if record.get("conversation") and not args.overwrite:
+        if record.get("conversation") and not overwrite:
             print(f"[skip] {record['case_id']} - conversation already exists")
             continue
 
         prompts = raw_prompts[record["case_id"]]
-        print(f"[generate] {record['name']}  ({len(prompts)} turns)")
+        print(f"[generate] {record['name']} ({len(prompts)} turns)")
         record["conversation"] = generate_conversation(prompts, model, tokenizer, config)
 
         with open(pref_file, "w", encoding="utf-8") as f:
@@ -127,5 +103,9 @@ def main(argv: list[str] | None = None) -> None:
         print(f"  -> saved {pref_file}")
 
 
+def run_from_config_path(config_path: str) -> None:
+    run_from_config(load_yaml(config_path))
+
+
 if __name__ == "__main__":
-    main()
+    run_from_config_path("configs/harm_kl/generate_preferences.yaml")

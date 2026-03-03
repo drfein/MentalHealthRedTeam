@@ -1,57 +1,44 @@
 from __future__ import annotations
 
-import argparse
-import importlib
-
-COMMAND_TARGETS: dict[tuple[str, str], tuple[str, str]] = {
-    ("harm", "seed-preferences"): ("src.experiments.harm_kl.seed_preferences", "main"),
-    ("harm", "generate-conversations"): ("src.experiments.harm_kl.generate_preferences", "main"),
-    ("harm", "compute-drift"): ("src.experiments.harm_kl.compute_drift", "main"),
-    ("harm", "plot"): ("src.experiments.harm_kl.plot", "main"),
-    ("harm", "analyze-jumps"): ("src.experiments.harm_kl.analyze_jumps", "main"),
-    ("harm", "plot-crossover"): ("src.experiments.harm_kl.plot_crossover", "main"),
-}
+from src.config.reader import load_run_config
+from src.experiments.harm_kl import compute_drift, generate_preferences
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="Unified experiment runner. Usage: python -m src.run <suite> <command> [args...]"
-    )
-    suites: dict[str, list[str]] = {}
-    for suite, command in COMMAND_TARGETS:
-        suites.setdefault(suite, []).append(command)
-
-    suite_subparsers = parser.add_subparsers(dest="suite", required=True)
-    for suite, commands in sorted(suites.items()):
-        suite_parser = suite_subparsers.add_parser(suite)
-        command_subparsers = suite_parser.add_subparsers(dest="command", required=True)
-        for command in sorted(commands):
-            command_parser = command_subparsers.add_parser(command)
-            command_parser.add_argument("--dry-run", action="store_true")
-            command_parser.add_argument("command_args", nargs=argparse.REMAINDER)
-
-    return parser
+def run_generate_conversations(step_config: dict) -> None:
+    config_path = step_config["config_path"]
+    generate_preferences.run_from_config_path(config_path)
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(argv)
+def run_compute_drift(step_config: dict, crossover: bool) -> None:
+    config_path = step_config["config_path"]
+    compute_drift.run_from_config_path(config_path, force_crossover=crossover)
 
-    key = (args.suite, args.command)
-    if key not in COMMAND_TARGETS:
-        parser.error(f"Unknown command: {args.suite} {args.command}")
 
-    module_name, func_name = COMMAND_TARGETS[key]
-    pass_through_args = list(args.command_args)
+def main() -> int:
+    config = load_run_config()
+    command = config["run_mode"]
+    skip_crossover = config["skip_crossover"]
 
-    if args.dry_run:
-        print(f"[dry-run] would run: python -m src.run {args.suite} {args.command} {' '.join(pass_through_args)}")
+    if command == "generate-conversations":
+        run_generate_conversations(config["generate_conversations"])
         return 0
 
-    module = importlib.import_module(module_name)
-    func = getattr(module, func_name)
-    func(pass_through_args)
-    return 0
+    if command == "compute-drift":
+        run_compute_drift(config["compute_drift"], crossover=False)
+        return 0
+
+    if command == "compute-drift-crossover":
+        run_compute_drift(config["compute_drift"], crossover=True)
+        return 0
+
+    if command == "run-all":
+        run_generate_conversations(config["generate_conversations"])
+        run_compute_drift(config["compute_drift"], crossover=False)
+        if not skip_crossover:
+            run_compute_drift(config["compute_drift"], crossover=True)
+        return 0
+
+    raise ValueError(f"Unknown run_mode: {command}")
 
 
 if __name__ == "__main__":

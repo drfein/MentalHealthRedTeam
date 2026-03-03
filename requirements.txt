@@ -2,5 +2,3 @@ torch>=2.1.0
 transformers>=4.40.0
 accelerate>=0.25.0
 PyYAML>=6.0
-matplotlib>=3.8.0
-numpy>=1.26.0
