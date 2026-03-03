@@ -1,4 +1,5 @@
 #!/bin/bash
+# SLURM job that generates conversation turns for preference files.
 #SBATCH -J harm_gen_prefs
 #SBATCH -o logs/harm_gen_prefs_%j.out
 #SBATCH -e logs/harm_gen_prefs_%j.err
@@ -13,11 +14,9 @@ export REPO="/sailhome/drfein/hr"
 source "${REPO}/slurm/helpers/common_env.sh"
 prepare_job_env
 
-RUN_CONFIG="${REPO}/configs/harm_kl/run_generate_conversations.yaml"
-
 mkdir -p logs harm_kl/data/preferences
 
 echo "Generating conversations for existing preference files: $(date)"
-HR_RUN_CONFIG="${RUN_CONFIG}" python -m src.run
+python -m src.experiments.harm_kl.generate_preferences
 
 echo "Done: $(date)"

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Code-only sync to remote; never transfer models or data.
+# Push code and configs to the remote machine without copying models or data.
 set -euo pipefail
 
 REMOTE="drfein@scdt.stanford.edu"

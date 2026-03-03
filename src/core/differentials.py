@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+# Shared scoring helpers for comparing how the model rates candidate responses.
+
+import math
 from typing import Callable
 
 import torch
@@ -40,8 +43,8 @@ def role_for_step(step: int) -> str:
 
 
 @torch.inference_mode()
-def response_log_prob(model, tokenizer, messages: list[dict[str, str]], response: str) -> float:
-    """Compute log p(response | messages) as assistant continuation tokens."""
+def response_token_stats(model, tokenizer, messages: list[dict[str, str]], response: str) -> dict[str, float]:
+    """Compute token-level response likelihood stats for an assistant continuation."""
     prompt_ids = tokenizer.apply_chat_template(
         messages,
         add_generation_prompt=True,
@@ -56,7 +59,12 @@ def response_log_prob(model, tokenizer, messages: list[dict[str, str]], response
         return_tensors="pt",
     ).input_ids
     if response_ids.shape[1] == 0:
-        return float("-inf")
+        return {
+            "log_prob": float("-inf"),
+            "mean_log_prob": float("-inf"),
+            "token_count": 0.0,
+            "perplexity": float("inf"),
+        }
 
     prompt_len = prompt_ids.shape[1]
     full_ids = torch.cat([prompt_ids, response_ids], dim=1).to(model.device)
@@ -67,7 +75,21 @@ def response_log_prob(model, tokenizer, messages: list[dict[str, str]], response
 
     log_probs = F.log_softmax(shift_logits, dim=-1)
     token_log_probs = log_probs.gather(1, shift_labels.unsqueeze(1)).squeeze(1)
-    return token_log_probs.sum().item()
+    log_prob = token_log_probs.sum().item()
+    token_count = int(token_log_probs.shape[0])
+    mean_log_prob = log_prob / token_count
+    return {
+        "log_prob": log_prob,
+        "mean_log_prob": mean_log_prob,
+        "token_count": float(token_count),
+        "perplexity": math.exp(-mean_log_prob),
+    }
+
+
+@torch.inference_mode()
+def response_log_prob(model, tokenizer, messages: list[dict[str, str]], response: str) -> float:
+    """Compute log p(response | messages) as assistant continuation tokens."""
+    return response_token_stats(model, tokenizer, messages, response)["log_prob"]
 
 
 def compute_stepwise_differentials(
@@ -153,4 +175,5 @@ __all__ = [
     "compute_stepwise_differentials",
     "preference_probability",
     "response_log_prob",
+    "response_token_stats",
 ]

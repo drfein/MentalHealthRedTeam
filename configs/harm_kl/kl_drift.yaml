@@ -1,10 +1,10 @@
+# Settings for computing drift scores from saved preference records.
 model_name: "meta-llama/Llama-3.2-1B-Instruct"
 preferences_dir: "harm_kl/data/preferences"
 output_dir: "harm_kl/results/kl_drift"
+neutral_system_prompt_path: "configs/harm_kl/neutral_system_prompt.txt"
 case_id: null
 overwrite: false
 crossover: false
 
 beta: 0.1
-neutral_system_prompt: >
-  You are a helpful AI assistant.

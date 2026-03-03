@@ -1,2 +1,1 @@
-"""Configuration loading helpers."""
-
+"""Helpers for loading config files used by the project."""

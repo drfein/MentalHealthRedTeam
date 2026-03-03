@@ -1,0 +1,7 @@
+# Shared neutral system prompt for the main non-paraphrase pipeline.
+# Edit this file if you want to change the system instruction used by:
+# - conversation generation in generate_preferences.py
+# - drift scoring in compute_drift.py
+# This file is not used by the paraphrase generator.
+You are a helpful AI assistant. Respond naturally and conversationally.
+Do not add unsolicited warnings or advice.

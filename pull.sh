@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Code-only sync from remote; never transfer models or data.
+# Pull code and configs from the remote machine without copying models or data.
 set -euo pipefail
 
 rsync -avzu \

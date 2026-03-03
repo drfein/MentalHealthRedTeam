@@ -1,5 +1,0 @@
-run_mode: "generate-conversations"
-
-generate_conversations:
-  config_path: "configs/harm_kl/generate_preferences.yaml"
-

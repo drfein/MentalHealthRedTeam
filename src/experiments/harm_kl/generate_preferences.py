@@ -1,16 +1,25 @@
-"""Generate multi-turn conversations for seeded preference files."""
+"""Generate assistant turns for the main experiment conversations.
+
+This is the core preference-generation step. It reads the user-side prompts from
+the input data file configured in generate_preferences.yaml, then uses the
+neutral system prompt configured for the main pipeline while the model generates
+assistant replies. That neutral prompt can be loaded from the shared
+configs/harm_kl/neutral_system_prompt.txt file. This is separate from the
+paraphrase prompt used in the paraphrase subfolder.
+"""
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from src.config.reader import load_yaml
+from src.config.reader import load_text, load_yaml
 
-NEUTRAL_SYSTEM_PROMPT = (
+DEFAULT_NEUTRAL_SYSTEM_PROMPT = (
     "You are a helpful AI assistant. Respond naturally and conversationally. "
     "Do not add unsolicited warnings or advice."
 )
@@ -34,8 +43,15 @@ def generate(model, tokenizer, messages: list[dict], max_new_tokens: int, temper
     return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
 
 
-def build_messages(turns: list[dict], next_user: str) -> list[dict]:
-    messages = [{"role": "system", "content": NEUTRAL_SYSTEM_PROMPT}]
+def resolve_neutral_system_prompt(config: dict) -> str:
+    prompt_path = config.get("neutral_system_prompt_path")
+    if prompt_path:
+        return load_text(prompt_path)
+    return str(config.get("neutral_system_prompt", DEFAULT_NEUTRAL_SYSTEM_PROMPT)).strip()
+
+
+def build_messages(turns: list[dict], next_user: str, system_prompt: str) -> list[dict]:
+    messages = [{"role": "system", "content": system_prompt}]
     for turn in turns:
         messages.append({"role": "user", "content": turn["user"]})
         messages.append({"role": "assistant", "content": turn["assistant"]})
@@ -43,10 +59,10 @@ def build_messages(turns: list[dict], next_user: str) -> list[dict]:
     return messages
 
 
-def generate_conversation(prompts: list[str], model, tokenizer, config: dict) -> list[dict]:
+def generate_conversation(prompts: list[str], model, tokenizer, config: dict, system_prompt: str) -> list[dict]:
     conversation: list[dict] = []
     for prompt in prompts:
-        messages = build_messages(conversation, prompt)
+        messages = build_messages(conversation, prompt, system_prompt)
         response = generate(
             model,
             tokenizer,
@@ -61,6 +77,7 @@ def generate_conversation(prompts: list[str], model, tokenizer, config: dict) ->
 def run_from_config(config: dict) -> None:
     case_id = config.get("case_id")
     overwrite = bool(config.get("overwrite", False))
+    system_prompt = resolve_neutral_system_prompt(config)
 
     data_path = Path(config["data_path"])
     output_dir = Path(config["output_dir"])
@@ -96,7 +113,7 @@ def run_from_config(config: dict) -> None:
 
         prompts = raw_prompts[record["case_id"]]
         print(f"[generate] {record['name']} ({len(prompts)} turns)")
-        record["conversation"] = generate_conversation(prompts, model, tokenizer, config)
+        record["conversation"] = generate_conversation(prompts, model, tokenizer, config, system_prompt)
 
         with open(pref_file, "w", encoding="utf-8") as f:
             json.dump(record, f, indent=2)
@@ -107,5 +124,16 @@ def run_from_config_path(config_path: str) -> None:
     run_from_config(load_yaml(config_path))
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Generate conversation turns for preference records.")
+    parser.add_argument(
+        "--config",
+        default="configs/harm_kl/generate_preferences.yaml",
+        help="Path to the YAML config for this step.",
+    )
+    return parser
+
+
 if __name__ == "__main__":
-    run_from_config_path("configs/harm_kl/generate_preferences.yaml")
+    args = build_parser().parse_args()
+    run_from_config_path(args.config)

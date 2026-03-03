@@ -1,4 +1,5 @@
 #!/bin/bash
+# Shared SLURM setup for loading the repo and Python environment.
 set -eo pipefail
 
 prepare_job_env() {

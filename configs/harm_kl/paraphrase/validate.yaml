@@ -1,0 +1,16 @@
+# Settings for validating how paraphrased versions of X behave.
+# This is the real config for the paraphrase-validation step.
+# It reads the variants file produced by paraphrase/generate.py.
+model_name: "meta-llama/Llama-3.2-1B-Instruct"
+preferences_dir: "harm_kl/data/preferences"
+output_dir: "harm_kl/results/paraphrase/validation"
+variants_path: "harm_kl/data/paraphrase/variants.json"
+target_responses:
+  - "y_pos"
+  - "y_neg"
+  - "y_refusal"
+case_id: null
+overwrite: false
+
+neutral_system_prompt: >
+  You are a helpful AI assistant.

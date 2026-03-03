@@ -1,4 +1,5 @@
 #!/bin/bash
+# SLURM job that runs the standard drift computation.
 #SBATCH -J harm_kl_drift
 #SBATCH -o logs/harm_kl_drift_%j.out
 #SBATCH -e logs/harm_kl_drift_%j.err
@@ -13,10 +14,8 @@ export REPO="/sailhome/drfein/hr"
 source "${REPO}/slurm/helpers/common_env.sh"
 prepare_job_env
 
-RUN_CONFIG="${REPO}/configs/harm_kl/run_compute_drift.yaml"
-
 mkdir -p harm_kl/results/kl_drift harm_kl/data/preferences
 
 echo "Running kl_drift compute: $(date)"
-HR_RUN_CONFIG="${RUN_CONFIG}" python -m src.run
+python -m src.experiments.harm_kl.compute_drift
 echo "Done: $(date)"

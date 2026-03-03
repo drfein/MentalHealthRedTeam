@@ -1,6 +1,8 @@
+# Settings for generating conversation turns from the input cases.
 model_name: "meta-llama/Llama-3.2-1B-Instruct"
 data_path: "harm_kl/data/raw/test_cases.json"
 output_dir: "harm_kl/data/preferences"
+neutral_system_prompt_path: "configs/harm_kl/neutral_system_prompt.txt"
 case_id: null
 overwrite: false
 

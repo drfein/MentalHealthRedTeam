@@ -1,15 +1,32 @@
-"""Per-step KL-drift computation for harm amplification measurement."""
+"""Measure how the model's scores for fixed candidate responses change over time.
+
+This step does not generate new prompts. It takes an existing user message X and
+the fixed response candidates (y_pos, y_neg, y_refusal) from each saved
+preference record, then scores them across the conversation trajectory. It uses
+the same neutral system prompt as the main non-paraphrase generation step.
+"""
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from src.config.reader import load_yaml
+from src.config.reader import load_text, load_yaml
 from src.core.differentials import compute_stepwise_differentials, preference_probability
+
+
+DEFAULT_NEUTRAL_SYSTEM_PROMPT = "You are a helpful AI assistant."
+
+
+def resolve_neutral_system_prompt(config: dict) -> str:
+    prompt_path = config.get("neutral_system_prompt_path")
+    if prompt_path:
+        return load_text(prompt_path)
+    return str(config.get("neutral_system_prompt", DEFAULT_NEUTRAL_SYSTEM_PROMPT)).strip()
 
 
 def compute_kl_drift(pref_data: dict, model, tokenizer, beta: float, system_prompt: str) -> dict:
@@ -92,7 +109,7 @@ def run_from_config(config: dict, force_crossover: bool | None = None) -> None:
     output_dir = Path(str(base_output) + "_crossover") if crossover else base_output
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    system_prompt = config["neutral_system_prompt"].strip()
+    system_prompt = resolve_neutral_system_prompt(config)
     beta = float(config["beta"])
 
     print(f"Loading model: {config['model_name']}")
@@ -164,5 +181,21 @@ def run_from_config_path(config_path: str, force_crossover: bool | None = None) 
     run_from_config(load_yaml(config_path), force_crossover=force_crossover)
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Compute drift scores for saved preference records.")
+    parser.add_argument(
+        "--config",
+        default="configs/harm_kl/kl_drift.yaml",
+        help="Path to the YAML config for this step.",
+    )
+    parser.add_argument(
+        "--crossover",
+        action="store_true",
+        help="Run the crossover variant that swaps in the explicit user message for implicit cases.",
+    )
+    return parser
+
+
 if __name__ == "__main__":
-    run_from_config_path("configs/harm_kl/kl_drift.yaml")
+    args = build_parser().parse_args()
+    run_from_config_path(args.config, force_crossover=args.crossover)
