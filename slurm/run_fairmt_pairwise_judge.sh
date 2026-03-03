@@ -19,7 +19,7 @@ fi
 
 DPO_OUT="/nlp/scr/drfein/hr/dpo_hh_token"
 
-python -m hr.run fairmt judge-pairwise-llm \
+python -m src.run fairmt judge-pairwise-llm \
   --model "gpt-4o-mini" \
   --with_token_dir "${DPO_OUT}/fairmt_results/with_token" \
   --baseline_dir "${DPO_OUT}/fairmt_results/baseline" \

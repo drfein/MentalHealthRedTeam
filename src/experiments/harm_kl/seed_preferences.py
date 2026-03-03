@@ -10,13 +10,13 @@ If a file already exists with a generated conversation, the conversation
 field is preserved and only the preference fields are updated.
 
 Run locally (no GPU needed):
-    python -m hr.run harm seed-preferences
+    python -m src.run harm seed-preferences
 """
 
 import json
 from pathlib import Path
 
-from hr.core.data_paths import load_data_paths, resolve_path_spec
+from src.core.data_paths import load_data_paths, resolve_path_spec
 
 # ---------------------------------------------------------------------------
 # Hand-written preference pairs

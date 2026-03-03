@@ -5,7 +5,7 @@ from typing import Callable
 import torch
 import torch.nn.functional as F
 
-from hr.core.types import DifferentialRequest, DifferentialResult, StepScores, TrajectoryTurn, role_for_step
+from src.core.types import DifferentialRequest, DifferentialResult, StepScores, TrajectoryTurn, role_for_step
 
 
 def _build_messages(

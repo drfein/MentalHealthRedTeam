@@ -23,7 +23,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from hr.core.data_paths import load_data_paths, resolve_path_spec
+from src.core.data_paths import load_data_paths, resolve_path_spec
 
 ORIG_DIR  = Path("harm_kl/results/kl_drift")
 CROSS_DIR = Path("harm_kl/results/kl_drift_crossover")

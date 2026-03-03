@@ -25,14 +25,14 @@ if [ ! -d "${FAIRMT_DIR}/FairMT_1K" ]; then
 fi
 
 echo "=== with_token run ==="
-python -m hr.run fairmt generate \
+python -m src.run fairmt generate \
   --model_id "meta-llama/Llama-3.2-1B-Instruct" \
   --embedding_path "${DPO_OUT}/hh_reminder_embedding.pt" \
   --data_dir "${FAIRMT_DIR}/FairMT_1K" \
   --save_dir "${DPO_OUT}/fairmt_results/with_token"
 
 echo "=== baseline run (no token) ==="
-python -m hr.run fairmt generate \
+python -m src.run fairmt generate \
   --model_id "meta-llama/Llama-3.2-1B-Instruct" \
   --no_token \
   --data_dir "${FAIRMT_DIR}/FairMT_1K" \

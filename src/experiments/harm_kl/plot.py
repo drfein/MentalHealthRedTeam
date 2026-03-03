@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 
-from hr.core.data_paths import load_data_paths, resolve_path_spec
+from src.core.data_paths import load_data_paths, resolve_path_spec
 
 RESULTS_DIR = Path("harm_kl/results/kl_drift")
 OUT_DIR = RESULTS_DIR

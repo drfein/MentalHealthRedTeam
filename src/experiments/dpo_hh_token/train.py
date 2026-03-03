@@ -26,7 +26,7 @@ from datasets import load_dataset, DatasetDict
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import DPOTrainer, DPOConfig
 
-from hr.core.data_paths import load_data_paths, resolve_path_spec
+from src.core.data_paths import load_data_paths, resolve_path_spec
 
 
 # ---------------------------------------------------------------------------

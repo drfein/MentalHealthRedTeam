@@ -5,7 +5,7 @@ import textwrap
 import unittest
 from pathlib import Path
 
-from hr.core.data_paths import load_data_paths, resolve_data_path, resolve_path_spec
+from src.core.data_paths import load_data_paths, resolve_data_path, resolve_path_spec
 
 
 class DataPathRegistryTests(unittest.TestCase):

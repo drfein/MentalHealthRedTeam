@@ -18,10 +18,10 @@ CONFIG_PATH="${REPO}/configs/harm_kl/generate_preferences.yaml"
 mkdir -p logs harm_kl/data/preferences
 
 echo "Seeding preference pairs: $(date)"
-python -m hr.run harm seed-preferences "$@"
+python -m src.run harm seed-preferences "$@"
 
 echo "Generating conversations: $(date)"
-python -m hr.run harm generate-conversations \
+python -m src.run harm generate-conversations \
   --config "${CONFIG_PATH}" \
   "$@"
 

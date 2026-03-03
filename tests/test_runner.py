@@ -4,7 +4,7 @@ import io
 import unittest
 from contextlib import redirect_stdout
 
-from hr import run
+from src import run
 
 
 class RunnerIntegrationTests(unittest.TestCase):

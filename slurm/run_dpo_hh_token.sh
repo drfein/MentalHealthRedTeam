@@ -23,7 +23,7 @@ echo "  repo:   ${REPO}"
 torchrun \
   --nproc_per_node=8 \
   --master_port=29500 \
-  -m hr.run dpo train-hh-token \
+  -m src.run dpo train-hh-token \
   --config "${HR_DPO_CONFIG}"
 
 echo "Done: $(date)"

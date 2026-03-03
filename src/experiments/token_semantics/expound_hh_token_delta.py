@@ -7,7 +7,7 @@ import torch
 import yaml
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from hr.core.data_paths import load_data_paths, resolve_path_spec
+from src.core.data_paths import load_data_paths, resolve_path_spec
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]

@@ -3,8 +3,8 @@ from __future__ import annotations
 import unittest
 from unittest import mock
 
-from hr.core.differentials import _build_messages, compute_single_y_delta_series, compute_stepwise_differentials
-from hr.core.types import DifferentialRequest, TrajectoryTurn
+from src.core.differentials import _build_messages, compute_single_y_delta_series, compute_stepwise_differentials
+from src.core.types import DifferentialRequest, TrajectoryTurn
 
 
 class DifferentialCoreTests(unittest.TestCase):
@@ -60,7 +60,7 @@ class DifferentialCoreTests(unittest.TestCase):
         )
         result = compute_stepwise_differentials(model=object(), tokenizer=object(), request=request)
 
-        with mock.patch("hr.core.differentials.response_log_prob", new=scorer):
+        with mock.patch("src.core.differentials.response_log_prob", new=scorer):
             series = compute_single_y_delta_series(
                 model=object(),
                 tokenizer=object(),

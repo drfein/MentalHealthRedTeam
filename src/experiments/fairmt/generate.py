@@ -6,14 +6,14 @@ same format as the original FairMT generate_answer.py, so their evaluation
 scripts can be applied downstream if desired.
 
 Usage (with trained token):
-    python -m hr.run fairmt generate \
+    python -m src.run fairmt generate \
         --model_id meta-llama/Llama-3.2-1B-Instruct \
         --embedding_path /nlp/scr/drfein/hr/dpo_hh_token/hh_reminder_embedding.pt \
         --data_dir /nlp/scr/drfein/fairmt/FairMT_1K \
         --save_dir /nlp/scr/drfein/hr/fairmt_results/with_token
 
 Usage (baseline — same model, no token):
-    python -m hr.run fairmt generate \
+    python -m src.run fairmt generate \
         --model_id meta-llama/Llama-3.2-1B-Instruct \
         --data_dir /nlp/scr/drfein/fairmt/FairMT_1K \
         --save_dir /nlp/scr/drfein/hr/fairmt_results/baseline
@@ -29,7 +29,7 @@ import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from hr.core.data_paths import load_data_paths, resolve_path_spec
+from src.core.data_paths import load_data_paths, resolve_path_spec
 
 NEW_TOKEN = "<hh_reminder>"
 

@@ -15,6 +15,6 @@ prepare_job_env
 
 export USE_TF=0
 
-python -m hr.run token expound-hh-token-delta
+python -m src.run token expound-hh-token-delta
 
 echo "Done: $(date)"

@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
 
-from hr.core.data_paths import load_data_paths, resolve_path_spec
+from src.core.data_paths import load_data_paths, resolve_path_spec
 
 RESULTS_DIR   = Path("harm_kl/results/kl_drift")
 DATA_PATH     = Path("harm_kl/data/raw/test_cases.json")

@@ -5,23 +5,23 @@ import importlib
 from collections import defaultdict
 
 COMMAND_TARGETS: dict[tuple[str, str], tuple[str, str]] = {
-    ("harm", "seed-preferences"): ("hr.experiments.harm_kl.seed_preferences", "main"),
-    ("harm", "generate-conversations"): ("hr.experiments.harm_kl.generate_preferences", "main"),
-    ("harm", "compute-drift"): ("hr.experiments.harm_kl.compute_drift", "main"),
-    ("harm", "plot"): ("hr.experiments.harm_kl.plot", "main"),
-    ("harm", "analyze-jumps"): ("hr.experiments.harm_kl.analyze_jumps", "main"),
-    ("harm", "plot-crossover"): ("hr.experiments.harm_kl.plot_crossover", "main"),
-    ("dpo", "train-hh-token"): ("hr.experiments.dpo_hh_token.train", "main"),
-    ("fairmt", "generate"): ("hr.experiments.fairmt.generate", "main"),
-    ("fairmt", "judge-heuristic"): ("hr.experiments.fairmt.judge_compare", "main"),
-    ("fairmt", "judge-pairwise-llm"): ("hr.experiments.fairmt.judge_pairwise_llm", "main"),
-    ("token", "expound-hh-token-delta"): ("hr.experiments.token_semantics.expound_hh_token_delta", "main"),
+    ("harm", "seed-preferences"): ("src.experiments.harm_kl.seed_preferences", "main"),
+    ("harm", "generate-conversations"): ("src.experiments.harm_kl.generate_preferences", "main"),
+    ("harm", "compute-drift"): ("src.experiments.harm_kl.compute_drift", "main"),
+    ("harm", "plot"): ("src.experiments.harm_kl.plot", "main"),
+    ("harm", "analyze-jumps"): ("src.experiments.harm_kl.analyze_jumps", "main"),
+    ("harm", "plot-crossover"): ("src.experiments.harm_kl.plot_crossover", "main"),
+    ("dpo", "train-hh-token"): ("src.experiments.dpo_hh_token.train", "main"),
+    ("fairmt", "generate"): ("src.experiments.fairmt.generate", "main"),
+    ("fairmt", "judge-heuristic"): ("src.experiments.fairmt.judge_compare", "main"),
+    ("fairmt", "judge-pairwise-llm"): ("src.experiments.fairmt.judge_pairwise_llm", "main"),
+    ("token", "expound-hh-token-delta"): ("src.experiments.token_semantics.expound_hh_token_delta", "main"),
 }
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Unified experiment runner. Usage: python -m hr.run <suite> <command> [args...]"
+        description="Unified experiment runner. Usage: python -m src.run <suite> <command> [args...]"
     )
     suites: dict[str, list[str]] = defaultdict(list)
     for suite, command in COMMAND_TARGETS:
@@ -51,7 +51,7 @@ def main(argv: list[str] | None = None) -> int:
     pass_through_args = list(args.command_args)
 
     if args.dry_run:
-        print(f"[dry-run] would run: python -m hr.run {args.suite} {args.command} {' '.join(pass_through_args)}")
+        print(f"[dry-run] would run: python -m src.run {args.suite} {args.command} {' '.join(pass_through_args)}")
         return 0
 
     module = importlib.import_module(module_name)

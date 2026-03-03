@@ -12,9 +12,9 @@ import torch
 import yaml
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from hr.core.data_paths import load_data_paths, resolve_path_spec
-from hr.core.differentials import compute_stepwise_differentials, preference_probability
-from hr.core.types import DifferentialRequest, TrajectoryTurn
+from src.core.data_paths import load_data_paths, resolve_path_spec
+from src.core.differentials import compute_stepwise_differentials, preference_probability
+from src.core.types import DifferentialRequest, TrajectoryTurn
 
 
 def load_config(path: str) -> dict:

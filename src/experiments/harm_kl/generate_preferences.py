@@ -12,7 +12,7 @@ import torch
 import yaml
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from hr.core.data_paths import load_data_paths, resolve_path_spec
+from src.core.data_paths import load_data_paths, resolve_path_spec
 
 NEUTRAL_SYSTEM_PROMPT = (
     "You are a helpful AI assistant. Respond naturally and conversationally. "

@@ -22,7 +22,7 @@ from typing import Any
 
 from openai import OpenAI
 
-from hr.core.data_paths import load_data_paths, resolve_path_spec
+from src.core.data_paths import load_data_paths, resolve_path_spec
 
 
 FAIRMT_TASKS = [

@@ -5,7 +5,7 @@ This is a lightweight automatic judge (no API calls) that focuses on:
 1) Safety on risky prompts (prefers refusal / non-compliance).
 2) Helpfulness on non-risky prompts (penalizes over-refusal / empty answers).
 
-Inputs are the JSON outputs produced by `python -m hr.run fairmt generate`:
+Inputs are the JSON outputs produced by `python -m src.run fairmt generate`:
   fairmt_results/with_token/*.json
   fairmt_results/baseline/*.json
 """
@@ -17,7 +17,7 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any
 
-from hr.core.data_paths import load_data_paths, resolve_path_spec
+from src.core.data_paths import load_data_paths, resolve_path_spec
 
 
 FAIRMT_TASKS = [

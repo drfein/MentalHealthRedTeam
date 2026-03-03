@@ -18,7 +18,7 @@ CONFIG_PATH="${REPO}/configs/harm_kl/kl_drift.yaml"
 mkdir -p harm_kl/results/kl_drift harm_kl/data/preferences
 
 echo "Running kl_drift compute: $(date)"
-python -m hr.run harm compute-drift \
+python -m src.run harm compute-drift \
   --config "${CONFIG_PATH}" \
   "$@"
 echo "Done: $(date)"

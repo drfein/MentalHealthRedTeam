@@ -3,8 +3,8 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from hr.core.types import DifferentialResult, StepScores
-from hr.experiments.harm_kl.compute_drift import compute_kl_drift
+from src.core.types import DifferentialResult, StepScores
+from src.experiments.harm_kl.compute_drift import compute_kl_drift
 
 
 class HarmComputeSchemaTests(unittest.TestCase):
@@ -43,7 +43,7 @@ class HarmComputeSchemaTests(unittest.TestCase):
             ],
         )
 
-        with patch("hr.experiments.harm_kl.compute_drift.compute_stepwise_differentials", return_value=fake_result):
+        with patch("src.experiments.harm_kl.compute_drift.compute_stepwise_differentials", return_value=fake_result):
             out = compute_kl_drift(pref_data, model=object(), tokenizer=object(), beta=0.1, system_prompt="sys")
 
         self.assertEqual(out["case_id"], "case_1")

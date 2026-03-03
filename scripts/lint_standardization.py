@@ -22,7 +22,7 @@ def check_slurm_wrappers() -> list[str]:
     for path in sorted((ROOT / "slurm").glob("run_*.sh")):
         text = path.read_text(encoding="utf-8")
         if LEGACY_ENTRYPOINT_RE.search(text):
-            errors.append(f"{path}: uses legacy experiment entrypoint instead of python -m hr.run")
+            errors.append(f"{path}: uses legacy experiment entrypoint instead of python -m src.run")
     return errors
 
 
