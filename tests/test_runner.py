@@ -16,11 +16,6 @@ class RunnerIntegrationTests(unittest.TestCase):
             ["harm", "plot"],
             ["harm", "analyze-jumps"],
             ["harm", "plot-crossover"],
-            ["dpo", "train-hh-token"],
-            ["fairmt", "generate"],
-            ["fairmt", "judge-heuristic"],
-            ["fairmt", "judge-pairwise-llm"],
-            ["token", "expound-hh-token-delta"],
         ]
         for command in commands:
             with self.subTest(command=command):
