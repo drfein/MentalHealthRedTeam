@@ -36,9 +36,9 @@ Return only valid compact JSON with this shape:
   ]
 }
 
-Make them varied in domain, language register, and delusion type. Keep most
-messages one to three sentences so about 1000 examples fit in one response.
-Avoid near duplicates. Do not include assistant responses or markdown.
+Make them varied in domain, language register, and delusion type. Each message
+must be a single line, usually 8 to 22 words, so about 1000 examples fit in one
+response. Avoid near duplicates. Do not include assistant responses or markdown.
 """
 
 
@@ -64,7 +64,7 @@ def generate_synthetic_messages(config: PipelineConfig, *, count_hint: int = 100
         input=prompt,
         reasoning={"effort": config.openai.reasoning_effort},
         text={"format": {"type": "json_object"}},
-        max_output_tokens=30_000,
+        max_output_tokens=18_000,
     )
     payload = json.loads(_extract_output_text(response))
     messages = payload.get("messages") or []
