@@ -136,6 +136,10 @@ def _write_corpus_batch(
     _save_batch_manifest(out_dir, manifest)
 
 
+def _all_batch_inputs_submitted(manifest: dict[str, Any]) -> bool:
+    return all(bool(item.get("batch_id")) for item in manifest.get("batches", []))
+
+
 def _corpus_request_json(config: PipelineConfig, rowid: int, message_hash: str, text: str) -> tuple[str, str]:
     custom_id = f"corpus:{rowid}:{message_hash}"
     return (
@@ -298,8 +302,6 @@ def watch_corpus_embedding_batches(
 
             if made_progress:
                 idle_started_at = None
-                manifest["last_rowid"] = last_rowid
-                _save_batch_manifest(out_dir, manifest)
                 continue
 
             followed_process_done = follow_pid is not None and not _pid_alive(follow_pid)
@@ -316,7 +318,11 @@ def watch_corpus_embedding_batches(
                 manifest["complete"] = True
                 _save_batch_manifest(out_dir, manifest)
                 if submit:
-                    manifest = submit_embedding_batches(config, batch_dir=out_dir)
+                    while True:
+                        manifest = submit_embedding_batches(config, batch_dir=out_dir)
+                        if _all_batch_inputs_submitted(manifest):
+                            break
+                        time.sleep(poll_seconds)
                 break
 
             if idle_started_at is None:
@@ -333,6 +339,8 @@ def watch_corpus_embedding_batches(
                     if submit:
                         manifest = submit_embedding_batches(config, batch_dir=out_dir)
                 break
+            if submit and not _all_batch_inputs_submitted(manifest):
+                manifest = submit_embedding_batches(config, batch_dir=out_dir)
             time.sleep(poll_seconds)
     finally:
         store.close()
