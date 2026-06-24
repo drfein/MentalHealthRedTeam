@@ -1,0 +1,17 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+data/
+artifacts/
+logs/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.npy
+*.npz
+*.parquet
+*.jsonl
+*.jsonl.zst

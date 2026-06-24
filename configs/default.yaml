@@ -1,0 +1,59 @@
+paths:
+  data_dir: data
+  sqlite_path: data/dedupe.sqlite
+  synthetic_path: data/synthetic_delusion_messages.jsonl
+  corpus_embedding_dir: data/embeddings/corpus
+  synthetic_embedding_dir: data/embeddings/synthetic
+  retrieval_dir: data/retrieval
+  annotation_dir: data/annotations
+  verification_dir: data/verification
+
+models:
+  synthetic_model: gpt-5.5
+  annotation_model: openai/gpt-5.1-2025-11-13
+  verifier_model: gpt-5.5
+  embedding_model: text-embedding-3-small
+
+openai:
+  reasoning_effort: low
+  timeout_seconds: 300
+
+annotation:
+  annotation_id: user-endorses-delusion
+  cutoff: 7
+  preceding_count: 0
+  batch_size: 256
+  max_workers: 32
+  timeout_seconds: 120
+
+retrieval:
+  initial_top_k: 500000
+  calibration_bins: 20
+  calibration_sample_per_bin: 100
+  target_hit_rate: 0.10
+  above_threshold_margin: 0.0
+  second_pass_top_k: 500000
+
+embedding:
+  provider: openai_batch
+  batch_request_size: 50000
+  poll_seconds: 120
+  shard_size: 100000
+  normalize: true
+  dtype: float16
+  dimensions: null
+  query_instruction: "Retrieve user messages that explicitly endorse or demonstrate genuine delusional beliefs rather than fiction, hypotheticals, jokes, or commonly held beliefs."
+
+datasets:
+  - name: yuntian-deng/WildChat-4.8M-Full
+    source: wildchat_full
+    split: train
+    gated: true
+  - name: anoynsharechat/sharechat
+    source: sharechat
+    split: train
+    gated: false
+  - name: lmsys/lmsys-chat-1m
+    source: lmsys_chat_1m
+    split: train
+    gated: false
