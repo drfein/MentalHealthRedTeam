@@ -243,7 +243,7 @@ def watch_corpus_embedding_batches(
                             max_rowid=batch_max_rowid,
                         )
                         if submit:
-                            submit_embedding_batches(config, batch_dir=out_dir)
+                            manifest = submit_embedding_batches(config, batch_dir=out_dir)
                         batch_index += 1
                         request_rows = []
 
@@ -267,7 +267,7 @@ def watch_corpus_embedding_batches(
                 manifest["complete"] = True
                 _save_batch_manifest(out_dir, manifest)
                 if submit:
-                    submit_embedding_batches(config, batch_dir=out_dir)
+                    manifest = submit_embedding_batches(config, batch_dir=out_dir)
                 break
 
             if idle_started_at is None:
@@ -282,7 +282,7 @@ def watch_corpus_embedding_batches(
                         max_rowid=batch_max_rowid,
                     )
                     if submit:
-                        submit_embedding_batches(config, batch_dir=out_dir)
+                        manifest = submit_embedding_batches(config, batch_dir=out_dir)
                 break
             time.sleep(poll_seconds)
     finally:
