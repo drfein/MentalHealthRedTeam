@@ -66,7 +66,7 @@ class RetrievalConfig:
 class EmbeddingConfig:
     provider: str = "openai_batch"
     batch_request_size: int = 50_000
-    max_enqueued_requests: int = 900_000
+    max_enqueued_requests: int = 950_000
     poll_seconds: int = 120
     shard_size: int = 100_000
     normalize: bool = True

@@ -456,6 +456,7 @@ def submit_embedding_batches(config: PipelineConfig, *, batch_dir: Path) -> dict
         if batch.status in ENQUEUED_BATCH_STATUSES:
             enqueued_requests += request_count
         _save_batch_manifest(batch_dir, manifest)
+        Path(item["input_path"]).unlink(missing_ok=True)
     return manifest
 
 
@@ -498,16 +499,28 @@ def download_embedding_batch_outputs(config: PipelineConfig, *, batch_dir: Path)
     for item in manifest["batches"]:
         output_file_id = item.get("output_file_id")
         if output_file_id and not item.get("output_path"):
-            content = client.files.content(str(output_file_id)).read()
             output_path = output_dir / f"output-{int(item['index']):06d}.jsonl"
-            output_path.write_bytes(content)
+            tmp_path = output_path.with_suffix(output_path.suffix + ".tmp")
+            response = client.files.content(str(output_file_id))
+            if hasattr(response, "write_to_file"):
+                response.write_to_file(tmp_path)
+            else:
+                tmp_path.write_bytes(response.read())
+            tmp_path.replace(output_path)
             item["output_path"] = str(output_path)
+            _save_batch_manifest(batch_dir, manifest)
         error_file_id = item.get("error_file_id")
         if error_file_id and not item.get("error_path"):
-            content = client.files.content(str(error_file_id)).read()
             error_path = output_dir / f"errors-{int(item['index']):06d}.jsonl"
-            error_path.write_bytes(content)
+            tmp_path = error_path.with_suffix(error_path.suffix + ".tmp")
+            response = client.files.content(str(error_file_id))
+            if hasattr(response, "write_to_file"):
+                response.write_to_file(tmp_path)
+            else:
+                tmp_path.write_bytes(response.read())
+            tmp_path.replace(error_path)
             item["error_path"] = str(error_path)
+            _save_batch_manifest(batch_dir, manifest)
     _save_batch_manifest(batch_dir, manifest)
     return manifest
 
