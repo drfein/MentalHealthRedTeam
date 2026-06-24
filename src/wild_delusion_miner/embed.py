@@ -20,6 +20,8 @@ from wild_delusion_miner.text import dedupe_key, normalize_text
 
 
 BatchSourceRow = tuple[str, str, int | None]
+ENQUEUED_BATCH_STATUSES = {"validating", "in_progress", "finalizing"}
+REMOTE_ENQUEUED_BATCH_STATUSES = ENQUEUED_BATCH_STATUSES | {"cancelling"}
 
 
 def _embedding_body(config: PipelineConfig, text: str) -> dict[str, Any]:
@@ -154,6 +156,53 @@ def _pid_alive(pid: int) -> bool:
     except PermissionError:
         return True
     return True
+
+
+def _dump_openai_object(value: Any) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    if hasattr(value, "model_dump"):
+        return value.model_dump()
+    if isinstance(value, dict):
+        return value
+    return None
+
+
+def _error_codes(item: dict[str, Any]) -> set[str]:
+    errors = item.get("errors") or {}
+    data = errors.get("data") if isinstance(errors, dict) else None
+    if not data:
+        return set()
+    return {str(error.get("code")) for error in data if isinstance(error, dict) and error.get("code")}
+
+
+def _clear_retryable_batch_failure(item: dict[str, Any]) -> None:
+    if item.get("status") != "failed":
+        return
+    if "request_limit_exceeded" not in _error_codes(item):
+        return
+    for key in ("batch_id", "input_file_id", "status", "output_file_id", "error_file_id", "errors"):
+        item.pop(key, None)
+
+
+def _remote_enqueued_request_count(
+    client: OpenAI,
+    *,
+    kind: str,
+    fallback_request_count: int,
+) -> int:
+    total = 0
+    for batch in client.batches.list(limit=100).data:
+        if (batch.metadata or {}).get("kind") != kind:
+            continue
+        if batch.status not in REMOTE_ENQUEUED_BATCH_STATUSES:
+            continue
+        request_counts = getattr(batch, "request_counts", None)
+        if request_counts and getattr(request_counts, "total", None) is not None:
+            total += int(request_counts.total)
+        else:
+            total += fallback_request_count
+    return total
 
 
 def prepare_corpus_embedding_batches(config: PipelineConfig, *, limit_messages: int | None = None) -> int:
@@ -360,9 +409,30 @@ def _prepare_small_embedding_batches(
 def submit_embedding_batches(config: PipelineConfig, *, batch_dir: Path) -> dict[str, Any]:
     client = OpenAI()
     manifest = _load_batch_manifest(batch_dir)
+    if any(item.get("batch_id") for item in manifest["batches"]):
+        manifest = refresh_embedding_batches(config, batch_dir=batch_dir)
+    for item in manifest["batches"]:
+        _clear_retryable_batch_failure(item)
+    _save_batch_manifest(batch_dir, manifest)
+    enqueued_requests = sum(
+        int(item.get("request_count") or 0)
+        for item in manifest["batches"]
+        if item.get("status") in ENQUEUED_BATCH_STATUSES
+    )
+    remote_enqueued_requests = _remote_enqueued_request_count(
+        client,
+        kind=str(manifest.get("kind", "embedding")),
+        fallback_request_count=config.embedding.batch_request_size,
+    )
+    enqueued_requests = max(enqueued_requests, remote_enqueued_requests)
     for item in manifest["batches"]:
         if item.get("batch_id"):
             continue
+        request_count = int(item.get("request_count") or 0)
+        if config.embedding.max_enqueued_requests and (
+            enqueued_requests + request_count > config.embedding.max_enqueued_requests
+        ):
+            break
         with Path(item["input_path"]).open("rb") as handle:
             upload = client.files.create(file=handle, purpose="batch")
         batch = client.batches.create(
@@ -374,6 +444,9 @@ def submit_embedding_batches(config: PipelineConfig, *, batch_dir: Path) -> dict
         item["input_file_id"] = upload.id
         item["batch_id"] = batch.id
         item["status"] = batch.status
+        item["errors"] = _dump_openai_object(batch.errors)
+        if batch.status in ENQUEUED_BATCH_STATUSES:
+            enqueued_requests += request_count
         _save_batch_manifest(batch_dir, manifest)
     return manifest
 
@@ -389,6 +462,7 @@ def refresh_embedding_batches(config: PipelineConfig, *, batch_dir: Path) -> dic
         item["status"] = batch.status
         item["output_file_id"] = batch.output_file_id
         item["error_file_id"] = batch.error_file_id
+        item["errors"] = _dump_openai_object(batch.errors)
         item["request_counts"] = (
             batch.request_counts.model_dump()
             if hasattr(batch.request_counts, "model_dump") and batch.request_counts

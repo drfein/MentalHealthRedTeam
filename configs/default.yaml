@@ -37,6 +37,7 @@ retrieval:
 embedding:
   provider: openai_batch
   batch_request_size: 50000
+  max_enqueued_requests: 900000
   poll_seconds: 120
   shard_size: 100000
   normalize: true
