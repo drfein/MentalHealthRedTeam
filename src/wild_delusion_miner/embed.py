@@ -501,26 +501,34 @@ def download_embedding_batch_outputs(config: PipelineConfig, *, batch_dir: Path)
         if output_file_id and not item.get("output_path"):
             output_path = output_dir / f"output-{int(item['index']):06d}.jsonl"
             tmp_path = output_path.with_suffix(output_path.suffix + ".tmp")
-            response = client.files.content(str(output_file_id))
-            if hasattr(response, "write_to_file"):
-                response.write_to_file(tmp_path)
-            else:
-                tmp_path.write_bytes(response.read())
-            tmp_path.replace(output_path)
-            item["output_path"] = str(output_path)
-            _save_batch_manifest(batch_dir, manifest)
+            try:
+                response = client.files.content(str(output_file_id))
+                if hasattr(response, "write_to_file"):
+                    response.write_to_file(tmp_path)
+                else:
+                    tmp_path.write_bytes(response.read())
+                tmp_path.replace(output_path)
+                item["output_path"] = str(output_path)
+                _save_batch_manifest(batch_dir, manifest)
+            except Exception as exc:
+                tmp_path.unlink(missing_ok=True)
+                print(f"download failed for output batch {item.get('index')}: {exc}")
         error_file_id = item.get("error_file_id")
         if error_file_id and not item.get("error_path"):
             error_path = output_dir / f"errors-{int(item['index']):06d}.jsonl"
             tmp_path = error_path.with_suffix(error_path.suffix + ".tmp")
-            response = client.files.content(str(error_file_id))
-            if hasattr(response, "write_to_file"):
-                response.write_to_file(tmp_path)
-            else:
-                tmp_path.write_bytes(response.read())
-            tmp_path.replace(error_path)
-            item["error_path"] = str(error_path)
-            _save_batch_manifest(batch_dir, manifest)
+            try:
+                response = client.files.content(str(error_file_id))
+                if hasattr(response, "write_to_file"):
+                    response.write_to_file(tmp_path)
+                else:
+                    tmp_path.write_bytes(response.read())
+                tmp_path.replace(error_path)
+                item["error_path"] = str(error_path)
+                _save_batch_manifest(batch_dir, manifest)
+            except Exception as exc:
+                tmp_path.unlink(missing_ok=True)
+                print(f"download failed for error batch {item.get('index')}: {exc}")
     _save_batch_manifest(batch_dir, manifest)
     return manifest
 
