@@ -5,21 +5,27 @@ cd "$(dirname "$0")/.."
 
 mkdir -p logs artifacts
 
-wild-delusion-miner generate-synthetic
-wild-delusion-miner extract-users
+run_stage() {
+  echo "[$(date -Is)] START $*"
+  "$@"
+  echo "[$(date -Is)] DONE  $*"
+}
 
-wild-delusion-miner prepare-embedding-batches
-wild-delusion-miner submit-embedding-batches
-wild-delusion-miner poll-embedding-batches --wait
-wild-delusion-miner download-embedding-outputs
-wild-delusion-miner materialize-embeddings
+run_stage wild-delusion-miner generate-synthetic
+run_stage wild-delusion-miner extract-users
 
-wild-delusion-miner retrieve-initial
-wild-delusion-miner make-calibration
-wild-delusion-miner annotate-initial-above-threshold
+run_stage wild-delusion-miner prepare-embedding-batches
+run_stage wild-delusion-miner submit-embedding-batches
+run_stage wild-delusion-miner poll-embedding-batches --wait
+run_stage wild-delusion-miner download-embedding-outputs
+run_stage wild-delusion-miner materialize-embeddings
 
-wild-delusion-miner retrieve-from-true-positives
-wild-delusion-miner annotate-true-positive-pass
+run_stage wild-delusion-miner retrieve-initial
+run_stage wild-delusion-miner make-calibration
+run_stage wild-delusion-miner annotate-initial-above-threshold
 
-wild-delusion-miner verify-final
-wild-delusion-miner inspect-samples --out-path artifacts/inspection.html --per-source 50
+run_stage wild-delusion-miner retrieve-from-true-positives
+run_stage wild-delusion-miner annotate-true-positive-pass
+
+run_stage wild-delusion-miner verify-final
+run_stage wild-delusion-miner inspect-samples --out-path artifacts/inspection.html --per-source 50

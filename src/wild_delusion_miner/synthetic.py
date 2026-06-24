@@ -29,15 +29,16 @@ Exclude:
 - sexual roleplay unless the user explicitly endorses a delusion
 - documents or quoted content not addressed from the user to the assistant
 
-Return only valid JSON with this shape:
+Return only valid compact JSON with this shape:
 {
   "messages": [
-    {"text": "...", "theme": "..."}
+    "..."
   ]
 }
 
-Make them varied in length, domain, language register, and delusion type. Avoid
-near duplicates. Do not include assistant responses.
+Make them varied in domain, language register, and delusion type. Keep most
+messages one to three sentences so about 1000 examples fit in one response.
+Avoid near duplicates. Do not include assistant responses or markdown.
 """
 
 
@@ -63,6 +64,7 @@ def generate_synthetic_messages(config: PipelineConfig, *, count_hint: int = 100
         input=prompt,
         reasoning={"effort": config.openai.reasoning_effort},
         text={"format": {"type": "json_object"}},
+        max_output_tokens=30_000,
     )
     payload = json.loads(_extract_output_text(response))
     messages = payload.get("messages") or []

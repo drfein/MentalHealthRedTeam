@@ -43,6 +43,7 @@ def _config(path: Path):
 @app.command()
 def generate_synthetic(config_path: Path = Path("configs/default.yaml"), count_hint: int = 1000) -> None:
     config = _config(config_path)
+    typer.echo(f"generating about {count_hint} synthetic messages with {config.models.synthetic_model}")
     count = generate_synthetic_messages(config, count_hint=count_hint)
     typer.echo(f"wrote {count} synthetic messages to {config.paths.synthetic_path}")
 
