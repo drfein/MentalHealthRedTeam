@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
 
 from openai import OpenAI
+from openai import APIStatusError
 
 from wild_delusion_miner.config import PipelineConfig
 from wild_delusion_miner.jsonl import write_jsonl
@@ -59,13 +61,7 @@ def _extract_output_text(response: Any) -> str:
 def generate_synthetic_messages(config: PipelineConfig, *, count_hint: int = 1000) -> int:
     client = OpenAI(timeout=config.openai.timeout_seconds)
     prompt = SYNTHETIC_PROMPT.replace("about 1000", f"about {count_hint}")
-    response = client.responses.create(
-        model=config.models.synthetic_model,
-        input=prompt,
-        reasoning={"effort": config.openai.reasoning_effort},
-        text={"format": {"type": "json_object"}},
-        max_output_tokens=18_000,
-    )
+    response = _create_background_response(client, config, prompt)
     payload = json.loads(_extract_output_text(response))
     messages = payload.get("messages") or []
     rows = []
@@ -81,3 +77,47 @@ def generate_synthetic_messages(config: PipelineConfig, *, count_hint: int = 100
         if text:
             rows.append({"synthetic_id": index, "text": text, "theme": theme})
     return write_jsonl(config.paths.synthetic_path, rows)
+
+
+def _create_background_response(client: OpenAI, config: PipelineConfig, prompt: str) -> Any:
+    last_error: BaseException | None = None
+    for attempt in range(1, 4):
+        try:
+            response = client.responses.create(
+                model=config.models.synthetic_model,
+                input=prompt,
+                reasoning={"effort": config.openai.reasoning_effort},
+                text={"format": {"type": "json_object"}},
+                max_output_tokens=18_000,
+                background=True,
+            )
+            print(f"synthetic background response {response.id} status={response.status}", flush=True)
+            return _poll_background_response(client, response.id)
+        except APIStatusError as error:
+            last_error = error
+            if error.status_code not in {429, 500, 502, 503, 504}:
+                raise
+            sleep_seconds = min(60 * attempt, 180)
+            print(
+                f"synthetic generation transient {error.status_code}; retrying in {sleep_seconds}s",
+                flush=True,
+            )
+            time.sleep(sleep_seconds)
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError("Synthetic generation failed without an exception.")
+
+
+def _poll_background_response(client: OpenAI, response_id: str) -> Any:
+    deadline = time.monotonic() + 45 * 60
+    response = client.responses.retrieve(response_id)
+    while response.status in {"queued", "in_progress"}:
+        if time.monotonic() > deadline:
+            raise TimeoutError(f"Timed out waiting for background response {response_id}")
+        print(f"synthetic background status={response.status}", flush=True)
+        time.sleep(30)
+        response = client.responses.retrieve(response_id)
+    print(f"synthetic background final status={response.status}", flush=True)
+    if response.status != "completed":
+        raise RuntimeError(f"Synthetic generation background response ended with status {response.status}")
+    return response
