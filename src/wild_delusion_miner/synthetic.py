@@ -4,6 +4,7 @@ import json
 import time
 from typing import Any
 
+import json_repair
 from openai import OpenAI
 from openai import APIStatusError
 
@@ -62,7 +63,7 @@ def generate_synthetic_messages(config: PipelineConfig, *, count_hint: int = 100
     client = OpenAI(timeout=config.openai.timeout_seconds)
     prompt = SYNTHETIC_PROMPT.replace("about 1000", f"about {count_hint}")
     response = _create_background_response(client, config, prompt)
-    payload = json.loads(_extract_output_text(response))
+    payload = _parse_synthetic_payload(_extract_output_text(response))
     messages = payload.get("messages") or []
     rows = []
     for index, item in enumerate(messages):
@@ -74,9 +75,21 @@ def generate_synthetic_messages(config: PipelineConfig, *, count_hint: int = 100
             theme = str(item.get("theme") or "").strip()
         else:
             continue
-        if text:
+        if text and len(text.split()) >= 5:
             rows.append({"synthetic_id": index, "text": text, "theme": theme})
+        if len(rows) >= count_hint:
+            break
     return write_jsonl(config.paths.synthetic_path, rows)
+
+
+def _parse_synthetic_payload(text: str) -> dict[str, Any]:
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        payload = json_repair.loads(text)
+    if not isinstance(payload, dict):
+        raise ValueError("Synthetic generation did not return a JSON object.")
+    return payload
 
 
 def _create_background_response(client: OpenAI, config: PipelineConfig, prompt: str) -> Any:
@@ -118,6 +131,14 @@ def _poll_background_response(client: OpenAI, response_id: str) -> Any:
         time.sleep(30)
         response = client.responses.retrieve(response_id)
     print(f"synthetic background final status={response.status}", flush=True)
+    incomplete_details = getattr(response, "incomplete_details", None)
+    if (
+        response.status == "incomplete"
+        and getattr(incomplete_details, "reason", None) == "max_output_tokens"
+        and (getattr(response, "output_text", "") or "")
+    ):
+        print("synthetic background hit max_output_tokens; using repairable partial output", flush=True)
+        return response
     if response.status != "completed":
         raise RuntimeError(f"Synthetic generation background response ended with status {response.status}")
     return response
