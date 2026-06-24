@@ -45,6 +45,21 @@ wild-delusion-miner verify-final
 wild-delusion-miner inspect-samples
 ```
 
+For large runs, start embedding batch preparation while extraction is still
+running:
+
+```bash
+wild-delusion-miner extract-users
+wild-delusion-miner prepare-synthetic-embedding-batches-only
+wild-delusion-miner submit-synthetic-embedding-batches-only
+wild-delusion-miner watch-corpus-embedding-batches --follow-pid "$(pgrep -f 'wild-delusion-miner extract-users')" --submit
+```
+
+The watcher writes full corpus request shards as new de-duplicated rows appear
+and submits each completed OpenAI Batch job immediately. The regular
+`prepare-embedding-batches` command is resumable and preserves already-written
+or already-submitted shards.
+
 Artifacts are under `data/`:
 
 - `data/dedupe.sqlite`: de-duplicated user messages plus source references

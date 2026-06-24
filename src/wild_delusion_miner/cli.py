@@ -19,6 +19,7 @@ from wild_delusion_miner.embed import (
     refresh_embedding_batches as refresh_embedding_batches_impl,
     submit_embedding_batches as submit_embedding_batches_impl,
     wait_for_embedding_batches as wait_for_embedding_batches_impl,
+    watch_corpus_embedding_batches as watch_corpus_embedding_batches_impl,
 )
 from wild_delusion_miner.monitor import pipeline_status, write_inspection_html
 from wild_delusion_miner.retrieval import (
@@ -83,6 +84,39 @@ def prepare_embedding_batches(
     corpus_count = prepare_corpus_embedding_batches(config, limit_messages=limit_messages)
     synthetic_count = prepare_synthetic_embedding_batches(config)
     typer.echo(f"prepared {corpus_count} corpus and {synthetic_count} synthetic embedding requests")
+
+
+@app.command()
+def prepare_synthetic_embedding_batches_only(config_path: Path = Path("configs/default.yaml")) -> None:
+    config = _config(config_path)
+    synthetic_count = prepare_synthetic_embedding_batches(config)
+    typer.echo(f"prepared {synthetic_count} synthetic embedding requests")
+
+
+@app.command()
+def submit_synthetic_embedding_batches_only(config_path: Path = Path("configs/default.yaml")) -> None:
+    config = _config(config_path)
+    submit_embedding_batches_impl(config, batch_dir=config.paths.synthetic_embedding_dir / "batches")
+    typer.echo("submitted synthetic embedding batches")
+
+
+@app.command()
+def watch_corpus_embedding_batches(
+    config_path: Path = Path("configs/default.yaml"),
+    follow_pid: int | None = None,
+    idle_exit_seconds: int = 600,
+    poll_seconds: int = 30,
+    submit: bool = False,
+) -> None:
+    config = _config(config_path)
+    count = watch_corpus_embedding_batches_impl(
+        config,
+        follow_pid=follow_pid,
+        idle_exit_seconds=idle_exit_seconds,
+        poll_seconds=poll_seconds,
+        submit=submit,
+    )
+    typer.echo(f"watched {count} new corpus embedding requests")
 
 
 @app.command()
