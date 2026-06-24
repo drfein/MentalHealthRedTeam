@@ -100,6 +100,15 @@ class DedupeStore:
     def message_count(self) -> int:
         return int(self.conn.execute("SELECT COUNT(*) FROM messages").fetchone()[0])
 
+    def max_row_offset(self, *, source: str, split: str) -> int | None:
+        row = self.conn.execute(
+            "SELECT MAX(row_offset) FROM refs WHERE source = ? AND split = ?",
+            (source, split),
+        ).fetchone()
+        if row is None or row[0] is None:
+            return None
+        return int(row[0])
+
     def iter_messages(
         self,
         *,

@@ -54,14 +54,24 @@ def extract_users(
     config_path: Path = Path("configs/default.yaml"),
     limit_rows_per_dataset: int | None = None,
     flush_every: int = 10_000,
+    resume: bool = True,
 ) -> None:
     config = _config(config_path)
     store = DedupeStore(config.paths.sqlite_path)
     try:
         for spec in config.datasets:
             buffer = []
-            with tqdm(desc=f"extracting {spec.source}") as progress:
-                for conversation in stream_conversations(spec, limit_rows=limit_rows_per_dataset):
+            start_offset = 0
+            if resume:
+                max_offset = store.max_row_offset(source=spec.source, split=spec.split)
+                if max_offset is not None:
+                    start_offset = max_offset + 1
+            with tqdm(desc=f"extracting {spec.source}", initial=start_offset) as progress:
+                for conversation in stream_conversations(
+                    spec,
+                    limit_rows=limit_rows_per_dataset,
+                    start_offset=start_offset,
+                ):
                     buffer.extend(iter_user_messages(conversation))
                     progress.update(1)
                     if len(buffer) >= flush_every:

@@ -176,6 +176,7 @@ def stream_conversations(
     spec: DatasetSpec,
     *,
     limit_rows: int | None = None,
+    start_offset: int = 0,
 ) -> Iterable[ConversationRecord]:
     token = os.environ.get("HF_TOKEN")
     kwargs: dict[str, Any] = {
@@ -189,7 +190,9 @@ def stream_conversations(
         kwargs["token"] = token
 
     dataset = load_dataset(**kwargs)
-    for row_offset, row in enumerate(dataset):
+    if start_offset > 0:
+        dataset = dataset.skip(start_offset)
+    for row_offset, row in enumerate(dataset, start=start_offset):
         if limit_rows is not None and row_offset >= limit_rows:
             break
         if not isinstance(row, Mapping):
