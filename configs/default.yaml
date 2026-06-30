@@ -37,6 +37,7 @@ retrieval:
 embedding:
   provider: openai_batch
   batch_request_size: 50000
+  batch_max_file_bytes: 180000000
   max_enqueued_requests: 950000
   poll_seconds: 120
   shard_size: 100000
@@ -51,7 +52,28 @@ datasets:
     split: train
     gated: true
   - name: anoynsharechat/sharechat
-    source: sharechat
+    config: chatgpt
+    source: sharechat_chatgpt
+    split: train
+    gated: false
+  - name: anoynsharechat/sharechat
+    config: claude
+    source: sharechat_claude
+    split: train
+    gated: false
+  - name: anoynsharechat/sharechat
+    config: gemini
+    source: sharechat_gemini
+    split: train
+    gated: false
+  - name: anoynsharechat/sharechat
+    config: grok
+    source: sharechat_grok
+    split: train
+    gated: false
+  - name: anoynsharechat/sharechat
+    config: perplexity
+    source: sharechat_perplexity
     split: train
     gated: false
   - name: lmsys/lmsys-chat-1m

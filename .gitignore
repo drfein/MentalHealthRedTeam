@@ -7,6 +7,7 @@ __pycache__/
 data/
 artifacts/
 logs/
+results/
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal

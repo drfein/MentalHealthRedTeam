@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import json
 import os
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
 
+import requests
 from datasets import load_dataset
 
 from wild_delusion_miner.config import DatasetSpec
@@ -27,7 +30,7 @@ ROLE_ALIASES = {
 }
 
 ROLE_KEYS = ("role", "from", "speaker", "author", "sender")
-CONTENT_KEYS = ("content", "value", "text", "message", "body", "utterance")
+CONTENT_KEYS = ("content", "value", "text", "message", "body", "utterance", "plain_text")
 CONVERSATION_KEYS = (
     "conversation",
     "conversations",
@@ -143,6 +146,10 @@ def row_to_conversation(
 ) -> ConversationRecord | None:
     messages = _find_message_sequence(row)
     if not messages:
+        direct_message = _message_from_mapping(row)
+        if direct_message:
+            messages = (direct_message,)
+    if not messages:
         return None
     return ConversationRecord(
         source=source,
@@ -205,6 +212,165 @@ def stream_conversations(
         )
         if conversation:
             yield conversation
+
+
+def stream_conversations_at_offsets(
+    spec: DatasetSpec,
+    offsets: Iterable[int],
+) -> Iterable[ConversationRecord]:
+    sorted_offsets = sorted(set(int(offset) for offset in offsets))
+    if not sorted_offsets:
+        return
+    if os.environ.get("WILD_DELUSION_USE_ROWS_API", "1") != "0":
+        try:
+            yield from _fetch_conversations_at_offsets_with_rows_api(spec, sorted_offsets)
+            return
+        except requests.RequestException:
+            pass
+
+    token = os.environ.get("HF_TOKEN")
+    kwargs: dict[str, Any] = {
+        "path": spec.name,
+        "split": spec.split,
+        "streaming": True,
+    }
+    if spec.config:
+        kwargs["name"] = spec.config
+    if token:
+        kwargs["token"] = token
+
+    iterator = iter(load_dataset(**kwargs))
+    cursor = 0
+    for target_offset in sorted_offsets:
+        if target_offset < cursor:
+            continue
+        for _ in range(target_offset - cursor):
+            next(iterator)
+        row = next(iterator)
+        cursor = target_offset + 1
+        if not isinstance(row, Mapping):
+            continue
+        conversation = row_to_conversation(
+            row,
+            source=spec.source,
+            split=spec.split,
+            row_offset=target_offset,
+        )
+        if conversation:
+            yield conversation
+
+
+def _fetch_conversations_at_offsets_with_rows_api(
+    spec: DatasetSpec,
+    offsets: Sequence[int],
+) -> list[ConversationRecord]:
+    token = os.environ.get("HF_TOKEN")
+    headers = {"Authorization": f"Bearer {token}"} if token else None
+    config = spec.config or "default"
+    records: list[ConversationRecord] = []
+    max_workers = int(os.environ.get("WILD_DELUSION_ROWS_API_WORKERS", "4"))
+    worker_count = max(1, min(max_workers, len(offsets)))
+    with ThreadPoolExecutor(max_workers=worker_count) as executor:
+        futures = {
+            executor.submit(
+                _fetch_conversation_at_offset_with_rows_api,
+                spec,
+                config,
+                offset,
+                headers,
+            ): offset
+            for offset in offsets
+        }
+        completed = 0
+        for future in as_completed(futures):
+            offset = futures[future]
+            completed += 1
+            try:
+                conversation = future.result()
+            except requests.RequestException as error:
+                print(
+                    "hf rows api fetch failed "
+                    f"source={spec.source} split={spec.split} offset={offset}: {error}",
+                    flush=True,
+                )
+                continue
+            if conversation:
+                records.append(conversation)
+            if completed % 50 == 0 or completed == len(offsets):
+                print(
+                    "hf rows api fetched "
+                    f"source={spec.source} split={spec.split} completed={completed}/{len(offsets)} "
+                    f"conversations={len(records)}",
+                    flush=True,
+                )
+    return sorted(records, key=lambda record: record.row_offset)
+
+
+def _fetch_conversation_at_offset_with_rows_api(
+    spec: DatasetSpec,
+    config: str,
+    offset: int,
+    headers: dict[str, str] | None,
+) -> ConversationRecord | None:
+    response = _get_hf_rows_api_row(
+        dataset=spec.name,
+        config=config,
+        split=spec.split,
+        offset=offset,
+        headers=headers,
+    )
+    rows = response.json().get("rows") or []
+    if not rows:
+        return None
+    row = rows[0].get("row")
+    if not isinstance(row, Mapping):
+        return None
+    return row_to_conversation(
+        row,
+        source=spec.source,
+        split=spec.split,
+        row_offset=offset,
+    )
+
+
+def _get_hf_rows_api_row(
+    *,
+    dataset: str,
+    config: str,
+    split: str,
+    offset: int,
+    headers: dict[str, str] | None,
+) -> requests.Response:
+    params = {
+        "dataset": dataset,
+        "config": config,
+        "split": split,
+        "offset": offset,
+        "length": 1,
+    }
+    last_error: requests.RequestException | None = None
+    for attempt in range(1, 9):
+        try:
+            response = requests.get(
+                "https://datasets-server.huggingface.co/rows",
+                params=params,
+                headers=headers,
+                timeout=30,
+            )
+            if response.status_code not in {429, 500, 502, 503, 504}:
+                response.raise_for_status()
+                return response
+            retry_after = response.headers.get("retry-after")
+            if retry_after and retry_after.isdigit():
+                time.sleep(min(int(retry_after), 120))
+                continue
+            response.raise_for_status()
+        except requests.RequestException as error:
+            last_error = error
+            time.sleep(min(5 * attempt, 120))
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError("HF rows API failed without an exception.")
 
 
 def conversation_to_json(conversation: ConversationRecord) -> dict[str, Any]:

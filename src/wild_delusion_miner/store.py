@@ -46,6 +46,8 @@ class DedupeStore:
             CREATE INDEX IF NOT EXISTS idx_refs_hash ON refs(message_hash);
             CREATE INDEX IF NOT EXISTS idx_refs_conversation
               ON refs(source, split, conversation_id, row_offset);
+            CREATE INDEX IF NOT EXISTS idx_refs_source_split_offset
+              ON refs(source, split, row_offset);
             """
         )
         self.conn.commit()

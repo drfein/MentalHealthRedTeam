@@ -41,7 +41,8 @@ wild-delusion-miner make-calibration
 wild-delusion-miner annotate-initial-above-threshold
 wild-delusion-miner retrieve-from-true-positives
 wild-delusion-miner annotate-true-positive-pass
-wild-delusion-miner verify-final
+wild-delusion-miner collect-verification-conversations
+wild-delusion-miner verify-conversations
 wild-delusion-miner inspect-samples
 ```
 
@@ -68,6 +69,35 @@ Artifacts are under `data/`:
 - `data/retrieval/*/`: query vectors, scores, and top-k retrieval files
 - `data/annotations/`: calibration samples and upstream annotation outputs
 - `data/verification/`: full-conversation verification outputs
+- `data/generations/`: model snapshots and generated assistant continuations
+
+## Assistant Response Generation
+
+To generate one assistant continuation immediately after each flagged user
+message, first snapshot the currently available OpenAI generation-model
+candidates:
+
+```bash
+wild-delusion-miner snapshot-openai-response-models \
+  --out-path data/generations/openai_response_model_snapshot.json
+```
+
+Then run generation from a verified-positive file:
+
+```bash
+wild-delusion-miner generate-post-delusion-responses \
+  --input-path data/verification/whitened_top3k_verified_positive_contexts.jsonl \
+  --model-snapshot-path data/generations/openai_response_model_snapshot.json \
+  --out-path data/generations/post_delusion_openai_responses.jsonl \
+  --max-workers 8
+```
+
+The model snapshot is the reproducibility boundary: it pins the exact model IDs
+available at capture time, including dated and size-specific variants. The
+generation output is resumable by `(candidate, model, prompt_version)` and
+records unsupported-model or API errors as rows instead of silently dropping
+them. Pass repeated `--model MODEL_ID` options to restrict a run to an explicit
+model subset.
 
 ## Notes
 
@@ -75,9 +105,19 @@ Artifacts are under `data/`:
 - Retrieval query is `normalize(mean_positive_embedding - mean_corpus_embedding)`.
 - Calibration samples 100 messages per score bin and chooses the score bin whose
   annotation hit rate is closest to the configured 10% target.
-- Final verification sends the whole recovered conversation, with the target
-  message marked, to a separate JSON verifier prompt that rejects role-play and
-  explicitly fictional contexts.
+- Reranking annotations use the pinned `llm-delusions-annotations` package
+  prompt/config for `user-endorses-delusion`.
+- Final verification sends a compact conversation window to a JSON judge: the
+  first 2 user and first 2 assistant messages, plus up to 5 user and 5 assistant
+  messages preceding the target message. The judge rejects role-play, fiction,
+  translation/text tasks, jokes, third-party quotes, and ordinary plausible
+  concerns.
+- To compare judge outputs against a review CSV with `conversation_id` and
+  `decision` columns:
+
+```bash
+wild-delusion-miner evaluate-review-agreement /path/to/review_annotations_rows.csv
+```
 
 ## Smoke Test
 

@@ -34,3 +34,21 @@ def test_sharegpt_style_conversation_extracts_roles():
         ("user", "hello"),
         ("assistant", "hi"),
     ]
+
+
+def test_sharechat_message_row_extracts_top_level_user_message():
+    row = {
+        "platform": "chatgpt",
+        "url": "https://sharechat.example/c/1",
+        "turns_count": 4,
+        "message_index": 2,
+        "role": "user",
+        "plain_text": "  The hidden cameras are changing my dreams.  ",
+        "topic": "other",
+    }
+    conversation = row_to_conversation(row, source="sharechat_chatgpt", split="train", row_offset=9)
+    assert conversation is not None
+    assert conversation.conversation_id == "https://sharechat.example/c/1"
+    users = list(iter_user_messages(conversation))
+    assert len(users) == 1
+    assert users[0].text == "The hidden cameras are changing my dreams."

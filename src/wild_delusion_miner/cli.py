@@ -213,6 +213,77 @@ def make_calibration(config_path: Path = Path("configs/default.yaml")) -> None:
 
 
 @app.command()
+def build_rerank_candidates(
+    config_path: Path = Path("configs/default.yaml"),
+    out_path: Path = Path("data/annotations/rerank_candidates.jsonl"),
+    top_per_retrieval: int = 750,
+    bin_samples_per_retrieval: int = 10,
+    max_candidates: int = 2500,
+) -> None:
+    from wild_delusion_miner.rerank import build_rerank_candidates as build_candidates
+
+    config = _config(config_path)
+    count = build_candidates(
+        config,
+        out_path=out_path,
+        top_per_retrieval=top_per_retrieval,
+        bin_samples_per_retrieval=bin_samples_per_retrieval,
+        max_candidates=max_candidates,
+    )
+    typer.echo(f"wrote {count} rerank candidates to {out_path}")
+
+
+@app.command()
+def annotate_rerank_canonical(
+    config_path: Path = Path("configs/default.yaml"),
+    input_path: Path = Path("data/annotations/rerank_candidates.jsonl"),
+    output_path: Path = Path("data/annotations/rerank_canonical_annotations.jsonl"),
+    model: str = "gpt-5.5",
+    max_rows: int = 1000,
+    resume: bool = True,
+) -> None:
+    from wild_delusion_miner.annotate import annotate_jsonl
+
+    config = _config(config_path)
+    count = annotate_jsonl(
+        config,
+        input_path=input_path,
+        output_path=output_path,
+        model=model,
+        max_rows=max_rows,
+        resume=resume,
+    )
+    typer.echo(f"canonical annotations present={count} at {output_path}")
+
+
+@app.command()
+def annotate_rerank_canonical_direct(
+    config_path: Path = Path("configs/default.yaml"),
+    input_path: Path = Path("data/annotations/rerank_candidates.jsonl"),
+    output_path: Path = Path("data/annotations/rerank_canonical_gpt55_direct.jsonl"),
+    model: str = "gpt-5.5",
+    budget_usd: float = 20.0,
+    max_rows: int | None = None,
+    max_workers: int = 8,
+    resume: bool = True,
+) -> None:
+    from wild_delusion_miner.annotate import annotate_jsonl_openai_direct
+
+    config = _config(config_path)
+    summary = annotate_jsonl_openai_direct(
+        config,
+        input_path=input_path,
+        output_path=output_path,
+        model=model,
+        budget_usd=budget_usd,
+        max_rows=max_rows,
+        max_workers=max_workers,
+        resume=resume,
+    )
+    typer.echo(json.dumps(summary, indent=2, sort_keys=True))
+
+
+@app.command()
 def annotate_initial_above_threshold(config_path: Path = Path("configs/default.yaml")) -> None:
     from wild_delusion_miner.annotate import annotate_jsonl
 
@@ -294,22 +365,226 @@ def annotate_true_positive_pass(config_path: Path = Path("configs/default.yaml")
 
 
 @app.command()
-def verify_final(config_path: Path = Path("configs/default.yaml")) -> None:
-    from wild_delusion_miner.verify import collect_candidate_conversations, verify_conversations
+def collect_verification_conversations(
+    config_path: Path = Path("configs/default.yaml"),
+    candidates_path: Path = Path("data/annotations/true_positive_candidates_annotated.jsonl"),
+    out_path: Path = Path("data/verification/candidate_conversations.jsonl"),
+) -> None:
+    from wild_delusion_miner.verify import collect_candidate_conversations
 
     config = _config(config_path)
-    conversations_path = config.paths.verification_dir / "candidate_conversations.jsonl"
     count = collect_candidate_conversations(
         config,
+        candidates_path=candidates_path,
+        out_path=out_path,
+    )
+    typer.echo(f"collected {count} candidate conversations at {out_path}")
+
+
+@app.command()
+def verify_conversations(
+    config_path: Path = Path("configs/default.yaml"),
+    conversations_path: Path = Path("data/verification/candidate_conversations.jsonl"),
+    out_path: Path = Path("data/verification/verified_candidates.jsonl"),
+    model: str | None = None,
+    max_rows: int | None = None,
+    max_workers: int = 8,
+    resume: bool = True,
+) -> None:
+    from wild_delusion_miner.verify import verify_conversations as verify_impl
+
+    config = _config(config_path)
+    count = verify_impl(
+        config,
+        conversations_path=conversations_path,
+        out_path=out_path,
+        model=model,
+        max_rows=max_rows,
+        max_workers=max_workers,
+        resume=resume,
+    )
+    typer.echo(f"verified conversations present={count} at {out_path}")
+
+
+@app.command()
+def evaluate_review_agreement(
+    review_csv_path: Path,
+    judge_output_path: Path = Path("data/verification/verified_candidates.jsonl"),
+    out_path: Path = Path("data/verification/review_agreement.json"),
+) -> None:
+    from wild_delusion_miner.verify import evaluate_review_agreement as evaluate_impl
+
+    summary = evaluate_impl(
+        review_csv_path=review_csv_path,
+        judge_output_path=judge_output_path,
+        out_path=out_path,
+    )
+    typer.echo(json.dumps(summary, indent=2, sort_keys=True))
+
+
+@app.command()
+def import_review_conversations(
+    review_csv_path: Path,
+    out_path: Path = Path("data/verification/review_conversations.jsonl"),
+) -> None:
+    from wild_delusion_miner.verify import import_review_conversations as import_impl
+
+    count = import_impl(review_csv_path=review_csv_path, out_path=out_path)
+    typer.echo(f"imported {count} reviewed conversations at {out_path}")
+
+
+@app.command()
+def verify_review_csv(
+    review_csv_path: Path,
+    conversations_path: Path = Path("data/verification/review_conversations.jsonl"),
+    judge_output_path: Path = Path("data/verification/review_judged.jsonl"),
+    agreement_path: Path = Path("data/verification/review_agreement.json"),
+    config_path: Path = Path("configs/default.yaml"),
+    model: str | None = None,
+    max_rows: int | None = None,
+    max_workers: int = 8,
+    resume: bool = True,
+) -> None:
+    from wild_delusion_miner.verify import (
+        evaluate_review_agreement as evaluate_impl,
+        import_review_conversations as import_impl,
+        verify_conversations as verify_impl,
+    )
+
+    config = _config(config_path)
+    import_impl(review_csv_path=review_csv_path, out_path=conversations_path)
+    verify_impl(
+        config,
+        conversations_path=conversations_path,
+        out_path=judge_output_path,
+        model=model,
+        max_rows=max_rows,
+        max_workers=max_workers,
+        resume=resume,
+    )
+    summary = evaluate_impl(
+        review_csv_path=review_csv_path,
+        judge_output_path=judge_output_path,
+        out_path=agreement_path,
+    )
+    typer.echo(json.dumps(summary, indent=2, sort_keys=True))
+
+
+@app.command()
+def verify_final(config_path: Path = Path("configs/default.yaml")) -> None:
+    config = _config(config_path)
+    conversations_path = config.paths.verification_dir / "candidate_conversations.jsonl"
+    collect_verification_conversations(
+        config_path=config_path,
         candidates_path=config.paths.annotation_dir / "true_positive_candidates_annotated.jsonl",
         out_path=conversations_path,
     )
     verify_conversations(
-        config,
+        config_path=config_path,
         conversations_path=conversations_path,
         out_path=config.paths.verification_dir / "verified_candidates.jsonl",
     )
-    typer.echo(f"verified {count} candidate conversations")
+
+
+@app.command()
+def snapshot_openai_response_models(
+    out_path: Path = Path("data/generations/openai_response_model_snapshot.json"),
+    include_pattern: list[str] | None = typer.Option(None, "--include-pattern"),
+    exclude_pattern: list[str] | None = typer.Option(None, "--exclude-pattern"),
+) -> None:
+    from wild_delusion_miner.assistant_responses import snapshot_openai_generation_models
+
+    snapshot = snapshot_openai_generation_models(
+        out_path=out_path,
+        include_patterns=include_pattern,
+        exclude_patterns=exclude_pattern,
+    )
+    typer.echo(f"wrote {len(snapshot['models'])} OpenAI generation-model candidates to {out_path}")
+
+
+@app.command()
+def generate_post_delusion_responses(
+    config_path: Path = Path("configs/default.yaml"),
+    input_path: Path = Path("data/verification/whitened_top3k_verified_positive_contexts.jsonl"),
+    out_path: Path = Path("data/generations/post_delusion_openai_responses.jsonl"),
+    manifest_path: Path | None = None,
+    model_snapshot_path: Path | None = Path("data/generations/openai_response_model_snapshot.json"),
+    model: list[str] | None = typer.Option(None, "--model"),
+    max_rows: int | None = None,
+    max_models: int | None = None,
+    max_workers: int = 8,
+    max_output_tokens: int = 800,
+    temperature: float | None = None,
+    reasoning_effort: str | None = None,
+    system_prompt: str | None = None,
+    resume: bool = True,
+    retry_errors: bool = False,
+) -> None:
+    from wild_delusion_miner.assistant_responses import (
+        DEFAULT_ASSISTANT_RESPONSE_SYSTEM_PROMPT,
+        generate_post_delusion_responses as generate_impl,
+    )
+
+    config = _config(config_path)
+    summary = generate_impl(
+        config,
+        input_path=input_path,
+        out_path=out_path,
+        manifest_path=manifest_path,
+        models=model,
+        model_snapshot_path=model_snapshot_path if not model else None,
+        max_rows=max_rows,
+        max_models=max_models,
+        max_workers=max_workers,
+        max_output_tokens=max_output_tokens,
+        temperature=temperature,
+        reasoning_effort=reasoning_effort,
+        system_prompt=system_prompt or DEFAULT_ASSISTANT_RESPONSE_SYSTEM_PROMPT,
+        resume=resume,
+        retry_errors=retry_errors,
+    )
+    typer.echo(json.dumps(summary, indent=2, sort_keys=True))
+
+
+@app.command()
+def analyze_generated_responses(
+    input_path: Path = Path("data/generations/post_delusion_openai_responses_10model_low_reasoning.jsonl"),
+    out_dir: Path = Path("results/response_analysis/10model_low_reasoning"),
+    embedding_model: str = "text-embedding-3-small",
+    label_model: str = "gpt-5.4-mini",
+    label_reasoning_effort: str | None = "low",
+    embedding_batch_size: int = 128,
+    cluster_count: int = 16,
+    topic_count: int = 16,
+    random_state: int = 13,
+    min_df: int = 3,
+    max_df: float = 0.85,
+    max_features: int = 6000,
+    representative_count: int = 8,
+) -> None:
+    from wild_delusion_miner.response_analysis import (
+        ResponseAnalysisParams,
+        analyze_generated_responses as analyze_impl,
+    )
+
+    summary = analyze_impl(
+        input_path=input_path,
+        out_dir=out_dir,
+        params=ResponseAnalysisParams(
+            embedding_model=embedding_model,
+            label_model=label_model,
+            label_reasoning_effort=label_reasoning_effort,
+            embedding_batch_size=embedding_batch_size,
+            cluster_count=cluster_count,
+            topic_count=topic_count,
+            random_state=random_state,
+            min_df=min_df,
+            max_df=max_df,
+            max_features=max_features,
+            representative_count=representative_count,
+        ),
+    )
+    typer.echo(json.dumps(summary, indent=2, sort_keys=True))
 
 
 @app.command()

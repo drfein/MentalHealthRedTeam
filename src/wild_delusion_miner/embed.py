@@ -10,7 +10,7 @@ from typing import Any
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
-from openai import OpenAI
+from openai import APIConnectionError, APITimeoutError, OpenAI, RateLimitError
 from tqdm import tqdm
 
 from wild_delusion_miner.config import PipelineConfig
@@ -22,6 +22,7 @@ from wild_delusion_miner.text import dedupe_key, normalize_text
 BatchSourceRow = tuple[str, str, int | None]
 ENQUEUED_BATCH_STATUSES = {"validating", "in_progress", "finalizing"}
 REMOTE_ENQUEUED_BATCH_STATUSES = ENQUEUED_BATCH_STATUSES | {"cancelling"}
+RETRYABLE_OPENAI_ERRORS = (APIConnectionError, APITimeoutError, RateLimitError)
 
 
 def _embedding_body(config: PipelineConfig, text: str) -> dict[str, Any]:
@@ -68,7 +69,10 @@ def _load_batch_manifest(out_dir: Path) -> dict[str, Any]:
 
 def _save_batch_manifest(out_dir: Path, manifest: dict[str, Any]) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
-    _manifest_path(out_dir).write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    path = _manifest_path(out_dir)
+    tmp_path = path.with_suffix(f"{path.suffix}.tmp.{os.getpid()}")
+    tmp_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    tmp_path.replace(path)
 
 
 def _new_embedding_manifest(config: PipelineConfig, *, kind: str) -> dict[str, Any]:
@@ -129,6 +133,8 @@ def _write_corpus_batch(
             "input_path": str(path),
             "max_rowid": max_rowid,
             "request_count": count,
+            "file_bytes": path.stat().st_size,
+            "status": "prepared",
         }
     )
     manifest["last_rowid"] = max_rowid
@@ -152,6 +158,21 @@ def _corpus_request_json(config: PipelineConfig, rowid: int, message_hash: str, 
     )
 
 
+def _request_line_size(request_json: str) -> int:
+    return len(request_json.encode("utf-8")) + 1
+
+
+def _would_exceed_batch_file_limit(
+    config: PipelineConfig,
+    *,
+    current_count: int,
+    current_bytes: int,
+    next_line_bytes: int,
+) -> bool:
+    max_bytes = int(config.embedding.batch_max_file_bytes or 0)
+    return bool(current_count and max_bytes and current_bytes + next_line_bytes > max_bytes)
+
+
 def _pid_alive(pid: int) -> bool:
     try:
         os.kill(pid, 0)
@@ -160,6 +181,22 @@ def _pid_alive(pid: int) -> bool:
     except PermissionError:
         return True
     return True
+
+
+def _submit_embedding_batches_with_retries(
+    config: PipelineConfig,
+    *,
+    batch_dir: Path,
+    max_attempts: int = 6,
+) -> dict[str, Any]:
+    for attempt in range(max_attempts):
+        try:
+            return submit_embedding_batches(config, batch_dir=batch_dir)
+        except RETRYABLE_OPENAI_ERRORS:
+            if attempt == max_attempts - 1:
+                raise
+            time.sleep(min(60.0, 2.0**attempt))
+    raise RuntimeError("unreachable retry loop exit")
 
 
 def _dump_openai_object(value: Any) -> dict[str, Any] | None:
@@ -187,6 +224,133 @@ def _clear_retryable_batch_failure(item: dict[str, Any]) -> None:
         return
     for key in ("batch_id", "input_file_id", "status", "output_file_id", "error_file_id", "errors"):
         item.pop(key, None)
+
+
+def _previous_corpus_batch_max_rowid(manifest: dict[str, Any], item: dict[str, Any]) -> int:
+    previous_max = 0
+    for other in manifest.get("batches", []):
+        if other is item:
+            break
+        previous_max = max(previous_max, int(other.get("max_rowid") or 0))
+    return previous_max
+
+
+def _next_available_batch_index(manifest: dict[str, Any]) -> int:
+    used = {int(item["index"]) for item in manifest.get("batches", [])}
+    candidate = _next_batch_index(manifest)
+    while candidate in used:
+        candidate += 1
+    return candidate
+
+
+def _rowid_from_batch_line(line: bytes) -> int:
+    payload = json.loads(line)
+    custom_id = str(payload["custom_id"])
+    return int(custom_id.split(":", 2)[1])
+
+
+def _split_oversized_corpus_batch_inputs(config: PipelineConfig, manifest: dict[str, Any], batch_dir: Path) -> None:
+    if manifest.get("kind") != "corpus":
+        return
+    max_bytes = int(config.embedding.batch_max_file_bytes or 0)
+    if max_bytes <= 0:
+        return
+
+    changed = False
+    batches = list(manifest.get("batches", []))
+    next_index = _next_available_batch_index(manifest)
+    for item in batches:
+        if item.get("batch_id"):
+            continue
+        path = Path(item["input_path"])
+        if not path.exists() or path.stat().st_size <= max_bytes:
+            continue
+
+        new_items: list[dict[str, Any]] = []
+        current_handle = None
+        current_path: Path | None = None
+        current_count = 0
+        current_bytes = 0
+        current_max_rowid = 0
+
+        def close_current() -> None:
+            nonlocal current_handle, current_path, current_count, current_bytes, current_max_rowid
+            if current_handle is None or current_path is None:
+                return
+            current_handle.close()
+            new_items.append(
+                {
+                    "index": next_index + len(new_items),
+                    "input_path": str(current_path),
+                    "max_rowid": current_max_rowid,
+                    "request_count": current_count,
+                    "file_bytes": current_bytes,
+                }
+            )
+            current_handle = None
+            current_path = None
+            current_count = 0
+            current_bytes = 0
+            current_max_rowid = 0
+
+        with path.open("rb") as source:
+            for line in source:
+                line_bytes = len(line)
+                if current_count and current_bytes + line_bytes > max_bytes:
+                    close_current()
+                if current_handle is None:
+                    current_path = batch_dir / f"input-{next_index + len(new_items):06d}.jsonl"
+                    current_handle = current_path.open("wb")
+                current_handle.write(line)
+                current_count += 1
+                current_bytes += line_bytes
+                current_max_rowid = _rowid_from_batch_line(line)
+        close_current()
+
+        if not new_items:
+            continue
+        position = manifest["batches"].index(item)
+        manifest["batches"][position : position + 1] = new_items
+        next_index += len(new_items)
+        path.unlink(missing_ok=True)
+        changed = True
+
+    if changed:
+        _save_batch_manifest(batch_dir, manifest)
+
+
+def _ensure_corpus_batch_input(config: PipelineConfig, manifest: dict[str, Any], item: dict[str, Any]) -> None:
+    path = Path(item["input_path"])
+    if path.exists():
+        return
+    if manifest.get("kind") != "corpus":
+        raise FileNotFoundError(path)
+    if item.get("max_rowid") is None or item.get("request_count") is None:
+        raise FileNotFoundError(path)
+
+    max_rowid = int(item["max_rowid"])
+    expected_count = int(item["request_count"])
+    start_after_rowid = _previous_corpus_batch_max_rowid(manifest, item)
+    rows: list[tuple[str, str]] = []
+    store = DedupeStore(config.paths.sqlite_path)
+    try:
+        for db_batch in store.iter_messages(batch_size=10_000, start_after_rowid=start_after_rowid):
+            for rowid, message_hash, text in db_batch:
+                if rowid > max_rowid:
+                    break
+                rows.append(_corpus_request_json(config, rowid, message_hash, text))
+            if db_batch and db_batch[-1][0] >= max_rowid:
+                break
+    finally:
+        store.close()
+
+    if len(rows) != expected_count:
+        raise RuntimeError(
+            f"Could not regenerate {path}: expected {expected_count} rows, got {len(rows)}"
+        )
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    _write_batch_file(tmp_path, rows)
+    tmp_path.replace(path)
 
 
 def _remote_enqueued_request_count(
@@ -220,6 +384,7 @@ def prepare_corpus_embedding_batches(config: PipelineConfig, *, limit_messages: 
     request_limit = config.embedding.batch_request_size
     batch_index = _next_batch_index(manifest)
     request_rows: list[tuple[str, str]] = []
+    request_bytes = 0
     batch_max_rowid = last_rowid
     added = 0
     try:
@@ -227,7 +392,26 @@ def prepare_corpus_embedding_batches(config: PipelineConfig, *, limit_messages: 
             for rowid, message_hash, text in db_batch:
                 if limit_messages is not None and added >= limit_messages:
                     break
-                request_rows.append(_corpus_request_json(config, rowid, message_hash, text))
+                request = _corpus_request_json(config, rowid, message_hash, text)
+                line_bytes = _request_line_size(request[1])
+                if _would_exceed_batch_file_limit(
+                    config,
+                    current_count=len(request_rows),
+                    current_bytes=request_bytes,
+                    next_line_bytes=line_bytes,
+                ):
+                    _write_corpus_batch(
+                        out_dir=out_dir,
+                        manifest=manifest,
+                        batch_index=batch_index,
+                        request_rows=request_rows,
+                        max_rowid=batch_max_rowid,
+                    )
+                    batch_index += 1
+                    request_rows = []
+                    request_bytes = 0
+                request_rows.append(request)
+                request_bytes += line_bytes
                 batch_max_rowid = rowid
                 added += 1
                 if len(request_rows) >= request_limit:
@@ -240,6 +424,7 @@ def prepare_corpus_embedding_batches(config: PipelineConfig, *, limit_messages: 
                     )
                     batch_index += 1
                     request_rows = []
+                    request_bytes = 0
             if limit_messages is not None and added >= limit_messages:
                 break
         if request_rows:
@@ -274,6 +459,7 @@ def watch_corpus_embedding_batches(
     request_limit = config.embedding.batch_request_size
     batch_index = _next_batch_index(manifest)
     request_rows: list[tuple[str, str]] = []
+    request_bytes = 0
     batch_max_rowid = last_rowid
     idle_started_at: float | None = None
     added = 0
@@ -282,7 +468,31 @@ def watch_corpus_embedding_batches(
             made_progress = False
             for db_batch in store.iter_messages(batch_size=10_000, start_after_rowid=last_rowid):
                 for rowid, message_hash, text in db_batch:
-                    request_rows.append(_corpus_request_json(config, rowid, message_hash, text))
+                    request = _corpus_request_json(config, rowid, message_hash, text)
+                    line_bytes = _request_line_size(request[1])
+                    if _would_exceed_batch_file_limit(
+                        config,
+                        current_count=len(request_rows),
+                        current_bytes=request_bytes,
+                        next_line_bytes=line_bytes,
+                    ):
+                        _write_corpus_batch(
+                            out_dir=out_dir,
+                            manifest=manifest,
+                            batch_index=batch_index,
+                            request_rows=request_rows,
+                            max_rowid=batch_max_rowid,
+                        )
+                        if submit:
+                            manifest = _submit_embedding_batches_with_retries(
+                                config,
+                                batch_dir=out_dir,
+                            )
+                        batch_index += 1
+                        request_rows = []
+                        request_bytes = 0
+                    request_rows.append(request)
+                    request_bytes += line_bytes
                     last_rowid = rowid
                     batch_max_rowid = rowid
                     made_progress = True
@@ -296,9 +506,13 @@ def watch_corpus_embedding_batches(
                             max_rowid=batch_max_rowid,
                         )
                         if submit:
-                            manifest = submit_embedding_batches(config, batch_dir=out_dir)
+                            manifest = _submit_embedding_batches_with_retries(
+                                config,
+                                batch_dir=out_dir,
+                        )
                         batch_index += 1
                         request_rows = []
+                        request_bytes = 0
 
             if made_progress:
                 idle_started_at = None
@@ -315,11 +529,15 @@ def watch_corpus_embedding_batches(
                         max_rowid=batch_max_rowid,
                     )
                     request_rows = []
+                    request_bytes = 0
                 manifest["complete"] = True
                 _save_batch_manifest(out_dir, manifest)
                 if submit:
                     while True:
-                        manifest = submit_embedding_batches(config, batch_dir=out_dir)
+                        manifest = _submit_embedding_batches_with_retries(
+                            config,
+                            batch_dir=out_dir,
+                        )
                         if _all_batch_inputs_submitted(manifest):
                             break
                         time.sleep(poll_seconds)
@@ -336,11 +554,15 @@ def watch_corpus_embedding_batches(
                         request_rows=request_rows,
                         max_rowid=batch_max_rowid,
                     )
+                    request_bytes = 0
                     if submit:
-                        manifest = submit_embedding_batches(config, batch_dir=out_dir)
+                        manifest = _submit_embedding_batches_with_retries(
+                            config,
+                            batch_dir=out_dir,
+                        )
                 break
             if submit and not _all_batch_inputs_submitted(manifest):
-                manifest = submit_embedding_batches(config, batch_dir=out_dir)
+                manifest = _submit_embedding_batches_with_retries(config, batch_dir=out_dir)
             time.sleep(poll_seconds)
     finally:
         store.close()
@@ -417,6 +639,8 @@ def _prepare_small_embedding_batches(
 def submit_embedding_batches(config: PipelineConfig, *, batch_dir: Path) -> dict[str, Any]:
     client = OpenAI()
     manifest = _load_batch_manifest(batch_dir)
+    _split_oversized_corpus_batch_inputs(config, manifest, batch_dir)
+    manifest = _load_batch_manifest(batch_dir)
     if any(item.get("batch_id") for item in manifest["batches"]):
         manifest = refresh_embedding_batches(config, batch_dir=batch_dir)
     for item in manifest["batches"]:
@@ -441,6 +665,7 @@ def submit_embedding_batches(config: PipelineConfig, *, batch_dir: Path) -> dict
             enqueued_requests + request_count > config.embedding.max_enqueued_requests
         ):
             break
+        _ensure_corpus_batch_input(config, manifest, item)
         with Path(item["input_path"]).open("rb") as handle:
             upload = client.files.create(file=handle, purpose="batch")
         batch = client.batches.create(
