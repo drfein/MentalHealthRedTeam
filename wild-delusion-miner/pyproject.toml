@@ -1,0 +1,40 @@
+[project]
+name = "wild-delusion-miner"
+version = "0.1.0"
+description = "Mine user-endorses-delusion candidates from large open chat datasets."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "datasets>=2.21.0",
+  "duckdb>=1.0.0",
+  "json-repair>=0.30.0",
+  "llm-delusions-annotations @ git+https://github.com/jlcmoore/llm-delusions-annotations.git@3ea8d2117e55099a61feee1c762c6ee0c32a162b",
+  "litellm>=1.60.0",
+  "numpy>=1.26.0",
+  "openai>=1.60.0",
+  "pandas>=2.2.0",
+  "pyarrow>=16.0.0",
+  "pydantic>=2.8.0",
+  "pyyaml>=6.0.0",
+  "scikit-learn>=1.5.0",
+  "tenacity>=8.0.0",
+  "tqdm>=4.66.0",
+  "typer>=0.12.0",
+  "zstandard>=0.23.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2.0",
+  "ruff>=0.5.0",
+]
+
+[project.scripts]
+wild-delusion-miner = "wild_delusion_miner.cli:app"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
