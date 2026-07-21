@@ -78,6 +78,7 @@ SCRIPT_FILES = (
     "scripts/run_hypothetical_bucket_calibration.py",
     "scripts/run_jspace_semantic_counterfactuals.py",
     "scripts/verify_wilddelusion_release.py",
+    "scripts/verify_paper_claims.py",
 )
 BEHAVIOR_ROOT = Path(
     "results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals"
@@ -267,7 +268,9 @@ def write_deterministic_zip(stage: Path, archive: Path) -> None:
                 continue
             info = zipfile.ZipInfo(path.relative_to(stage).as_posix(), FIXED_ZIP_TIME)
             info.compress_type = zipfile.ZIP_DEFLATED
-            info.external_attr = 0o100644 << 16
+            mode = 0o100755 if path.relative_to(stage).parts[0] == "scripts" else 0o100644
+            info.external_attr = mode << 16
+            info.create_system = 3
             output.writestr(info, path.read_bytes(), compresslevel=9)
 
 

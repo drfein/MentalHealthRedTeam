@@ -89,6 +89,7 @@ def main() -> None:
         "release_rule": "judge_label == positive",
         "rows": len(frame),
         "distinct_source_conversations": int(frame["conversation_key"].nunique()),
+        "multi_target_source_conversations": int((turns_per_conversation > 1).sum()),
         "source_counts": dict(sorted(source_counts.items())),
         "source_conversation_counts": {
             str(key): int(value) for key, value in sorted(conversation_counts.items())

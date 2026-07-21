@@ -94,12 +94,17 @@ and report null or reversed results.
 ## Final preflight
 
 - [ ] Replace pending audit language using locked human-analysis outputs.
-- [ ] Re-run `CLAIM_AUDIT.md` against every number in the final manuscript.
+- [x] Re-run the executable claim audit against committed artifacts and current
+  manuscript strings; ten quantitative claim groups pass.
 - [x] Confirm the anonymous repository/release policy for the target venue and
   remove the identifying dataset URL from the manuscript.
 - [x] Check the ICLR 2026 submission-page, ethics, and LLM-disclosure policies;
   main text ends on page 7 and the appendix now includes an LLM-use disclosure.
-- [ ] Compile from a clean environment and visually inspect every page.
+- [x] Extract the anonymous ZIP into a fresh directory, install from the locked
+  dependency file, run all tests and the claim verifier, and rebuild the PDF;
+  the clean-room PDF is byte-identical to the development build.
+- [x] Visually inspect every page of the rebuilt PDF; no clipping, overlap,
+  link-border artifacts, or malformed figures remain.
 
 Current status: technically reproducible with a complete full-benchmark
 behavioral analysis, but not empirically submission-ready until Gate A and Gate

@@ -1,5 +1,6 @@
 {
   "input_context_rows": 715,
+  "distinct_source_conversations": 418,
   "verified_positive_rows": 436,
   "label_counts": {
     "positive": 436,

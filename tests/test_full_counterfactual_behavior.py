@@ -4,6 +4,7 @@ import importlib.util
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/analyze_full_counterfactual_behavior.py"
@@ -25,3 +26,11 @@ def test_exact_cluster_sign_flip_handles_zero_observed_sum() -> None:
         {"conversation_key": ["a", "b"], "difference": [1, -1]}
     )
     assert MODULE.exact_cluster_sign_flip_p(frame) == 1.0
+
+
+def test_unique_string_requires_one_run_setting() -> None:
+    frame = pd.DataFrame({"model_id": ["model-a", "model-a"]})
+    assert MODULE.unique_string(frame, "model_id") == "model-a"
+
+    with pytest.raises(ValueError, match="Expected one model_id"):
+        MODULE.unique_string(pd.DataFrame({"model_id": ["model-a", "model-b"]}), "model_id")

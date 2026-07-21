@@ -3,6 +3,7 @@
   "release_rule": "judge_label == positive",
   "rows": 433,
   "distinct_source_conversations": 232,
+  "multi_target_source_conversations": 62,
   "source_counts": {
     "sharechat_chatgpt": 356,
     "sharechat_grok": 33,

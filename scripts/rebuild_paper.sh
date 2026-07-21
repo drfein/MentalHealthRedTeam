@@ -4,6 +4,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+# Keep the PDF and anonymous supplement byte-reproducible across rebuilds.
+export SOURCE_DATE_EPOCH=1784592000
+export FORCE_SOURCE_DATE=1
+
 required_files=(
   paper/iclr2026/artifacts/mining_settings.json
   paper/iclr2026/artifacts/verification_summary.json
@@ -21,6 +25,8 @@ for path in "${required_files[@]}"; do
     exit 1
   fi
 done
+
+uv run python scripts/verify_paper_claims.py
 
 uv run --extra paper python scripts/plot_wilddelusion_dataset_overview.py \
   --settings paper/iclr2026/artifacts/mining_settings.json \

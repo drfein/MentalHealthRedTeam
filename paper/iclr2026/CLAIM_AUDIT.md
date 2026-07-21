@@ -2,7 +2,11 @@
 
 This file maps the paper's quantitative claims to authoritative saved artifacts.
 It is intended to prevent prose revisions from drifting away from the analyzed
-data.
+data. `scripts/verify_paper_claims.py` checks the listed aggregate inputs,
+cross-artifact invariants, generation and judge settings, confidence intervals,
+paired-test outputs, and corresponding manuscript strings during every full
+paper rebuild. Its latest machine-readable result is
+`artifacts/claim_verification.json`.
 
 | Claim | Value in manuscript | Authoritative artifact |
 |---|---:|---|

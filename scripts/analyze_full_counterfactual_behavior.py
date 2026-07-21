@@ -38,12 +38,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--exclude-source", action="append", default=["lmsys_chat_1m"])
     parser.add_argument("--bootstrap-draws", type=int, default=10_000)
     parser.add_argument("--seed", type=int, default=20260721)
+    parser.add_argument("--max-new-tokens", type=int, default=192)
     return parser.parse_args()
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
     with path.open(encoding="utf-8") as handle:
         return [json.loads(line) for line in handle if line.strip()]
+
+
+def unique_string(frame: pd.DataFrame, column: str) -> str:
+    values = sorted(str(value) for value in frame[column].dropna().unique())
+    if len(values) != 1:
+        raise ValueError(f"Expected one {column}, found {values}")
+    return values[0]
 
 
 def cluster_bootstrap(
@@ -439,6 +447,13 @@ def main() -> None:
         ),
         "positive_threshold": args.positive_threshold,
         "package_positive_threshold": args.package_positive_threshold,
+        "generation_model": unique_string(frame, "model_id"),
+        "decoding": unique_string(frame, "decoding"),
+        "max_new_tokens": args.max_new_tokens,
+        "framing_judge_model": unique_string(frame, "judge_model"),
+        "framing_judge_reasoning_effort": unique_string(
+            frame, "judge_reasoning_effort"
+        ),
         "excluded_sources": sorted(excluded_sources),
         "bootstrap_draws": args.bootstrap_draws,
         "seed": args.seed,

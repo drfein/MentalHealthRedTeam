@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "check_groups": [
+    "mining",
+    "conversation verification",
+    "release characterization and integrity",
+    "transfer audit",
+    "retrieval ablation",
+    "generation and judge settings",
+    "full framing-aware behavior",
+    "exact-package behavior",
+    "appendix J-space sensitivity",
+    "manuscript rendering strings"
+  ],
+  "artifact_root": "paper/iclr2026/artifacts",
+  "manuscript": "paper/iclr2026/main.tex",
+  "human_audit_scope": "non-random 108-case transfer audit only",
+  "pending_human_gates": [
+    "final-release precision audit",
+    "assistant-response endpoint audit"
+  ]
+}

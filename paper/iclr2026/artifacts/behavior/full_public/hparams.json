@@ -3,6 +3,11 @@
   "package_judgments": "results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/all_openai_package_judgments.jsonl",
   "positive_threshold": 4,
   "package_positive_threshold": 7,
+  "generation_model": "Qwen/Qwen2.5-7B-Instruct",
+  "decoding": "greedy",
+  "max_new_tokens": 192,
+  "framing_judge_model": "gpt-5.4-mini",
+  "framing_judge_reasoning_effort": "low",
   "excluded_sources": [
     "lmsys_chat_1m"
   ],
