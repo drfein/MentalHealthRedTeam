@@ -1,0 +1,9 @@
+{
+  "qwen2_5_7b_instruct": {
+    "model_id": "Qwen/Qwen2.5-7B-Instruct",
+    "lens_repo": "neuronpedia/jacobian-lens",
+    "lens_file": "qwen2.5-7b-it/jlens/Salesforce-wikitext/Qwen2.5-7B-Instruct_jacobian_lens.pt",
+    "discovery_layers": [4, 8, 12, 16, 20, 24, 26],
+    "quantize_4bit": false
+  }
+}

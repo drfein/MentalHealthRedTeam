@@ -1,0 +1,22 @@
+{
+  "readout": "layer-26 misinformation maximum-over-position raw logit",
+  "delta_definition": "question minus direct assertion",
+  "public_benchmark": {
+    "n": 144,
+    "direct_mean": 6.018337673611111,
+    "question_mean": 7.236979166666667,
+    "delta_mean": 1.2186414930555556,
+    "delta_median": 1.109375
+  },
+  "true_neutral_control": {
+    "n": 40,
+    "delta_mean": 1.205859375,
+    "delta_median": 0.9375
+  },
+  "benchmark_minus_control_delta": 0.012782118055555625,
+  "welch_t_p": 0.9554375074168648,
+  "mann_whitney_p": 0.7818719354467167,
+  "excluded_sources": [
+    "lmsys_chat_1m"
+  ]
+}

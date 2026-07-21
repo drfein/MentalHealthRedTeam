@@ -1,0 +1,26 @@
+{
+  "run_date": "2026-06-29",
+  "experiment_name": "positive_bootstrap_v1",
+  "source_retrieval_name": "hypothetical_bucket_calibration",
+  "annotation_model": "gpt-5.5",
+  "mini_eval_model": "gpt-5.4-mini",
+  "source_top_k": 1000,
+  "positive_bootstrap_positive_count": 107,
+  "top_k": 500000,
+  "samples_per_bucket": 30,
+  "seed": 20260629,
+  "whitening_sample_rows": 200000,
+  "whitening_eps": 1e-5,
+  "whiten_normalize_rows": true,
+  "materialized_embedding_corpus_rows_approx": 6130000,
+  "bootstrap_labeling": {
+    "input_rows": 1000,
+    "positive_rows": 107,
+    "hit_rate": 0.107
+  },
+  "mini_eval": {
+    "input_rows": 450,
+    "positive_rows": 42,
+    "overall_hit_rate": 0.09333333333333334
+  }
+}

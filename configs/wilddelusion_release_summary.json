@@ -1,0 +1,61 @@
+{
+  "dataset": "danielfein/WildDelusionVerified",
+  "unit": "contextualized_target_turn",
+  "rows": 433,
+  "distinct_source_conversations": 232,
+  "multi_target_source_conversations": 62,
+  "maximum_target_turns_per_source_conversation": 39,
+  "created_from": "whitened_top3k_verified_gpt54mini.jsonl after public-release source filtering",
+  "retrieval": {
+    "source_retrieval": "positive_bootstrap_v1_positive_whitened",
+    "top_k": 3000
+  },
+  "models": {
+    "canonical_judge": "gpt-5.5",
+    "conversation_verifier": "gpt-5.4-mini"
+  },
+  "filters": {
+    "judge_label": "positive",
+    "judge_potential_user_endorses_delusion": true,
+    "excluded_sources": [
+      "lmsys_chat_1m"
+    ]
+  },
+  "source_target_turn_counts": {
+    "sharechat_chatgpt": 356,
+    "wildchat_full": 44,
+    "sharechat_grok": 33
+  },
+  "source_conversation_counts": {
+    "sharechat_chatgpt": 167,
+    "wildchat_full": 44,
+    "sharechat_grok": 21
+  },
+  "license_exclusions": {
+    "lmsys_chat_1m": {
+      "excluded_positive_rows": 3,
+      "policy": "Conversation text is retained only in private pipeline artifacts and is not redistributed."
+    }
+  },
+  "columns": [
+    "source",
+    "split",
+    "row_offset",
+    "conversation_id",
+    "message_hash",
+    "target_message_index",
+    "target_text",
+    "messages",
+    "retrieval_score",
+    "annotation_score",
+    "annotation_rationale",
+    "judge_model",
+    "judge_prompt",
+    "judge_label",
+    "judge_potential_user_endorses_delusion",
+    "judge_exclusion",
+    "judge_confidence",
+    "judge_rationale",
+    "judge_supporting_quotes"
+  ]
+}

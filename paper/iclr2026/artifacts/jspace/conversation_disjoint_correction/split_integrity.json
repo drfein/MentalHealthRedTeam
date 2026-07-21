@@ -1,0 +1,17 @@
+{
+  "analysis_status": "post hoc metadata-only correction after detecting source-conversation overlap",
+  "excluded_sources": [
+    "lmsys_chat_1m"
+  ],
+  "original_discovery_target_turns": 289,
+  "original_holdout_target_turns": 144,
+  "discovery_source_conversations": 170,
+  "holdout_source_conversations": 98,
+  "overlapping_source_conversations": 36,
+  "discovery_target_turns_in_overlapping_conversations": 124,
+  "holdout_target_turns_in_overlapping_conversations": 77,
+  "conversation_disjoint_holdout_target_turns": 67,
+  "conversation_disjoint_holdout_source_conversations": 62,
+  "selection_uses_behavior_labels": false,
+  "selection_rule": "retain original holdout turns whose source conversation is absent from discovery"
+}

@@ -23,6 +23,12 @@ export OPENAI_API_KEY=...
 export HF_TOKEN=...
 ```
 
+Install the pinned Jacobian-lens environment only on a CUDA-capable machine:
+
+```bash
+uv pip install -e ".[jspace]"
+```
+
 Do not put real keys in git. `.env` is ignored if you prefer to source secrets
 locally.
 
@@ -70,6 +76,28 @@ Artifacts are under `data/`:
 - `data/annotations/`: calibration samples and upstream annotation outputs
 - `data/verification/`: full-conversation verification outputs
 - `data/generations/`: model snapshots and generated assistant continuations
+
+The public benchmark card is mirrored in
+`docs/WILDDELUSION_DATASET_CARD.md`. The machine-readable evaluation contract is
+`configs/wilddelusion_benchmark_protocol.json`. It evaluates all 433 publicly
+redistributable target turns from 232 source conversations and cluster-bootstraps
+source conversations. Three verified LMSYS-Chat-1M targets remain in private
+pipeline artifacts but are excluded from the public release under the source
+dataset terms. The paper's public 289/144 split permits source-conversation overlap and
+must not be used as a general or confirmatory model-comparison split.
+
+The two locked simple-random final-release audit interfaces are under
+`results/wilddelusion_release_human_audit/blinded_review_rater_*.html`. Their
+protocol is `paper/iclr2026/DATASET_HUMAN_AUDIT_PROTOCOL.md`; labels are
+intentionally blank.
+
+Verify any downloaded release export against the authoritative local rows with:
+
+```bash
+uv run python scripts/verify_wilddelusion_release.py \
+  --release /path/to/downloaded/train.jsonl \
+  --exclude-source lmsys_chat_1m
+```
 
 ## Assistant Response Generation
 
@@ -128,3 +156,11 @@ pytest
 
 The smoke command only touches tiny dataset slices and is intended to validate
 plumbing, not produce research candidates.
+
+## Paper Draft
+
+The complete anonymous ICLR-format study write-up is in
+`paper/iclr2026/main.tex`. A compiled, visually verified PDF is at
+`output/pdf/wild_delusion_jspace_iclr2026.pdf`. The manuscript's quantitative
+claims are mapped back to saved result artifacts in
+`paper/iclr2026/CLAIM_AUDIT.md`.

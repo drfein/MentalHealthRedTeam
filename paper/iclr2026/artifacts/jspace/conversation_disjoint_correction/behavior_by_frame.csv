@@ -1,0 +1,17 @@
+population,arm,n_target_turns,n_source_conversations,positive_n,positive_rate,ci_low,ci_high,conversation_macro_positive_rate,conversation_macro_ci_low,conversation_macro_ci_high,interval,bootstrap_draws_valid,conversation_macro_bootstrap_draws_valid
+original_holdout,direct_assertion,144,98,23,0.1597222222222222,0.08403200975046508,0.24647887323943662,0.13702623906705538,0.07821914480077745,0.20408163265306123,95% source-conversation cluster bootstrap,10000,10000
+original_holdout,explicit_fiction,144,98,0,0.0,0.0,0.0,0.0,0.0,0.0,95% source-conversation cluster bootstrap,10000,10000
+original_holdout,question,144,98,0,0.0,0.0,0.0,0.0,0.0,0.0,95% source-conversation cluster bootstrap,10000,10000
+original_holdout,quotation_analysis,144,98,1,0.006944444444444444,0.0,0.023809523809523808,0.01020408163265306,0.0,0.030612244897959183,95% source-conversation cluster bootstrap,10000,10000
+original_holdout,reconsideration,144,98,2,0.013888888888888888,0.0,0.033783783783783786,0.004859086491739553,0.0,0.013119533527696792,95% source-conversation cluster bootstrap,10000,10000
+original_holdout,reported_belief,144,98,3,0.020833333333333332,0.0,0.045454545454545456,0.01020408163265306,0.0,0.02380952380952381,95% source-conversation cluster bootstrap,10000,10000
+original_holdout,skeptical_roleplay,144,98,0,0.0,0.0,0.0,0.0,0.0,0.0,95% source-conversation cluster bootstrap,10000,10000
+original_holdout,translation,144,98,0,0.0,0.0,0.0,0.0,0.0,0.0,95% source-conversation cluster bootstrap,10000,10000
+conversation_disjoint_holdout,direct_assertion,67,62,10,0.14925373134328357,0.07246376811594203,0.23880597014925373,0.15053763440860213,0.06989247311827956,0.24193548387096775,95% source-conversation cluster bootstrap,10000,10000
+conversation_disjoint_holdout,explicit_fiction,67,62,0,0.0,0.0,0.0,0.0,0.0,0.0,95% source-conversation cluster bootstrap,10000,10000
+conversation_disjoint_holdout,question,67,62,0,0.0,0.0,0.0,0.0,0.0,0.0,95% source-conversation cluster bootstrap,10000,10000
+conversation_disjoint_holdout,quotation_analysis,67,62,0,0.0,0.0,0.0,0.0,0.0,0.0,95% source-conversation cluster bootstrap,10000,10000
+conversation_disjoint_holdout,reconsideration,67,62,0,0.0,0.0,0.0,0.0,0.0,0.0,95% source-conversation cluster bootstrap,10000,10000
+conversation_disjoint_holdout,reported_belief,67,62,0,0.0,0.0,0.0,0.0,0.0,0.0,95% source-conversation cluster bootstrap,10000,10000
+conversation_disjoint_holdout,skeptical_roleplay,67,62,0,0.0,0.0,0.0,0.0,0.0,0.0,95% source-conversation cluster bootstrap,10000,10000
+conversation_disjoint_holdout,translation,67,62,0,0.0,0.0,0.0,0.0,0.0,0.0,95% source-conversation cluster bootstrap,10000,10000

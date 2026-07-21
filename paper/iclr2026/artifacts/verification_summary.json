@@ -1,0 +1,58 @@
+{
+  "input_context_rows": 715,
+  "verified_positive_rows": 436,
+  "label_counts": {
+    "positive": 436,
+    "negative": 271,
+    "uncertain": 8
+  },
+  "exclusion_counts": {
+    "none": 436,
+    "roleplay": 95,
+    "ordinary_plausible": 75,
+    "fiction_or_story": 47,
+    "joke_or_absurd": 22,
+    "translation_or_text_task": 20,
+    "insufficient_context": 12,
+    "third_party_or_quoted": 7,
+    "dreams": 1
+  },
+  "source_counts": {
+    "sharechat_chatgpt": 516,
+    "wildchat_full": 136,
+    "sharechat_grok": 57,
+    "lmsys_chat_1m": 5,
+    "sharechat_perplexity": 1
+  },
+  "positive_source_counts": {
+    "sharechat_chatgpt": 356,
+    "wildchat_full": 44,
+    "sharechat_grok": 33,
+    "lmsys_chat_1m": 3
+  },
+  "message_count_stats": {
+    "count": 715.0,
+    "mean": 31.12167832167832,
+    "std": 34.884852884378425,
+    "min": 1.0,
+    "25%": 7.0,
+    "50%": 19.0,
+    "75%": 39.0,
+    "max": 264.0
+  },
+  "paths": {
+    "top_candidates": "data/annotations/experiments/whitened_top3k_verification/top_candidates.jsonl",
+    "canonical_annotations_clean": "data/annotations/experiments/whitened_top3k_verification/top3k_canonical_annotations_clean.jsonl",
+    "candidate_contexts": "data/verification/whitened_top3k_candidate_contexts.jsonl",
+    "verified_all": "data/verification/whitened_top3k_verified_gpt54mini.jsonl",
+    "verified_positive": "data/verification/whitened_top3k_verified_positive_contexts.jsonl"
+  },
+  "models": {
+    "canonical_judge": "gpt-5.5",
+    "conversation_verifier": "gpt-5.4-mini"
+  },
+  "retrieval": {
+    "source_retrieval": "positive_bootstrap_v1_positive_whitened",
+    "top_k": 3000
+  }
+}

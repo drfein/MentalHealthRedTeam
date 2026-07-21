@@ -1,0 +1,5 @@
+population,endpoint,n_target_turns,n_source_conversations,positive_n,auc,ci_low,ci_high,interval,bootstrap_draws_requested,bootstrap_draws_valid,predictor
+original_holdout,framing_rubric,144,98,23,0.7001437297879985,0.5358533249158248,0.8306034266848816,95% source-conversation cluster bootstrap,10000,10000,frozen inverse layer-26 misinformation max-over-position
+original_holdout,exact_package_rubric,144,98,9,0.797119341563786,0.6673364730507588,0.9285714285714286,95% source-conversation cluster bootstrap,10000,9995,frozen inverse layer-26 misinformation max-over-position
+conversation_disjoint_holdout,framing_rubric,67,62,10,0.6868421052631579,0.4747339466089466,0.8720538720538721,95% source-conversation cluster bootstrap,10000,10000,frozen inverse layer-26 misinformation max-over-position
+conversation_disjoint_holdout,exact_package_rubric,67,62,4,0.8333333333333334,0.6861870026525199,0.9670247709739634,95% source-conversation cluster bootstrap,10000,9826,frozen inverse layer-26 misinformation max-over-position

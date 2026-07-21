@@ -28,9 +28,27 @@ dev = [
   "pytest>=8.2.0",
   "ruff>=0.5.0",
 ]
+paper = [
+  "matplotlib>=3.9.0",
+]
+jspace = [
+  "accelerate>=1.12.0",
+  "jlens @ git+https://github.com/anthropics/jacobian-lens.git@581d398613e5602a5af361e1c34d3a92ea82ba8e",
+  "torch>=2.7.0",
+]
 
 [project.scripts]
 wild-delusion-miner = "wild_delusion_miner.cli:app"
+
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/wild_delusion_miner"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.ruff]
 line-length = 100
