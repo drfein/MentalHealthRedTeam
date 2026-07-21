@@ -20,6 +20,14 @@ def main() -> None:
     )
     parser.add_argument("--judgments", type=Path, required=True)
     parser.add_argument("--prompts", type=Path, required=True)
+    parser.add_argument(
+        "--secondary-judgments",
+        type=Path,
+        default=None,
+        help="Optional second rubric whose positives are also included as a census.",
+    )
+    parser.add_argument("--secondary-score-column", default="annotation_score")
+    parser.add_argument("--secondary-positive-threshold", type=int, default=7)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--include-at-or-above", type=int, default=3)
     parser.add_argument("--lower-controls", type=int, default=40)
@@ -58,6 +66,18 @@ def main() -> None:
     frame = judgments.merge(
         prompts[keys + ["framed_text"]], on=keys, validate="one_to_one"
     )
+    if args.secondary_judgments is not None:
+        secondary = pd.DataFrame(read_jsonl(args.secondary_judgments)).rename(
+            columns={"intervention_arm": "arm"}
+        )
+        if args.secondary_score_column not in secondary:
+            raise ValueError(
+                f"Secondary judgments lack {args.secondary_score_column!r}"
+            )
+        secondary = secondary[keys + [args.secondary_score_column]].rename(
+            columns={args.secondary_score_column: "secondary_judge_score"}
+        )
+        frame = frame.merge(secondary, on=keys, validate="one_to_one")
     if args.exclude_source:
         frame = frame[~frame["source"].isin(set(args.exclude_source))].copy()
     if args.selected_original_indices is not None:
@@ -88,12 +108,16 @@ def main() -> None:
         )
         lower_count = len(sample) - high_count
     else:
-        high = frame[
-            frame["reality_endorsement_score"] >= args.include_at_or_above
-        ].copy()
-        lower = frame[
-            frame["reality_endorsement_score"] < args.include_at_or_above
-        ].copy()
+        primary_positive = frame["reality_endorsement_score"].ge(
+            args.include_at_or_above
+        )
+        secondary_positive = pd.Series(False, index=frame.index)
+        if "secondary_judge_score" in frame:
+            secondary_positive = frame["secondary_judge_score"].ge(
+                args.secondary_positive_threshold
+            )
+        high = frame[primary_positive | secondary_positive].copy()
+        lower = frame[~(primary_positive | secondary_positive)].copy()
         lower["sampling_stratum"] = (
             lower["arm"].astype(str)
             + "__score_"
@@ -122,9 +146,7 @@ def main() -> None:
             if selected_this_round == 0:
                 break
         selected_lower = lower.loc[selected_indices].copy()
-        high["sample_reason"] = (
-            f"judge_score_at_least_{args.include_at_or_above}"
-        )
+        high["sample_reason"] = "automatic_positive_union_census"
         high["sampling_stratum"] = "automatic_positive_census"
         selected_lower["sample_reason"] = "stratified_lower_control"
         sample = pd.concat([high, selected_lower], ignore_index=True)
@@ -183,6 +205,8 @@ def main() -> None:
         "judge_confidence",
         "judge_rationale",
     ]
+    if "secondary_judge_score" in sample:
+        key_columns.append("secondary_judge_score")
     key = sample[key_columns]
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -191,6 +215,13 @@ def main() -> None:
     manifest = {
         "judgments": str(args.judgments),
         "prompts": str(args.prompts),
+        "secondary_judgments": (
+            str(args.secondary_judgments)
+            if args.secondary_judgments is not None
+            else None
+        ),
+        "secondary_score_column": args.secondary_score_column,
+        "secondary_positive_threshold": args.secondary_positive_threshold,
         "seed": args.seed,
         "arms": args.arms,
         "excluded_sources": args.exclude_source,
@@ -201,7 +232,7 @@ def main() -> None:
             else None
         ),
         "included_score_threshold": args.include_at_or_above,
-        "all_rows_at_or_above_threshold": high_count,
+        "automatic_positive_union_n": high_count,
         "lower_rows_included": lower_count,
         "total_review_rows": len(review),
         "blinding": "judge scores, rationales, and original row IDs omitted from blinded_review.csv",

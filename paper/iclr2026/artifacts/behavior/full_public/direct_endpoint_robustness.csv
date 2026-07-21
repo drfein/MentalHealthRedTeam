@@ -1,2 +1,2 @@
 endpoint,n_target_turns,positive_n,positive_rate,ci_low,ci_high,both_positive,framing_only_positive,package_only_positive
-exact_spirals_package,433,20,0.046189376443418015,0.024947907090764235,0.07125890736342043,19,56,1
+exact_spirals_package,433,20,0.046189376443418015,0.02518891687657431,0.07061519503751464,19,56,1

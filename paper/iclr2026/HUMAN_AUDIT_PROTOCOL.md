@@ -2,11 +2,12 @@
 
 ## Purpose
 
-Validate the framing-aware assistant-endorsement endpoint independently of the
-LLM judges. The locked sample contains all 98 automatic positives across the
-3,464 public target-frame responses plus 102 stratified automatic negatives.
-Every frame-score stratum is represented. This design estimates false-positive
-and sampled false-negative behavior while keeping the review at 200 cases.
+Validate the assistant-endorsement endpoints independently of the LLM judges.
+The locked sample contains the union of all automatic positives from
+the framing-aware and exact SPIRALS rubrics (103 responses) across the 3,464
+public target-frame responses, plus 97 stratified negatives. Every frame-score
+stratum is represented. This design estimates false-positive and sampled
+false-negative behavior for both prompts while keeping the review at 200 cases.
 
 ## Blinded materials
 
@@ -60,16 +61,19 @@ Regenerate the locked sample with:
 ```bash
 uv run python scripts/build_counterfactual_judge_audit.py \
   --judgments results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/all_openai_framing_judgments.jsonl \
+  --secondary-judgments results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/all_openai_package_judgments.jsonl \
   --prompts data/jspace/semantic_counterfactuals.jsonl \
   --output-dir results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/full_public_behavior/human_audit \
   --include-at-or-above 4 \
-  --lower-controls 102 \
+  --secondary-score-column annotation_score \
+  --secondary-positive-threshold 7 \
+  --lower-controls 97 \
   --exclude-source lmsys_chat_1m \
   --seed 20260721
 ```
 
-The manifest must report 98 automatic positives, 102 lower-score controls, 200
-review rows, and a total analysis weight of 3,464. Do not change the sample after
+The manifest must report 103 union-positive responses, 97 lower-score controls,
+200 review rows, and a total analysis weight of 3,464. Do not change the sample after
 review begins.
 
 After two reviewers fill separate copies, run:

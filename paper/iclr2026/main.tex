@@ -26,7 +26,7 @@
 \maketitle
 
 \begin{abstract}
-Evaluating whether assistants reinforce highly implausible user beliefs requires natural conversations, but uniform sampling yields few positives and context-free classifiers conflate endorsement with role-play, fiction, translation, and quotation. We introduce \dataset{}, a precision-oriented benchmark of 433 LLM-context-verified target turns from 232 source conversations, mined from 6.13M embedded user messages across WildChat, ShareChat, and LMSYS-Chat-1M. A reproducible rare-event pipeline bootstraps an embedding query from 107 judged positives, retrieves 3,000 candidates, reconstructs context for 715 candidate turns, verifies 436, and releases the 433 whose source terms permit redistribution. On a separate, non-random transfer audit, 35 of 38 strict verifier positives are human-retained (92.1\% precision, 95\% Wilson CI [79.2, 97.3]). We then generate \model{} responses to eight matched framings of every released target. A framing-aware judge marks 75/433 direct-assertion responses as endorsements (17.3\%, 95\% source-conversation cluster-bootstrap CI [13.1, 22.4]), versus at most 13/433 (3.0\%) in every alternative frame. The smallest paired risk difference is 14.3 percentage points [10.5, 18.8]. The exact SPIRALS package rubric is more conservative, marking 20/433 direct responses (4.6\%), which makes endpoint sensitivity explicit. \dataset{} provides a reproducible, context-preserving test bed for behavioral audits on naturally occurring claims.
+Evaluating whether assistants reinforce highly implausible user beliefs requires natural conversations, but uniform sampling yields few positives and context-free classifiers conflate endorsement with role-play, fiction, translation, and quotation. We introduce \dataset{}, a precision-oriented benchmark of 433 LLM-context-verified target turns from 232 source conversations, mined from 6.13M embedded user messages across WildChat, ShareChat, and LMSYS-Chat-1M. A reproducible rare-event pipeline bootstraps an embedding query from 107 judged positives, retrieves 3,000 candidates, reconstructs context for 715 candidate turns, verifies 436, and releases the 433 whose source terms permit redistribution. On a separate, non-random transfer audit, 35 of 38 strict verifier positives are human-retained (92.1\% precision, 95\% Wilson CI [79.2, 97.3]). We then generate \model{} responses to eight matched framings of every released target. A framing-aware judge marks 75/433 direct-assertion responses as endorsements (17.3\%, 95\% source-conversation cluster-bootstrap CI [13.1, 22.4]), versus at most 13/433 (3.0\%) in every alternative frame. The smallest paired risk difference is 14.3 percentage points [10.5, 18.8]. The exact SPIRALS package rubric is more conservative (20/433 direct responses, 4.6\%) but preserves the ordering: direct assertion exceeds every alternative by at least 3.7 points [1.5, 6.2]. \dataset{} provides a reproducible, context-preserving test bed for behavioral audits on naturally occurring claims.
 \end{abstract}
 
 \section{Introduction}
@@ -41,7 +41,7 @@ Our contributions are:
 \begin{enumerate}
     \item \textbf{A context-verified wild benchmark.} \dataset{} contains 433 LLM-filtered target turns from 232 source conversations in two redistributable open corpora, produced by a reproducible rare-event retrieval and conversation-verification pipeline with explicit exclusion reasons and an earlier 108-case human transfer audit.
     \item \textbf{A full-benchmark paired evaluation.} Eight matched speech acts separate exposure to implausible content from user commitment across all 433 released targets; direct assertion increases judged endorsement by at least 14.3 percentage points relative to every alternative frame.
-    \item \textbf{An explicit endpoint-sensitivity analysis.} A framing-aware rubric and the exact SPIRALS assistant-endorsement rubric agree on 19 direct-response positives but differ substantially in absolute rate, documenting what each operationalization supports.
+    \item \textbf{A cross-rubric robustness analysis.} A framing-aware rubric and the exact SPIRALS assistant-endorsement rubric produce different absolute rates but the same ordering across all eight frames, documenting both the robust comparison and its operationalization dependence.
 \end{enumerate}
 
 Together, the dataset and evaluation separate two questions that are often collapsed: where risky interactions can be found in wild data, and when matched conversational framing changes model behavior.
@@ -123,9 +123,9 @@ The counterfactual changes more than syntax: it changes the conversational task 
 
 \subsection{Behavioral measurement}
 
-The primary judge is GPT-5.4-mini with low reasoning effort and a framing-aware 0--5 rubric. Scores 4--5 require accepting or elaborating the claim as real; emotional validation without factual endorsement is negative. The threshold was frozen during judge calibration because score 3 often captured ambiguous language. We retain the graded score and a threshold-3 sensitivity analysis.
+The primary judge is GPT-5.4-mini with low reasoning effort and a framing-aware 0--5 rubric. Scores 4--5 require accepting or elaborating the claim as real; emotional validation without factual endorsement is negative. The threshold was frozen during judge calibration because score 3 often captured ambiguous language.
 
-We test outcome robustness rather than relying on one prompt \citep{zheng2023judge}. The exact \texttt{bot-endorses-delusion} SPIRALS package rubric, positive at its published threshold of 7, is well matched to the direct-assertion arm but can mistake compliant translations for real-world endorsement in other frames. We therefore use it only as a direct-assertion robustness endpoint. The framing-aware and package rubrics identify 75 and 20 direct-assertion positives; 19 are shared. Both use GPT-5.4-mini and are alternative rubric formulations, not independent human ground truth.
+We test outcome robustness rather than relying on one prompt \citep{zheng2023judge}. The exact \texttt{bot-endorses-delusion} SPIRALS package rubric, positive at its published threshold of 7, is well matched to direct assertion but can mistake compliant translations for real-world endorsement. We nevertheless apply it unchanged to all frames as a secondary strict-rubric comparison and interpret its non-direct labels cautiously. The framing-aware and package rubrics identify 75 and 20 direct-assertion positives; 19 are shared. Both use GPT-5.4-mini and are alternative rubric formulations, not independent human ground truth.
 
 \subsection{Statistical analysis}
 
@@ -143,13 +143,13 @@ All seven paired direct-versus-alternative cluster intervals exclude zero (Figur
 \begin{figure*}[t]
     \centering
     \includegraphics[width=.94\textwidth]{figures/full_behavior_main.png}
-    \caption{Full-benchmark controlled evaluation of \model{}. \textbf{A:} Assistant endorsement rates for all 433 target turns under each frame. \textbf{B:} Paired target-level risk differences between direct assertion and each alternative frame. Intervals are 95\% source-conversation cluster-bootstrap intervals over 232 source conversations.}
+    \caption{Full-benchmark controlled evaluation of \model{} under two rubric formulations. \textbf{A:} Assistant endorsement rates for all 433 target turns under each frame. \textbf{B:} Paired target-level risk differences between direct assertion and each alternative frame. Intervals are 95\% source-conversation cluster-bootstrap intervals over 232 source conversations.}
     \label{fig:main}
 \end{figure*}
 
-\subsection{Absolute endorsement depends on the rubric}
+\subsection{The framing ordering replicates under a stricter rubric}
 
-The exact SPIRALS package rubric marks 20/433 direct responses positive (4.6\%, 95\% source-conversation cluster-bootstrap CI [2.5, 7.1]). Nineteen are also positive under the framing-aware rubric; one is package-only, while 56 are framing-only. The package rubric demands stronger, more explicit assistant endorsement and was not designed to compare translation or fiction frames. The paired framing result is therefore the primary analysis, while the package count shows that the absolute direct-assertion rate is operationalization-dependent.
+The exact SPIRALS package rubric marks 20/433 direct responses positive (4.6\%, 95\% source-conversation cluster-bootstrap CI [2.5, 7.1]), versus four translations, one each for reported belief, reconsideration, and question, and none in the remaining frames. All seven direct-versus-alternative cluster intervals again exclude zero. The smallest effect is direct assertion versus translation: 3.7 points [1.5, 6.2] (Holm-adjusted exact source-conversation sign-flip $p=.0022$). Nineteen direct responses are positive under both rubrics; one is package-only and 56 are framing-only. Thus the direct-assertion ordering is cross-rubric robust, while its absolute rate is strongly operationalization-dependent. Because the package rubric is not framing-aware, its four translation positives are not interpreted as real-world endorsement.
 
 \section{Discussion}
 
@@ -157,7 +157,7 @@ The primary resource contribution is a benchmark of naturally occurring, LLM-con
 
 The framing result is narrower but clear within this experiment. Direct user assertion produces the highest endorsement rate among our eight deterministic templates; questioning, quoting, reconsidering, or explicitly fictionalizing the same claim sharply reduces endorsement. The wrappers also change conversational purpose, so this result does not identify a universal real-world speech-act hierarchy.
 
-The framing-aware endpoint is intentionally sensitive to accepting or elaborating a claim as real, whereas the package endpoint is stricter. Their discrepancy rules out presenting 17.3\% as an endpoint-free failure rate. The robust automatic conclusion is comparative: under the framing-aware rubric, direct assertion is the condition most likely to elicit agreement. Human adjudication and replication across model families remain necessary before treating either automatic rate as a model-level safety score.
+The framing-aware endpoint is intentionally sensitive to accepting or elaborating a claim as real, whereas the package endpoint is stricter. Their discrepancy rules out presenting 17.3\% as an endpoint-free failure rate. The robust automatic conclusion is comparative: under both rubric formulations, direct assertion is the condition most likely to elicit agreement. Human adjudication and replication across model families remain necessary before treating either automatic rate as a model-level safety score.
 
 \section{Limitations}
 

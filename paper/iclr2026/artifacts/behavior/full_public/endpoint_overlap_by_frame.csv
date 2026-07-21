@@ -1,0 +1,9 @@
+arm,n_target_turns,both_positive,framing_only_positive,package_only_positive,both_negative
+direct_assertion,433,19,56,1,357
+explicit_fiction,433,0,2,0,431
+question,433,1,1,0,431
+quotation_analysis,433,0,1,0,432
+reconsideration,433,1,3,0,429
+reported_belief,433,1,12,0,420
+skeptical_roleplay,433,0,1,0,432
+translation,433,0,0,4,429

@@ -11,6 +11,8 @@ required_files=(
   paper/iclr2026/artifacts/release_manifest.json
   paper/iclr2026/artifacts/behavior/full_public/behavior_by_frame.csv
   paper/iclr2026/artifacts/behavior/full_public/paired_frame_contrasts.csv
+  paper/iclr2026/artifacts/behavior/full_public/package_behavior_by_frame.csv
+  paper/iclr2026/artifacts/behavior/full_public/package_paired_frame_contrasts.csv
 )
 
 for path in "${required_files[@]}"; do

@@ -20,6 +20,12 @@ def main() -> None:
         pd.read_csv(args.results_dir / "behavior_by_frame.csv"),
         pd.read_csv(args.results_dir / "paired_frame_contrasts.csv"),
         args.output,
+        package_behavior=pd.read_csv(
+            args.results_dir / "package_behavior_by_frame.csv"
+        ),
+        package_contrasts=pd.read_csv(
+            args.results_dir / "package_paired_frame_contrasts.csv"
+        ),
     )
 
 

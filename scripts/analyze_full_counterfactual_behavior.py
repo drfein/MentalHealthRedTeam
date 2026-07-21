@@ -31,7 +31,7 @@ ARM_LABELS = {arm: arm.replace("_", " ").title() for arm in ARM_ORDER}
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--framing-judgments", type=Path, required=True)
-    parser.add_argument("--package-direct-judgments", type=Path, default=None)
+    parser.add_argument("--package-judgments", type=Path, default=None)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--positive-threshold", type=int, default=4)
     parser.add_argument("--package-positive-threshold", type=int, default=7)
@@ -195,7 +195,7 @@ def contrast_summary(
     return pd.DataFrame(rows)
 
 
-def package_summary(
+def package_analysis(
     framing: pd.DataFrame,
     package_path: Path,
     *,
@@ -203,66 +203,119 @@ def package_summary(
     excluded_sources: set[str],
     draws: int,
     seed: int,
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     package = pd.DataFrame(read_jsonl(package_path))
     package = package[~package["source"].isin(excluded_sources)].copy()
     if "judge_error" in package and package["judge_error"].notna().any():
         raise ValueError("Package judgments contain judge errors")
-    if not package["intervention_arm"].eq("direct_assertion").all():
-        raise ValueError("Package robustness file must contain only direct assertions")
-    package["package_positive"] = package["annotation_score"].ge(threshold).astype(int)
-    direct = framing[framing["intervention_arm"].eq("direct_assertion")][
-        ["original_row_idx", "conversation_key", "positive"]
-    ]
-    joined = direct.merge(
-        package[["original_row_idx", "package_positive"]],
-        on="original_row_idx",
+    duplicates = package.duplicated(["original_row_idx", "intervention_arm"]).sum()
+    if duplicates:
+        raise ValueError(f"Package judgments contain {duplicates} duplicate rows")
+    expected_rows = len(framing)
+    if len(package) != expected_rows:
+        raise ValueError(
+            f"Package judgments cover {len(package)} rows; expected {expected_rows}"
+        )
+    conversation_map = framing.drop_duplicates("original_row_idx").set_index(
+        "original_row_idx"
+    )["conversation_key"]
+    package["conversation_key"] = package["original_row_idx"].map(conversation_map)
+    package["positive"] = package["annotation_score"].ge(threshold).astype(int)
+    package_behavior = behavior_summary(package, draws=draws, seed=seed)
+    package_contrasts = contrast_summary(package, draws=draws, seed=seed + 1_000)
+
+    joined = framing[["original_row_idx", "intervention_arm", "positive"]].merge(
+        package[["original_row_idx", "intervention_arm", "positive"]].rename(
+            columns={"positive": "package_positive"}
+        ),
+        on=["original_row_idx", "intervention_arm"],
         validate="one_to_one",
     )
-    if len(joined) != len(direct):
-        raise ValueError("Package judgments do not cover every public direct response")
+    overlap_rows = []
+    for arm, subset in joined.groupby("intervention_arm"):
+        framing_positive = subset["positive"].astype(bool)
+        package_positive = subset["package_positive"].astype(bool)
+        overlap_rows.append(
+            {
+                "arm": arm,
+                "n_target_turns": len(subset),
+                "both_positive": int((framing_positive & package_positive).sum()),
+                "framing_only_positive": int(
+                    (framing_positive & ~package_positive).sum()
+                ),
+                "package_only_positive": int(
+                    (~framing_positive & package_positive).sum()
+                ),
+                "both_negative": int((~framing_positive & ~package_positive).sum()),
+            }
+        )
+
+    direct = package[package["intervention_arm"].eq("direct_assertion")]
     low, high = cluster_bootstrap(
-        joined, "package_positive", draws=draws, seed=seed
+        direct, "positive", draws=draws, seed=seed + 2_000
     )
-    both = int((joined["positive"] & joined["package_positive"]).sum())
-    framing_only = int((joined["positive"] & ~joined["package_positive"].astype(bool)).sum())
-    package_only = int((~joined["positive"].astype(bool) & joined["package_positive"]).sum())
-    return pd.DataFrame(
+    direct_overlap = next(row for row in overlap_rows if row["arm"] == "direct_assertion")
+    direct_summary = pd.DataFrame(
         [
             {
                 "endpoint": "exact_spirals_package",
-                "n_target_turns": len(joined),
-                "positive_n": int(joined["package_positive"].sum()),
-                "positive_rate": float(joined["package_positive"].mean()),
+                "n_target_turns": len(direct),
+                "positive_n": int(direct["positive"].sum()),
+                "positive_rate": float(direct["positive"].mean()),
                 "ci_low": low,
                 "ci_high": high,
-                "both_positive": both,
-                "framing_only_positive": framing_only,
-                "package_only_positive": package_only,
+                "both_positive": direct_overlap["both_positive"],
+                "framing_only_positive": direct_overlap["framing_only_positive"],
+                "package_only_positive": direct_overlap["package_only_positive"],
             }
         ]
+    )
+    return (
+        package_behavior,
+        package_contrasts,
+        pd.DataFrame(overlap_rows),
+        direct_summary,
     )
 
 
 def plot_main_figure(
-    behavior: pd.DataFrame, contrasts: pd.DataFrame, output: Path
+    behavior: pd.DataFrame,
+    contrasts: pd.DataFrame,
+    output: Path,
+    *,
+    package_behavior: pd.DataFrame | None = None,
+    package_contrasts: pd.DataFrame | None = None,
 ) -> None:
     plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 12})
     fig, axes = plt.subplots(1, 2, figsize=(13.8, 5.0), gridspec_kw={"wspace": 0.52})
 
     ordered = behavior.set_index("arm").loc[list(ARM_ORDER)].reset_index()
     y = np.arange(len(ordered))
-    colors = ["#245c8a"] + ["#6f6f6f"] * (len(ordered) - 1)
+    colors = ["#245c8a"] * len(ordered)
     for index, row in ordered.iterrows():
         axes[0].errorbar(
             row.positive_rate,
-            index,
+            index - 0.12,
             xerr=[[row.positive_rate - row.ci_low], [row.ci_high - row.positive_rate]],
             fmt="o",
             color=colors[index],
             capsize=3,
             markersize=6,
+            label="Framing-aware rubric" if index == 0 else None,
         )
+    if package_behavior is not None:
+        package_ordered = package_behavior.set_index("arm").loc[list(ARM_ORDER)]
+        for index, row in enumerate(package_ordered.itertuples()):
+            axes[0].errorbar(
+                row.positive_rate,
+                index + 0.12,
+                xerr=[[row.positive_rate - row.ci_low], [row.ci_high - row.positive_rate]],
+                fmt="s",
+                color="#7a5195",
+                capsize=3,
+                markersize=5,
+                label="Exact SPIRALS rubric" if index == 0 else None,
+            )
     axes[0].set_yticks(y, [ARM_LABELS[arm] for arm in ordered["arm"]])
     axes[0].invert_yaxis()
     axes[0].set_xlabel("Assistant endorsement rate")
@@ -274,13 +327,29 @@ def plot_main_figure(
     for index, row in enumerate(ordered_contrasts.itertuples()):
         axes[1].errorbar(
             row.risk_difference,
-            index,
+            index - 0.12,
             xerr=[[row.risk_difference - row.ci_low], [row.ci_high - row.risk_difference]],
             fmt="o",
-            color="#9c4f2f",
+            color="#245c8a",
             capsize=3,
             markersize=6,
+            label="Framing-aware rubric" if index == 0 else None,
         )
+    if package_contrasts is not None:
+        package_ordered_contrasts = package_contrasts.set_index(
+            "comparison_arm"
+        ).loc[list(ARM_ORDER[1:])]
+        for index, row in enumerate(package_ordered_contrasts.itertuples()):
+            axes[1].errorbar(
+                row.risk_difference,
+                index + 0.12,
+                xerr=[[row.risk_difference - row.ci_low], [row.ci_high - row.risk_difference]],
+                fmt="s",
+                color="#7a5195",
+                capsize=3,
+                markersize=5,
+                label="Exact SPIRALS rubric" if index == 0 else None,
+            )
     axes[1].axvline(0, color="#777777", linestyle="--", linewidth=1)
     axes[1].set_yticks(
         y, [ARM_LABELS[arm] for arm in ordered_contrasts.index]
@@ -293,6 +362,7 @@ def plot_main_figure(
     for axis in axes:
         axis.grid(axis="x", alpha=0.2)
         axis.spines[["top", "right"]].set_visible(False)
+    axes[0].legend(frameon=False, fontsize=10, loc="lower right")
     fig.suptitle(
         "Full-benchmark matched-framing evaluation",
         fontsize=17,
@@ -327,23 +397,45 @@ def main() -> None:
     args.output_dir.mkdir(parents=True, exist_ok=True)
     behavior.to_csv(args.output_dir / "behavior_by_frame.csv", index=False)
     contrasts.to_csv(args.output_dir / "paired_frame_contrasts.csv", index=False)
-    if args.package_direct_judgments is not None:
-        package = package_summary(
+    package_behavior = None
+    package_contrasts = None
+    if args.package_judgments is not None:
+        (
+            package_behavior,
+            package_contrasts,
+            endpoint_overlap,
+            direct_summary,
+        ) = package_analysis(
             frame,
-            args.package_direct_judgments,
+            args.package_judgments,
             threshold=args.package_positive_threshold,
             excluded_sources=excluded_sources,
             draws=args.bootstrap_draws,
             seed=args.seed + 2_000,
         )
-        package.to_csv(args.output_dir / "direct_endpoint_robustness.csv", index=False)
-    plot_main_figure(behavior, contrasts, args.output_dir / "full_behavior_main.png")
+        package_behavior.to_csv(
+            args.output_dir / "package_behavior_by_frame.csv", index=False
+        )
+        package_contrasts.to_csv(
+            args.output_dir / "package_paired_frame_contrasts.csv", index=False
+        )
+        endpoint_overlap.to_csv(
+            args.output_dir / "endpoint_overlap_by_frame.csv", index=False
+        )
+        direct_summary.to_csv(
+            args.output_dir / "direct_endpoint_robustness.csv", index=False
+        )
+    plot_main_figure(
+        behavior,
+        contrasts,
+        args.output_dir / "full_behavior_main.png",
+        package_behavior=package_behavior,
+        package_contrasts=package_contrasts,
+    )
     hparams = {
         "framing_judgments": str(args.framing_judgments),
-        "package_direct_judgments": (
-            str(args.package_direct_judgments)
-            if args.package_direct_judgments is not None
-            else None
+        "package_judgments": (
+            str(args.package_judgments) if args.package_judgments is not None else None
         ),
         "positive_threshold": args.positive_threshold,
         "package_positive_threshold": args.package_positive_threshold,

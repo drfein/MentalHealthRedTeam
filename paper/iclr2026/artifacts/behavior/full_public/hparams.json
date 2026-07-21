@@ -1,6 +1,6 @@
 {
   "framing_judgments": "results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/all_openai_framing_judgments.jsonl",
-  "package_direct_judgments": "results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/all_direct_openai_package_judgments.jsonl",
+  "package_judgments": "results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/all_openai_package_judgments.jsonl",
   "positive_threshold": 4,
   "package_positive_threshold": 7,
   "excluded_sources": [

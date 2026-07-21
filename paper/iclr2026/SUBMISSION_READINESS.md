@@ -20,8 +20,8 @@ does not satisfy the empirical gates.
   and non-prevalence limitations stated explicitly.
 - [x] Full 433-target, eight-frame behavioral experiment completed; uncertainty
   clusters all 232 source conversations and every paired contrast is saved.
-- [x] Exact SPIRALS direct-response endpoint run on all 433 responses; its
-  materially lower absolute rate is reported as endpoint sensitivity.
+- [x] Exact SPIRALS endpoint run on all 3,464 responses; it preserves the
+  direct-assertion ordering while producing a materially lower absolute rate.
 - [x] J-space removed from the abstract, contributions, main figure, results,
   discussion, and conclusion; the controlled null is appendix-only.
 - [x] Source-conversation duplication audited; benchmark uncertainty changed to
