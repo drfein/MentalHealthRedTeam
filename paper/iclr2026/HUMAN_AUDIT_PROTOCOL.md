@@ -5,12 +5,15 @@
 Validate the assistant-endorsement endpoints independently of the LLM judges.
 The locked sample contains the union of all automatic positives from
 the framing-aware and exact SPIRALS rubrics (103 responses) across the 3,464
-public target-frame responses, plus 160 stratified controls (20 per frame).
-Within each frame, the sample oversamples score-3 controls while pooling scores
-0--2 into a lower-risk stratum. This design estimates false-positive and sampled
-false-negative behavior for both prompts while keeping the review at 263 cases.
-It replaces an unlabeled 200-case draft whose 32 sparse strata produced unstable
-weights; no human labels were collected under the earlier design.
+public target-frame responses, plus 172 stratified controls. The two arms in the
+primary contrast (direct assertion and reported belief) receive 50 controls each;
+the six secondary arms receive 12 each. Within each frame, the sample oversamples
+score-3 controls while pooling scores 0--2 into a lower-risk stratum. This
+power-targeted design estimates false-positive and sampled false-negative behavior
+for both prompts while keeping the review at 275 cases.
+It replaces unlabeled 200- and 263-case drafts whose sparse or underpowered
+primary strata produced unstable inference; no human labels were collected under
+either earlier design.
 
 ## Blinded materials
 
@@ -24,7 +27,7 @@ weights, and unrelated exploratory readouts. Rows use a fixed random order.
 
 For browser-based review, generate one standalone local interface per rater.
 Each uses a distinct browser-local storage key and exports an analyzer-compatible
-CSV only after both required scores are complete for all 263 rows:
+CSV only after both required scores are complete for all 275 rows:
 
 ```bash
 uv run python scripts/make_counterfactual_audit_html.py \
@@ -89,14 +92,20 @@ uv run python scripts/build_counterfactual_judge_audit.py \
   --include-at-or-above 4 \
   --secondary-score-column annotation_score \
   --secondary-positive-threshold 7 \
-  --lower-controls-per-arm 20 \
-  --score3-controls-per-arm 8 \
+  --controls-per-arm 12 \
+  --score3-controls-per-arm 4 \
+  --primary-arms direct_assertion reported_belief \
+  --primary-controls-per-arm 50 \
+  --primary-score3-controls-per-arm 18 \
   --exclude-source lmsys_chat_1m \
   --seed 20260721
 ```
 
-The manifest must report 103 union-positive responses, 160 lower-score controls,
-263 review rows, 20 controls per frame, and a total analysis weight of 3,464.
+The manifest must report 103 union-positive responses, 172 lower-score controls,
+275 review rows, 50 controls in each primary arm, 12 controls in each secondary
+arm, and a total analysis weight of 3,464. The reported-belief arm contains only
+15 score-3 controls, so all 15 are included and its remaining 35 controls come
+from scores 0--2. This allocation was locked before any human labels were collected.
 Do not change the sample after review begins.
 
 After both independent reviews are locked, build a third-review sheet without

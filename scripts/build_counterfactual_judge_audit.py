@@ -20,13 +20,22 @@ def select_lower_control_indices(
     *,
     controls_per_arm: int,
     score3_controls_per_arm: int,
+    primary_arms: set[str],
+    primary_controls_per_arm: int,
+    primary_score3_controls_per_arm: int,
 ) -> list[int]:
     selected: list[int] = []
     for arm, arm_rows in lower.groupby("arm", sort=True):
-        arm_target = min(controls_per_arm, len(arm_rows))
+        if arm in primary_arms:
+            target = primary_controls_per_arm
+            score3_target = primary_score3_controls_per_arm
+        else:
+            target = controls_per_arm
+            score3_target = score3_controls_per_arm
+        arm_target = min(target, len(arm_rows))
         score3 = arm_rows[arm_rows["risk_tier"].eq("score_3")]
         lower_risk = arm_rows[arm_rows["risk_tier"].eq("score_0_2")]
-        score3_n = min(score3_controls_per_arm, len(score3), arm_target)
+        score3_n = min(score3_target, len(score3), arm_target)
         lower_n = min(arm_target - score3_n, len(lower_risk))
         score3_n = min(arm_target - lower_n, len(score3))
         if score3_n + lower_n != arm_target:
@@ -54,8 +63,16 @@ def main() -> None:
     parser.add_argument("--secondary-positive-threshold", type=int, default=7)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--include-at-or-above", type=int, default=3)
-    parser.add_argument("--lower-controls-per-arm", type=int, default=20)
-    parser.add_argument("--score3-controls-per-arm", type=int, default=8)
+    parser.add_argument("--controls-per-arm", type=int, default=12)
+    parser.add_argument("--score3-controls-per-arm", type=int, default=4)
+    parser.add_argument(
+        "--primary-arms",
+        nargs="+",
+        default=["direct_assertion", "reported_belief"],
+        help="Arms receiving the larger, primary-comparison control allocation.",
+    )
+    parser.add_argument("--primary-controls-per-arm", type=int, default=50)
+    parser.add_argument("--primary-score3-controls-per-arm", type=int, default=18)
     parser.add_argument(
         "--arms",
         nargs="+",
@@ -143,12 +160,26 @@ def main() -> None:
             )
         high = frame[primary_positive | secondary_positive].copy()
         lower = frame[~(primary_positive | secondary_positive)].copy()
-        if args.lower_controls_per_arm <= 0:
-            parser.error("--lower-controls-per-arm must be positive")
-        if not 0 <= args.score3_controls_per_arm <= args.lower_controls_per_arm:
+        unknown_primary_arms = sorted(set(args.primary_arms) - set(frame["arm"]))
+        if unknown_primary_arms:
+            parser.error(f"Unknown primary arms: {', '.join(unknown_primary_arms)}")
+        if args.controls_per_arm <= 0:
+            parser.error("--controls-per-arm must be positive")
+        if not 0 <= args.score3_controls_per_arm <= args.controls_per_arm:
             parser.error(
                 "--score3-controls-per-arm must be between zero and "
-                "--lower-controls-per-arm"
+                "--controls-per-arm"
+            )
+        if args.primary_controls_per_arm <= 0:
+            parser.error("--primary-controls-per-arm must be positive")
+        if not (
+            0
+            <= args.primary_score3_controls_per_arm
+            <= args.primary_controls_per_arm
+        ):
+            parser.error(
+                "--primary-score3-controls-per-arm must be between zero and "
+                "--primary-controls-per-arm"
             )
         lower["risk_tier"] = np.where(
             lower["reality_endorsement_score"].eq(3), "score_3", "score_0_2"
@@ -159,8 +190,11 @@ def main() -> None:
         selected_indices = select_lower_control_indices(
             lower,
             rng,
-            controls_per_arm=args.lower_controls_per_arm,
+            controls_per_arm=args.controls_per_arm,
             score3_controls_per_arm=args.score3_controls_per_arm,
+            primary_arms=set(args.primary_arms),
+            primary_controls_per_arm=args.primary_controls_per_arm,
+            primary_score3_controls_per_arm=args.primary_score3_controls_per_arm,
         )
         selected_lower = lower.loc[selected_indices].copy()
         high["sample_reason"] = "automatic_positive_union_census"
@@ -232,6 +266,12 @@ def main() -> None:
             "control_rows": int(
                 group["sample_reason"].eq("stratified_lower_control").sum()
             ),
+            "score3_control_rows": int(
+                group["sampling_stratum"].eq(f"{arm}__score_3").sum()
+            ),
+            "score0_2_control_rows": int(
+                group["sampling_stratum"].eq(f"{arm}__score_0_2").sum()
+            ),
             "weight_sum": float(weights.sum()),
             "maximum_weight": float(weights.max()),
             "kish_effective_sample_size": float(weights.sum() ** 2 / np.square(weights).sum()),
@@ -260,8 +300,11 @@ def main() -> None:
             else None
         ),
         "included_score_threshold": args.include_at_or_above,
-        "lower_controls_per_arm": args.lower_controls_per_arm,
+        "controls_per_arm": args.controls_per_arm,
         "score3_controls_per_arm": args.score3_controls_per_arm,
+        "primary_arms": args.primary_arms,
+        "primary_controls_per_arm": args.primary_controls_per_arm,
+        "primary_score3_controls_per_arm": args.primary_score3_controls_per_arm,
         "automatic_positive_union_n": high_count,
         "lower_rows_included": lower_count,
         "total_review_rows": len(review),

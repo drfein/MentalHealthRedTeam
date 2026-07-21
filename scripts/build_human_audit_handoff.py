@@ -4,12 +4,19 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import hashlib
 import json
 import zipfile
 from pathlib import Path
 
 
 FIXED_ZIP_TIME = (2026, 1, 1, 0, 0, 0)
+
+
+def csv_row_count(path: Path) -> int:
+    with path.open(encoding="utf-8", newline="") as handle:
+        return sum(1 for _ in csv.DictReader(handle))
 
 
 def parse_args() -> argparse.Namespace:
@@ -74,11 +81,16 @@ def main() -> None:
         archives[rater] = {
             "path": str(archive),
             "bytes": archive.stat().st_size,
+            "sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
         }
     manifest = {
         "reviewers": archives,
-        "release_rows_per_reviewer": 100,
-        "response_rows_per_reviewer": 263,
+        "release_rows_per_reviewer": csv_row_count(
+            args.release_root / "blinded_review.csv"
+        ),
+        "response_rows_per_reviewer": csv_row_count(
+            args.response_root / "blinded_review.csv"
+        ),
         "contains_judge_keys": False,
         "contains_other_reviewer_labels": False,
     }

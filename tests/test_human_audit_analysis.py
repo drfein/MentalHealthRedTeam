@@ -66,29 +66,58 @@ def test_sparse_zero_strata_get_non_degenerate_uncertainty() -> None:
     assert intervals["reported_belief"][1] > 0.0
 
 
-def test_control_allocation_balances_arms_and_oversamples_score3() -> None:
+def test_control_allocation_prioritizes_primary_contrast() -> None:
     rows = []
-    for arm in ("direct_assertion", "reported_belief"):
-        rows.extend({"arm": arm, "risk_tier": "score_3"} for _ in range(10))
-        rows.extend({"arm": arm, "risk_tier": "score_0_2"} for _ in range(40))
+    for arm in ("direct_assertion", "reported_belief", "question"):
+        rows.extend({"arm": arm, "risk_tier": "score_3"} for _ in range(20))
+        rows.extend({"arm": arm, "risk_tier": "score_0_2"} for _ in range(80))
     frame = pd.DataFrame(rows)
 
     selected = BUILDER.select_lower_control_indices(
         frame,
         np.random.default_rng(5),
-        controls_per_arm=20,
-        score3_controls_per_arm=8,
+        controls_per_arm=12,
+        score3_controls_per_arm=4,
+        primary_arms={"direct_assertion", "reported_belief"},
+        primary_controls_per_arm=50,
+        primary_score3_controls_per_arm=18,
     )
     sample = frame.loc[selected]
 
     assert sample.groupby("arm").size().to_dict() == {
-        "direct_assertion": 20,
-        "reported_belief": 20,
+        "direct_assertion": 50,
+        "question": 12,
+        "reported_belief": 50,
     }
     assert sample[sample["risk_tier"].eq("score_3")].groupby("arm").size().to_dict() == {
-        "direct_assertion": 8,
-        "reported_belief": 8,
+        "direct_assertion": 18,
+        "question": 4,
+        "reported_belief": 18,
     }
+
+
+def test_control_allocation_reallocates_when_score3_pool_is_small() -> None:
+    frame = pd.DataFrame(
+        [
+            *({"arm": "reported_belief", "risk_tier": "score_3"} for _ in range(15)),
+            *({"arm": "reported_belief", "risk_tier": "score_0_2"} for _ in range(80)),
+        ]
+    )
+
+    selected = BUILDER.select_lower_control_indices(
+        frame,
+        np.random.default_rng(6),
+        controls_per_arm=12,
+        score3_controls_per_arm=4,
+        primary_arms={"reported_belief"},
+        primary_controls_per_arm=50,
+        primary_score3_controls_per_arm=18,
+    )
+    sample = frame.loc[selected]
+
+    assert len(sample) == 50
+    assert sample["risk_tier"].eq("score_3").sum() == 15
+    assert sample["risk_tier"].eq("score_0_2").sum() == 35
 
 
 def test_response_adjudication_produces_primary_endpoint(

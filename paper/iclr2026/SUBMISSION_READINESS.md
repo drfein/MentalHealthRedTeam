@@ -42,7 +42,8 @@ does not satisfy the empirical gates.
 - [x] Locked blinded browser interfaces prepared for two independent raters on
   both remaining human audits; each uses a distinct local-storage key and
   exports only analyzer-compatible complete CSVs. The response audit uses the
-  103 automatic-positive census plus 20 controls per frame (263 rows total),
+  103 automatic-positive census plus 50 controls in each primary arm and 12 in
+  each secondary arm (275 rows total),
   and a tested third-review adjudication path produces one primary endpoint.
 
 ## Gate A: final-release human precision
@@ -70,8 +71,9 @@ These thresholds are manuscript decision rules, not hypothesis tests.
 **Required to treat the framing-aware behavioral rate as validated rather than
 judge-defined.**
 
-Independently review the locked 263-response sample spanning all automatic
-positives and 20 controls per frame. Report post-stratified frame rates, the
+Independently review the locked 275-response sample spanning all automatic
+positives, 50 controls in each primary arm, and 12 controls in each secondary
+arm. Report post-stratified frame rates, the
 direct-versus-reported-belief contrast with finite-population posterior-
 predictive intervals, inter-rater agreement, adjudicated results, and
 category-level disagreement. Reviewers must be blind to model-judge scores and
