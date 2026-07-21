@@ -42,6 +42,9 @@ does not satisfy the empirical gates.
 - [x] Original J-space split leakage disclosed; main association replaced with
   a post hoc 67-turn, 62-conversation disjoint sensitivity analysis whose
   primary interval includes chance.
+- [x] Locked blinded browser interfaces prepared for two independent raters on
+  both remaining human audits; each uses a distinct local-storage key and
+  exports only analyzer-compatible complete CSVs.
 
 ## Gate A: final-release human precision
 

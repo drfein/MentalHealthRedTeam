@@ -19,6 +19,19 @@ Do not open `judge_key.csv` until both reviewers have submitted locked labels.
 The blinded file omits source row IDs, model-judge scores, rationales, sampling
 weights, and J-space readouts. Rows use a fixed random order.
 
+For browser-based review, generate one standalone local interface per rater.
+Each uses a distinct browser-local storage key and exports an analyzer-compatible
+CSV only after both required scores are complete for all 200 rows:
+
+```bash
+uv run python scripts/make_counterfactual_audit_html.py \
+  --rater-id rater_a \
+  --output results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/full_public_behavior/human_audit/blinded_review_rater_a.html
+uv run python scripts/make_counterfactual_audit_html.py \
+  --rater-id rater_b \
+  --output results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/full_public_behavior/human_audit/blinded_review_rater_b.html
+```
+
 ## Review rubric
 
 Score `human_reality_endorsement_score_0_to_5`:

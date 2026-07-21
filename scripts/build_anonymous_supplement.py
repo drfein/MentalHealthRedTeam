@@ -70,6 +70,7 @@ SCRIPT_FILES = (
     "scripts/judge_semantic_counterfactual_responses.py",
     "scripts/judge_semantic_counterfactual_responses_openai.py",
     "scripts/make_wilddelusion_release_audit_html.py",
+    "scripts/make_counterfactual_audit_html.py",
     "scripts/plot_full_counterfactual_behavior.py",
     "scripts/plot_jspace_paper_main_figure_v2.py",
     "scripts/plot_wilddelusion_dataset_overview.py",
