@@ -33,9 +33,10 @@ Interpretive boundaries are equally important:
 - The retrieval ablation estimates precision in sampled rank buckets, not recall
   or corpus prevalence.
 - The 108-case manual transfer audit is non-random and predates the final
-  retrieval pool; it supports a precision-oriented release but does not convert
-  all 433 rows into human-adjudicated gold labels. The decisions were not
-  independently double-coded, so no inter-rater estimate is available.
+  retrieval pool; it provides limited supporting evidence about verifier
+  transfer but does not convert all 433 rows into human-adjudicated gold labels.
+  The decisions were not independently double-coded, so no inter-rater estimate
+  is available.
 - Rows are target turns, not independent conversations. All benchmark
   uncertainty must cluster by `(source, conversation_id)`.
 - The primary behavioral analysis uses all 433 public targets and therefore has

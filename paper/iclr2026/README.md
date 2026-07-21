@@ -1,7 +1,7 @@
 # ICLR paper draft
 
 The manuscript is an anonymous ICLR 2026-format draft centered on
-`WildDelusion`, a precision-oriented wild-conversation benchmark. The primary
+`WildDelusion`, a retrieval-enriched wild-conversation benchmark. The primary
 application is a full-benchmark, eight-frame paired behavioral study. Weak
 exploratory interpretability, cross-model, and topic analyses remain outside the
 manuscript and anonymous supplement.

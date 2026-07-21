@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 from pathlib import Path
 from typing import Any
@@ -13,18 +12,6 @@ from matplotlib.patches import FancyBboxPatch
 
 def read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
-
-
-def read_metric_rows(path: Path) -> dict[str, dict[str, float]]:
-    with path.open(encoding="utf-8", newline="") as handle:
-        return {
-            row["metric"]: {
-                "estimate": float(row["estimate"]),
-                "ci_low": float(row["ci_low"]),
-                "ci_high": float(row["ci_high"]),
-            }
-            for row in csv.DictReader(handle)
-        }
 
 
 def draw_pipeline(ax: plt.Axes, settings: dict[str, Any], summary: dict[str, Any]) -> None:
@@ -111,9 +98,9 @@ def main() -> None:
         default=Path("results/whitened_top3k_verification/summary.json"),
     )
     parser.add_argument(
-        "--human-validation",
+        "--release-characterization",
         type=Path,
-        default=Path("results/conversation_verifier_human_validation/human_validation_metrics.csv"),
+        default=Path("paper/iclr2026/artifacts/release_characterization.json"),
     )
     parser.add_argument(
         "--release-manifest",
@@ -130,8 +117,8 @@ def main() -> None:
     settings = read_json(args.settings)
     summary = read_json(args.verification_summary)
     release = read_json(args.release_manifest)
+    characterization = read_json(args.release_characterization)
     summary["released_rows"] = release["rows"]
-    human_metrics = read_metric_rows(args.human_validation)
     source_counts = release["source_target_turn_counts"]
     sources = ["ShareChat-ChatGPT", "WildChat", "ShareChat-Grok"]
     source_values = [
@@ -173,7 +160,7 @@ def main() -> None:
     pipeline_ax = fig.add_subplot(grid[0, :])
     source_ax = fig.add_subplot(grid[1, 0])
     exclusion_ax = fig.add_subplot(grid[1, 1])
-    validation_ax = fig.add_subplot(grid[1, 2])
+    concentration_ax = fig.add_subplot(grid[1, 2])
 
     draw_pipeline(pipeline_ax, settings, summary)
     pipeline_ax.set_title("A  Mining a rare behavior from three open conversation corpora", loc="left", weight="bold")
@@ -197,34 +184,25 @@ def main() -> None:
     exclusion_ax.set_title("C  Contextual exclusions", loc="left", weight="bold")
     exclusion_ax.set_xlabel("Excluded or uncertain conversations")
 
-    metric_order = ["audited_precision_ppv", "specificity", "sensitivity"]
-    metric_labels = ["Audited precision", "Specificity", "Sensitivity"]
-    estimates = np.asarray([human_metrics[name]["estimate"] for name in metric_order])
-    lows = np.asarray([human_metrics[name]["ci_low"] for name in metric_order])
-    highs = np.asarray([human_metrics[name]["ci_high"] for name in metric_order])
-    y = np.arange(len(metric_order))[::-1]
-    validation_ax.errorbar(
-        estimates,
-        y,
-        xerr=np.vstack([estimates - lows, highs - estimates]),
-        fmt="o",
-        color="#3A7D44",
-        capsize=4,
+    conversation_n = characterization["distinct_source_conversations"]
+    multi_target_n = characterization["multi_target_source_conversations"]
+    single_target_n = conversation_n - multi_target_n
+    horizontal_bars(
+        concentration_ax,
+        ["One retained target", "Multiple retained targets"],
+        [single_target_n, multi_target_n],
+        "#3A7D44",
+        denominator=conversation_n,
     )
-    validation_ax.set_yticks(y, metric_labels)
-    validation_ax.set_xlim(0.25, 1.02)
-    validation_ax.set_xlabel("Proportion (95% Wilson CI)")
-    validation_ax.set_title("D  Human audit transfer", loc="left", weight="bold")
-    validation_ax.text(
-        0.25,
-        -0.62,
-        "Strict positive rule; 108 earlier reviewed candidates",
+    concentration_ax.set_xlabel("Source conversations")
+    concentration_ax.set_title("D  Conversation concentration", loc="left", weight="bold")
+    concentration_ax.text(
+        0,
+        -0.72,
+        "Maximum: 39 retained targets in one conversation",
         fontsize=9.5,
         color="#555555",
     )
-    validation_ax.grid(axis="x", alpha=0.2)
-    validation_ax.spines[["top", "right", "left"]].set_visible(False)
-    validation_ax.tick_params(axis="y", length=0)
 
     fig.suptitle("WildDelusion construction and composition", fontsize=19, weight="bold", y=0.995)
     fig.subplots_adjust(left=0.09, right=0.985, bottom=0.1, top=0.92)

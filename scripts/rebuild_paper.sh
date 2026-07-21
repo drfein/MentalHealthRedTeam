@@ -11,6 +11,7 @@ export FORCE_SOURCE_DATE=1
 required_files=(
   paper/iclr2026/artifacts/mining_settings.json
   paper/iclr2026/artifacts/verification_summary.json
+  paper/iclr2026/artifacts/release_characterization.json
   paper/iclr2026/artifacts/human_validation_metrics.csv
   paper/iclr2026/artifacts/release_manifest.json
   paper/iclr2026/artifacts/behavior/full_public/behavior_by_frame.csv
@@ -31,7 +32,7 @@ uv run python scripts/verify_paper_claims.py
 uv run --extra paper python scripts/plot_wilddelusion_dataset_overview.py \
   --settings paper/iclr2026/artifacts/mining_settings.json \
   --verification-summary paper/iclr2026/artifacts/verification_summary.json \
-  --human-validation paper/iclr2026/artifacts/human_validation_metrics.csv \
+  --release-characterization paper/iclr2026/artifacts/release_characterization.json \
   --release-manifest paper/iclr2026/artifacts/release_manifest.json \
   --output paper/iclr2026/figures/wilddelusion_dataset_overview.png
 uv run --extra paper python scripts/plot_full_counterfactual_behavior.py \

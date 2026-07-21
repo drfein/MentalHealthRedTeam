@@ -10,8 +10,8 @@ size_categories:
 
 # WildDelusionVerified
 
-WildDelusionVerified is a precision-oriented collection of 433 contextualized
-target turns from 232 source conversations that potentially endorse highly
+WildDelusionVerified is a retrieval-enriched, LLM-context-verified collection of
+433 target turns from 232 source conversations that potentially endorse highly
 implausible beliefs. The public target turns were mined from WildChat-4.8M-Full
 and ShareChat. The mining pipeline also found three verified LMSYS-Chat-1M
 targets, but their conversation text is excluded from this release under that
@@ -53,8 +53,8 @@ This was a non-random transfer audit that predates the final retrieval pool. The
 double-coded (101 were assigned to one account), so no inter-rater reliability
 estimate is available. It does not constitute exhaustive human adjudication of
 the 433 released rows.
-The release should therefore be treated as precision-oriented, LLM-context-
-verified data rather than human-labeled clinical ground truth.
+The release should therefore be treated as an LLM-context-verified candidate
+set rather than human-labeled clinical ground truth.
 
 ## Source Composition
 

@@ -26,7 +26,7 @@
 \maketitle
 
 \begin{abstract}
-Evaluating whether assistants reinforce highly implausible user beliefs requires natural conversations, but uniform sampling yields few positives and context-free classifiers conflate endorsement with role-play, fiction, translation, and quotation. We introduce \dataset{}, a precision-oriented benchmark of 433 LLM-context-verified target turns from 232 source conversations, mined from 6.13M embedded user messages across WildChat, ShareChat, and LMSYS-Chat-1M. A reproducible rare-event pipeline bootstraps an embedding query from 107 judged positives, retrieves 3,000 candidates, reconstructs context for 715 candidate turns, verifies 436, and releases the 433 whose source terms permit redistribution. On a separate, non-random transfer audit, 35 of 38 strict verifier positives are human-retained (92.1\% precision, 95\% Wilson CI [79.2, 97.3]). We then generate \model{} responses to eight matched framings of every released target. A framing-aware judge marks 75/433 direct-assertion responses as endorsements (17.3\%, 95\% source-conversation cluster-bootstrap CI [13.1, 22.4]), versus at most 13/433 (3.0\%) in every alternative frame. The smallest paired risk difference is 14.3 percentage points [10.5, 18.8]. The exact SPIRALS package rubric is more conservative (20/433 direct responses, 4.6\%) but preserves the ordering: direct assertion exceeds every alternative by at least 3.7 points [1.5, 6.2]. \dataset{} provides a reproducible, context-preserving test bed for behavioral audits on naturally occurring claims.
+Evaluating whether assistants reinforce highly implausible user beliefs requires natural conversations, but uniform sampling yields few positives and context-free classifiers conflate endorsement with role-play, fiction, translation, and quotation. We introduce \dataset{}, a context-verified, retrieval-enriched benchmark of 433 LLM-filtered target turns from 232 source conversations, mined from 6.13M embedded user messages across WildChat, ShareChat, and LMSYS-Chat-1M. A reproducible rare-event pipeline bootstraps an embedding query from 107 judged positives, retrieves 3,000 candidates, reconstructs context for 715 candidate turns, verifies 436, and releases the 433 whose source terms permit redistribution. We then generate \model{} responses to eight matched framings of every released target. A framing-aware judge marks 75/433 direct-assertion responses as endorsements (17.3\%, 95\% source-conversation cluster-bootstrap CI [13.1, 22.4]), versus at most 13/433 (3.0\%) in every alternative frame. The smallest paired risk difference is 14.3 percentage points [10.5, 18.8]. The exact SPIRALS package rubric is more conservative (20/433 direct responses, 4.6\%) but preserves the ordering: direct assertion exceeds every alternative by at least 3.7 points [1.5, 6.2]. \dataset{} provides a reproducible, context-preserving test bed for behavioral audits on naturally occurring claims.
 \end{abstract}
 
 \section{Introduction}
@@ -39,7 +39,7 @@ We demonstrate the benchmark by transforming every released target claim into ei
 
 Our contributions are:
 \begin{enumerate}
-    \item \textbf{A context-verified wild benchmark.} \dataset{} contains 433 LLM-filtered target turns from 232 source conversations in two redistributable open corpora, produced by a reproducible rare-event retrieval and conversation-verification pipeline with explicit exclusion reasons and an earlier 108-case human transfer audit.
+    \item \textbf{A context-verified wild benchmark.} \dataset{} contains 433 LLM-filtered target turns from 232 source conversations in two redistributable open corpora, produced by a reproducible rare-event retrieval and conversation-verification pipeline with explicit exclusion reasons and source-license filtering.
     \item \textbf{A full-benchmark paired evaluation.} Eight matched speech acts separate exposure to implausible content from user commitment across all 433 released targets; direct assertion increases judged endorsement by at least 14.3 percentage points relative to every alternative frame.
     \item \textbf{A cross-rubric robustness analysis.} A framing-aware rubric and the exact SPIRALS assistant-endorsement rubric produce different absolute rates but the same ordering across all eight frames, documenting both the robust comparison and its operationalization dependence.
 \end{enumerate}
@@ -77,12 +77,10 @@ We score all materialized messages by cosine similarity to $q_0$, annotate the t
 
 The pinned package judge scores whether the target user message explicitly endorses a physically or logically impossible, or extremely implausible, belief. We then reconstruct the source conversation and run a separate LLM contextual verifier on the first two user and assistant messages plus up to five user and assistant turns preceding the target. The verifier excludes role-play, fiction, jokes, translation or text transformation, third-party quotation, ordinary plausible concerns, and insufficient context. Of 715 reconstructed candidate target contexts from 418 source conversations, 436 target turns are verified, 271 are rejected, and 8 are uncertain. We exclude three verified LMSYS-Chat-1M targets from redistribution, leaving 433 released turns from 232 source conversations. Sixty-two conversations contribute multiple released targets, with a maximum of 39. The largest contextual exclusions are role-play (95), ordinary plausible content (75), and fiction (47). Released target-turn counts are ShareChat-ChatGPT (356), WildChat (44), and ShareChat-Grok (33).
 
-We test the same verifier and strict \texttt{positive} release rule on a separate earlier set of 108 manually reviewed candidates. Thirty-five of 38 verifier positives are human-retained, for audited precision 92.1\% (95\% Wilson CI [79.2, 97.3]); specificity is 89.7\% [73.6, 96.4] and sensitivity is 44.3\% [33.9, 55.3]. This is a non-random transfer audit rather than human adjudication of all 433 rows. Its decisions span three reviewer accounts but were not independently double-coded (101/108 came from one account), so no inter-rater estimate is available. It supports describing the release as precision-oriented (Figure~\ref{fig:dataset}D), not as human-labeled ground truth.
-
 \begin{figure*}[t]
     \centering
     \includegraphics[width=.96\textwidth]{figures/wilddelusion_dataset_overview.png}
-    \caption{\dataset{} construction and composition. \textbf{A:} The rare-event pipeline embeds 6.13M deduplicated user messages, bootstraps a positive query from 107 judged examples, retrieves 3,000 candidates, reconstructs 715 candidate target contexts, verifies 436, and releases 433 after source-license filtering. \textbf{B:} Released target turns by source and serving model. \textbf{C:} Mutually exclusive reasons assigned to the 271 rejected and 8 uncertain target contexts. \textbf{D:} Transfer performance of the strict verifier-positive rule on 108 earlier human-reviewed candidates. The audit is non-random, and the enriched benchmark does not estimate corpus prevalence.}
+    \caption{\dataset{} construction and composition. \textbf{A:} The rare-event pipeline embeds 6.13M deduplicated user messages, bootstraps a positive query from 107 judged examples, retrieves 3,000 candidates, reconstructs 715 candidate target contexts, verifies 436, and releases 433 after source-license filtering. \textbf{B:} Released target turns by source and serving model. \textbf{C:} Mutually exclusive reasons assigned to the 271 rejected and 8 uncertain target contexts. \textbf{D:} Source conversations contributing one versus multiple released target turns; the concentration motivates conversation-clustered uncertainty. The enriched benchmark does not estimate corpus prevalence.}
     \label{fig:dataset}
 \end{figure*}
 
@@ -229,6 +227,13 @@ Verifier score \auc{} & -- & 108 & 0.824 [0.723, 0.906] \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+We applied the same verifier and strict \texttt{positive} rule to this earlier
+candidate set. Thirty-five of 38 verifier positives were human-retained. The
+decisions span three reviewer accounts but were not independently double-coded
+(101/108 came from one account), so no inter-rater estimate is available. This
+transfer check is supporting evidence only; it is not human adjudication of the
+433-row release.
 
 \begin{table}[h]
 \caption{Descriptive framing-aware results by released source stratum. ``Largest alternative'' is selected within each source after excluding direct assertion; these small-stratum summaries are not additional confirmatory tests.}

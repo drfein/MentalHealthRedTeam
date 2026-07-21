@@ -256,10 +256,10 @@ def main() -> None:
 
     manuscript = (args.paper_dir / "main.tex").read_text(encoding="utf-8")
     for fragment in (
-        "433 LLM-context-verified target turns from 232 source conversations",
+        "context-verified, retrieval-enriched benchmark of 433 LLM-filtered target turns from 232 source conversations",
         "6.13M embedded user messages",
         "reconstructs context for 715 candidate turns, verifies 436",
-        "35 of 38 strict verifier positives",
+        "Audited precision & 35 & 38 & 92.1\\% [79.2, 97.3]",
         "75/433 direct-assertion responses",
         "14.3 percentage points [10.5, 18.8]",
         "20/433 direct responses, 4.6\\%",
