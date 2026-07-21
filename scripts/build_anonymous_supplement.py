@@ -19,13 +19,24 @@ from pathlib import Path
 PUBLIC_ROWS = 433
 PUBLIC_BEHAVIOR_ROWS = 3_464
 FIXED_ZIP_TIME = (2026, 1, 1, 0, 0, 0)
+RELEASE_JSONL = Path("data/releases/WildDelusionVerified/train.jsonl")
+RELEASE_MANIFEST = Path("data/releases/WildDelusionVerified/manifest.json")
 
 ROOT_FILES = ("pyproject.toml", "uv.lock")
 COPY_TREES = (
     "src/wild_delusion_miner",
-    "tests",
-    "paper/iclr2026/artifacts",
-    "paper/iclr2026/figures",
+    "paper/iclr2026/artifacts/behavior/full_public",
+)
+ARTIFACT_FILES = (
+    "paper/iclr2026/artifacts/README.md",
+    "paper/iclr2026/artifacts/claim_verification.json",
+    "paper/iclr2026/artifacts/human_validation_metrics.csv",
+    "paper/iclr2026/artifacts/mining_settings.json",
+    "paper/iclr2026/artifacts/release_characterization.json",
+    "paper/iclr2026/artifacts/release_integrity.json",
+    "paper/iclr2026/artifacts/release_manifest.json",
+    "paper/iclr2026/artifacts/retrieval_ablation_results.csv",
+    "paper/iclr2026/artifacts/verification_summary.json",
 )
 CONFIG_FILES = (
     "configs/default.yaml",
@@ -42,48 +53,49 @@ PAPER_FILES = (
     "paper/iclr2026/main.tex",
     "paper/iclr2026/math_commands.tex",
     "paper/iclr2026/references.bib",
+    "paper/iclr2026/figures/full_behavior_main.png",
+    "paper/iclr2026/figures/wilddelusion_dataset_overview.png",
     "output/pdf/wild_delusion_iclr2026.pdf",
 )
 SCRIPT_FILES = (
     "scripts/analyze_conversation_verifier_human_validation.py",
-    "scripts/analyze_counterfactual_human_audit.py",
     "scripts/analyze_full_behavior_human_audit.py",
     "scripts/analyze_full_counterfactual_behavior.py",
-    "scripts/analyze_jspace_conversation_disjoint_holdout.py",
-    "scripts/analyze_jspace_headline_probe_diagnostics.py",
-    "scripts/analyze_jspace_primary_endpoint_robustness.py",
-    "scripts/analyze_jspace_semantic_specificity.py",
-    "scripts/analyze_jspace_true_neutral_control.py",
     "scripts/analyze_wilddelusion_dataset.py",
     "scripts/analyze_wilddelusion_release_human_audit.py",
     "scripts/benchmark_openai_embeddings.py",
     "scripts/bootstrap_embedding_mechanisms.py",
     "scripts/build_counterfactual_judge_audit.py",
-    "scripts/build_jspace_group_split.py",
-    "scripts/build_jspace_semantic_counterfactuals.py",
-    "scripts/build_jspace_true_neutral_controls.py",
     "scripts/build_wilddelusion_public_release.py",
     "scripts/build_wilddelusion_release_human_audit.py",
     "scripts/finalize_openai_embeddings_and_retrieve.py",
-    "scripts/generate_jspace_matched_responses.py",
     "scripts/judge_generated_responses_with_package.py",
     "scripts/judge_semantic_counterfactual_responses.py",
     "scripts/judge_semantic_counterfactual_responses_openai.py",
     "scripts/make_wilddelusion_release_audit_html.py",
     "scripts/make_counterfactual_audit_html.py",
     "scripts/plot_full_counterfactual_behavior.py",
-    "scripts/plot_jspace_paper_main_figure_v2.py",
     "scripts/plot_wilddelusion_dataset_overview.py",
     "scripts/populate_verification_contexts.py",
     "scripts/rebuild_paper.sh",
     "scripts/run_hypothetical_bucket_calibration.py",
-    "scripts/run_jspace_semantic_counterfactuals.py",
     "scripts/verify_wilddelusion_release.py",
     "scripts/verify_paper_claims.py",
+)
+TEST_FILES = (
+    "tests/test_assistant_responses.py",
+    "tests/test_counterfactual_judge.py",
+    "tests/test_dataset_adapters.py",
+    "tests/test_full_counterfactual_behavior.py",
+    "tests/test_release_audit_tools.py",
+    "tests/test_response_audit_html.py",
+    "tests/test_retrieval.py",
+    "tests/test_verify.py",
 )
 BEHAVIOR_ROOT = Path(
     "results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals"
 )
+PROMPTS_SOURCE = Path("data/jspace/semantic_counterfactuals.jsonl")
 BEHAVIOR_FILES = (
     "generations_complete.jsonl",
     "all_openai_framing_judgments.jsonl",
@@ -131,8 +143,20 @@ def copy_tree(root: Path, stage: Path, relative: str) -> None:
 def redact_text_files(stage: Path) -> None:
     substitutions = (
         (
+            "results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/full_public_behavior",
+            "results/full_public_behavior",
+        ),
+        (
+            "results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals",
+            "results/full_public_behavior",
+        ),
+        (
+            "data/jspace/semantic_counterfactuals.jsonl",
+            "results/full_public_behavior/prompts.jsonl",
+        ),
+        (
             'dataset = load_dataset("danielfein/WildDelusionVerified", split="train")',
-            'dataset = load_dataset("json", data_files="data/WildDelusionVerified/train.jsonl", split="train")',
+            'dataset = load_dataset("json", data_files="data/releases/WildDelusionVerified/train.jsonl", split="train")',
         ),
         (
             "https://huggingface.co/datasets/danielfein/WildDelusionVerified",
@@ -140,7 +164,7 @@ def redact_text_files(stage: Path) -> None:
         ),
         (
             "hf://datasets/danielfein/WildDelusionVerified@7639c02b593e437bcea32259db4c0a5da29bd79d/train.jsonl",
-            "supplement://data/WildDelusionVerified/train.jsonl",
+            "supplement://data/releases/WildDelusionVerified/train.jsonl",
         ),
         ("danielfein/WildDelusionVerified", "anonymous/WildDelusionVerified"),
         (
@@ -237,6 +261,58 @@ def validate_anonymity(stage: Path) -> None:
         raise RuntimeError("Anonymous supplement validation failed:\n" + "\n".join(failures))
 
 
+def validate_contents(stage: Path) -> None:
+    """Fail closed when the staged archive does not match its documented contract."""
+    required_jsonl = {
+        RELEASE_JSONL: PUBLIC_ROWS,
+        Path("results/full_public_behavior/prompts.jsonl"): PUBLIC_BEHAVIOR_ROWS,
+        Path("results/full_public_behavior/generations_complete.jsonl"): PUBLIC_BEHAVIOR_ROWS,
+        Path(
+            "results/full_public_behavior/all_openai_framing_judgments.jsonl"
+        ): PUBLIC_BEHAVIOR_ROWS,
+        Path(
+            "results/full_public_behavior/all_openai_package_judgments.jsonl"
+        ): PUBLIC_BEHAVIOR_ROWS,
+    }
+    for relative, expected_rows in required_jsonl.items():
+        path = stage / relative
+        if not path.is_file():
+            raise FileNotFoundError(path)
+        actual_rows = count_jsonl(path)
+        if actual_rows != expected_rows:
+            raise ValueError(f"{relative}: expected {expected_rows} rows, got {actual_rows}")
+
+    for relative in (RELEASE_JSONL, RELEASE_MANIFEST):
+        if not (stage / relative).is_file():
+            raise FileNotFoundError(stage / relative)
+
+    for relative in required_jsonl:
+        with (stage / relative).open(encoding="utf-8") as handle:
+            for line_number, line in enumerate(handle, start=1):
+                row = json.loads(line)
+                if row.get("source") == "lmsys_chat_1m":
+                    raise ValueError(f"{relative}:{line_number}: contains excluded LMSYS text")
+
+    documented_paths = (
+        "data/releases/WildDelusionVerified/train.jsonl",
+        "results/full_public_behavior/prompts.jsonl",
+        "results/full_public_behavior/generations_complete.jsonl",
+        "results/full_public_behavior/all_openai_framing_judgments.jsonl",
+        "results/full_public_behavior/all_openai_package_judgments.jsonl",
+    )
+    corpus = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in stage.rglob("*")
+        if path.is_file() and path.suffix.lower() in {".md", ".json", ".py", ".toml"}
+    )
+    stale_path = "data/WildDelusionVerified/train.jsonl"
+    if stale_path in corpus:
+        raise ValueError(f"Staged supplement contains stale path {stale_path!r}")
+    for documented_path in documented_paths:
+        if not (stage / documented_path).is_file():
+            raise FileNotFoundError(stage / documented_path)
+
+
 def write_manifest(stage: Path) -> None:
     files = []
     for path in sorted(stage.rglob("*")):
@@ -284,15 +360,24 @@ def main() -> None:
         shutil.rmtree(stage)
     stage.mkdir(parents=True)
 
-    for relative in ROOT_FILES + CONFIG_FILES + PAPER_FILES + SCRIPT_FILES:
+    for relative in (
+        ROOT_FILES + CONFIG_FILES + PAPER_FILES + ARTIFACT_FILES + SCRIPT_FILES + TEST_FILES
+    ):
         copy_file(root, stage, relative)
     for relative in COPY_TREES:
         copy_tree(root, stage, relative)
     copy_file(root, stage, "docs/WILDDELUSION_DATASET_CARD.md")
-    copy_file(root, stage, "data/releases/WildDelusionVerified/train.jsonl")
-    copy_file(root, stage, "data/releases/WildDelusionVerified/manifest.json")
+    copy_file(root, stage, RELEASE_JSONL)
+    copy_file(root, stage, RELEASE_MANIFEST)
 
     behavior_destination = stage / "results/full_public_behavior"
+    prompt_count = filter_public_jsonl(
+        root / PROMPTS_SOURCE, behavior_destination / "prompts.jsonl"
+    )
+    if prompt_count != PUBLIC_BEHAVIOR_ROWS:
+        raise ValueError(
+            f"prompts.jsonl: expected {PUBLIC_BEHAVIOR_ROWS} public rows, got {prompt_count}"
+        )
     for name in BEHAVIOR_FILES:
         source = root / BEHAVIOR_ROOT / name
         destination = behavior_destination / name
@@ -325,11 +410,9 @@ def main() -> None:
         encoding="utf-8",
     )
 
-    if count_jsonl(stage / "data/releases/WildDelusionVerified/train.jsonl") != PUBLIC_ROWS:
-        raise ValueError("Release JSONL does not contain 433 rows")
-
     write_readme(stage)
     redact_text_files(stage)
+    validate_contents(stage)
     validate_anonymity(stage)
     write_manifest(stage)
     validate_anonymity(stage)

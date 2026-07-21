@@ -35,13 +35,10 @@ does not satisfy the empirical gates.
   clusters all 232 source conversations and every paired contrast is saved.
 - [x] Exact SPIRALS endpoint run on all 3,464 responses; it preserves the
   direct-assertion ordering while producing a materially lower absolute rate.
-- [x] J-space removed from the abstract, contributions, main figure, results,
-  discussion, and conclusion; the controlled null is appendix-only.
+- [x] Weak J-space results removed from the manuscript and anonymous supplement;
+  no interpretability claim remains in the submission.
 - [x] Source-conversation duplication audited; benchmark uncertainty changed to
   source-conversation cluster bootstrap.
-- [x] Original J-space split leakage disclosed; main association replaced with
-  a post hoc 67-turn, 62-conversation disjoint sensitivity analysis whose
-  primary interval includes chance.
 - [x] Locked blinded browser interfaces prepared for two independent raters on
   both remaining human audits; each uses a distinct local-storage key and
   exports only analyzer-compatible complete CSVs.
@@ -75,7 +72,7 @@ Independently review a locked sample spanning all automatic positives and a
 pre-specified random sample of automatic negatives across the eight frames.
 Report weighted frame rates, the direct-versus-reported-belief contrast,
 inter-rater agreement, and category-level disagreement. Reviewers must be blind
-to model-judge scores and to the appendix J-space values.
+to model-judge scores and unrelated exploratory analyses.
 
 Decision rule:
 
@@ -90,15 +87,14 @@ Decision rule:
 ## Gate C: model-family scope
 
 **Resolved conservatively.** The behavioral experiment is explicitly
-single-model. J-space is appendix-only and labeled a negative result. A future
-model-family replication must freeze its endpoint before inspecting outcomes
-and report null or reversed results.
+single-model. A future model-family replication must freeze its endpoint before
+inspecting outcomes and report null or reversed results.
 
 ## Final preflight
 
 - [ ] Replace pending audit language using locked human-analysis outputs.
 - [x] Re-run the executable claim audit against committed artifacts and current
-  manuscript strings; ten quantitative claim groups pass.
+  manuscript strings; nine quantitative claim groups pass.
 - [x] Confirm the anonymous repository/release policy for the target venue and
   remove the identifying dataset URL from the manuscript.
 - [x] Check the ICLR 2026 submission-page, ethics, and LLM-disclosure policies;
@@ -111,4 +107,4 @@ and report null or reversed results.
 
 Current status: technically reproducible with a complete full-benchmark
 behavioral analysis, but not empirically submission-ready until Gate A and Gate
-B are complete. J-space no longer gates any main-paper claim.
+B are complete.

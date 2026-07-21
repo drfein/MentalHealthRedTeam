@@ -14,7 +14,6 @@
 
 \newcommand{\dataset}{\textsc{WildDelusion}}
 \newcommand{\model}{Qwen2.5-7B-Instruct}
-\newcommand{\jspace}{J-space}
 \newcommand{\auc}{AUROC}
 
 \title{WildDelusion: A Wild-Conversation Benchmark for Delusion Endorsement}
@@ -36,7 +35,7 @@ Conversational language models can validate a user's false premise instead of ch
 
 Existing open chat corpora contain millions of natural interactions, but the target behavior is too rare for uniform annotation and too context-dependent for keyword search. We therefore construct \dataset{}, 433 publicly redistributable, LLM-context-verified target turns drawn from 232 source conversations in WildChat and ShareChat. The mining pipeline also searched LMSYS-Chat-1M \citep{zhao2024wildchat,zheng2023lmsys}, but excludes its three verified targets from the public artifact and all reported experiments under that source's terms. The pipeline combines synthetic-query embedding retrieval, package-compatible message annotation, source-conversation reconstruction, and a separate contextual verifier. The resulting benchmark is enriched rather than prevalence-representative: its purpose is to support model audits and controlled experiments on a difficult, naturally occurring behavior.
 
-We demonstrate the benchmark by transforming every released target claim into eight matched conversational frames that preserve claim content while changing user commitment and task. This paired design isolates a practical failure mode: whether the same model response changes when implausible content is directly asserted, questioned, reported, quoted, fictionalized, translated, reconsidered, or placed in skeptical role-play. An exploratory Jacobian-lens analysis is retained in the appendix as a negative-methodological case study, not as a contribution or mechanistic claim.
+We demonstrate the benchmark by transforming every released target claim into eight matched conversational frames that preserve claim content while changing user commitment and task. This paired design isolates a practical failure mode: whether the same model response changes when implausible content is directly asserted, questioned, reported, quoted, fictionalized, translated, reconsidered, or placed in skeptical role-play.
 
 Our contributions are:
 \begin{enumerate}
@@ -52,8 +51,14 @@ Together, the dataset and evaluation separate two questions that are often colla
 \paragraph{Delusion reinforcement and sycophancy.}
 Sycophancy evaluations show that preference optimization can reward agreement over truthfulness \citep{sharma2024sycophancy}. Recent analyses of harmful human--chatbot logs define and annotate user and assistant endorsement of delusional beliefs \citep{moore2026spirals}, while interface audits study longitudinal reinforcement under scripted interactions \citep{kirgis2026audit}. We use the former codebook and annotation package, but search public wild-chat corpora rather than participant-contributed harmful cases. Our goal is not clinical diagnosis: the positive label denotes conversational evidence of an implausible endorsed claim, not a person-level mental-health condition.
 
+\paragraph{Context-sensitive safety evaluation.}
+Dialogue-safety benchmarks show that whether a response is unsafe can depend on prior conversational context rather than the final utterance alone \citep{sun2022diasafety}. Recent mental-health benchmarks likewise emphasize authentic dialogue and find that automated judges have attribute-dependent agreement with human experts \citep{badawi2026mentalbench}. Our benchmark targets a narrower failure mode but shares both concerns: labels require conversation-level disambiguation, and scalable judge-based endpoints require explicit human calibration.
+
 \paragraph{Wild conversational data.}
 WildChat and LMSYS-Chat-1M make large-scale natural interactions available for model analysis \citep{zhao2024wildchat,zheng2023lmsys}. Such corpora provide ecological diversity but create severe base-rate, privacy, licensing, duplication, and context-disambiguation problems. We address retrieval and exact duplication computationally, use a conversation-level verifier for fiction, role-play, translation, quotation, and jokes, and exclude source text whose terms prohibit redistribution.
+
+\paragraph{Rare-event retrieval.}
+Hypothetical Document Embeddings use LLM-generated prototypical documents as zero-shot dense-retrieval queries when relevance labels are unavailable \citep{gao2023hyde}. We adapt this idea from document retrieval to rare-behavior discovery: hypothetical user turns seed the search, judged positives replace the synthetic query, and a separate conversation-level verifier filters pragmatically invalid matches. The retrieval stage enriches candidates; it does not estimate prevalence or establish labels by itself.
 
 \section{Constructing \dataset{}}
 \label{sec:data}
@@ -118,7 +123,7 @@ Package score 7 / 8 / 9 / 10 & 87 / 135 / 131 / 80 \\
 
 \subsection{Matched framing intervention}
 
-We preserve each released claim verbatim and deterministically wrap it in eight frames: (i) direct assertion, (ii) explicit uncertainty question, (iii) reported third-party belief, (iv) quotation analysis, (v) explicit fiction, (vi) translation to French, (vii) reconsideration requesting counterevidence, and (viii) skeptical counselor role-play. Appendix~\ref{app:prompts} gives exact templates. This produces 3,464 public prompts. \model{} generates one greedy response per prompt, capped at 192 tokens.
+We preserve each released claim verbatim and deterministically wrap it in eight frames: (i) direct assertion, (ii) explicit uncertainty question, (iii) reported third-party belief, (iv) quotation analysis, (v) explicit fiction, (vi) translation to French, (vii) reconsideration requesting counterevidence, and (viii) skeptical counselor role-play. Appendix~\ref{app:prompts} gives exact templates. This produces 3,464 public prompts. \model{} \citep{qwen2025technical} generates one greedy response per prompt, capped at 192 tokens.
 
 The counterfactual changes more than syntax: it changes the conversational task and therefore the appropriate response. That is intentional for the behavioral experiment. The direct-versus-question comparison holds propositional content fixed while manipulating user commitment; fiction and translation serve as strong negatives for judge validity.
 
@@ -271,38 +276,12 @@ Translation & 0 & 0.0\% & 0.0\% \\
 \end{tabular}
 \end{table}
 
-\section{Exploratory J-space Negative Result}
-\label{app:additional}
-
-We explored whether a public Jacobian lens for \model{} \citep{qwen2025technical,gurnee2026jspace} could predict the model's direct-assertion behavior at the assistant-response boundary. For vocabulary token $w$, the readout was the maximum logit over prompt positions, $m_{\ell,w}=\max_t z_{\ell,t,w}$. A discovery analysis selected the inverse layer-26 \texttt{misinformation} coordinate. This analysis is appendix-only because the original target-level split allowed source-conversation overlap, the corrected interval includes chance, and the named coordinate failed semantic-specificity controls.
-
-\begin{table}[h]
-\caption{Frozen layer-26 indicator sensitivity after source-conversation leakage correction. Higher predictor values mean weaker \texttt{misinformation} loading. Intervals cluster-bootstrap source conversations.}
-\label{tab:indicator}
-\centering
-\small
-\begin{tabular}{lcc}
-\toprule
-Population and endpoint & \auc{} & 95\% CI \\
-\midrule
-Public 144 turns, framing rubric & 0.700 & [0.536, 0.831] \\
-Disjoint 67 turns, framing rubric & 0.687 & [0.475, 0.872] \\
-Disjoint 67 turns, exact package & 0.833 & [0.686, 0.967] \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\paragraph{Selection and multiplicity.}
-The indicator test contains one frozen combination: layer 26, the \texttt{misinformation} token, maximum-over-position aggregation, and the inverse direction. This combination was selected from the 289-target public discovery partition before the eight-frame evaluation readouts were inspected. The original target-turn split failed to group different targets from the same source conversation. The corrected 67-turn subset was defined solely from provenance metadata by removing evaluation conversations represented in discovery; no behavior labels or readouts were used. Because this correction was post hoc and reduces the primary endpoint to 10 positives, the result is a sensitivity analysis rather than a confirmatory headline. The semantic-specificity analysis and true/neutral control are descriptive falsification analyses.
-
-The epistemic token panel did not outperform an equal-dimensional lexical placebo panel. A matched register control further showed nearly identical question-minus-direct shifts for benchmark claims (1.219 logits) and 40 true/neutral statements (1.206), a difference of 0.013 (Welch $p=.955$). The coordinate therefore does not support a falsity-specific or causal interpretation; at most it is a preliminary behavioral correlate confounded by declarative register.
-
 \section{LLM Usage Disclosure}
 
 Large language models played a material role in this work. GPT-5.5 generated the synthetic retrieval seed; GPT-5.4-mini served as the message, conversation, and response judge where specified in the methods; and OpenAI Codex assisted with research ideation, implementation, analysis scripts, visualization, and manuscript editing. The authors inspected the resulting code and aggregate artifacts, checked manuscript claims against saved outputs, and take full responsibility for the study design, analyses, and text. No LLM is listed as an author.
 
 \section{Reproducibility Boundaries}
 
-The repository records exact model IDs, random seeds, prompts, thresholds, and bootstrap counts. The primary behavioral artifact contains all 433 public targets under all eight frames and uses 10,000 source-conversation cluster-bootstrap draws. The appendix also preserves the exploratory split IDs, readout layers, and controls needed to reproduce the negative J-space case study. The hosted 433-row export has canonical content digest \texttt{dd34ec93...4dc}; the release verifier checks every conversation, target turn, and metadata field against the authoritative pipeline output after excluding LMSYS-Chat-1M. API models are versioned where available, but proprietary weights and service behavior cannot be reconstructed from the repository alone. Public source datasets may also change or become gated. The derived dataset is therefore a reproducibility aid, not a substitute for preserving source snapshots under their licenses.
+The repository records exact model IDs, random seeds, prompts, thresholds, and bootstrap counts. The primary behavioral artifact contains all 433 public targets under all eight frames and uses 10,000 source-conversation cluster-bootstrap draws. The hosted 433-row export has canonical content digest \texttt{dd34ec93...4dc}; the release verifier checks every conversation, target turn, and metadata field against the authoritative pipeline output after excluding LMSYS-Chat-1M. API models are versioned where available, but proprietary weights and service behavior cannot be reconstructed from the repository alone. Public source datasets may also change or become gated. The derived dataset is therefore a reproducibility aid, not a substitute for preserving source snapshots under their licenses.
 
 \end{document}

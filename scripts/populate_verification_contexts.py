@@ -13,7 +13,7 @@ import pandas as pd
 import requests
 
 from wild_delusion_miner.config import DatasetSpec, load_config
-from wild_delusion_miner.datasets import normalize_role, row_to_conversation
+from wild_delusion_miner.datasets import normalize_role
 from wild_delusion_miner.text import normalize_text, stringify
 
 

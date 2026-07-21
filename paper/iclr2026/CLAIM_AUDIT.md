@@ -26,10 +26,6 @@ paper rebuild. Its latest machine-readable result is
 | Exact package frame ordering | Direct 20/433 (4.6%) [2.5, 7.1], translation 4/433, every other frame at most 1/433 | `artifacts/behavior/full_public/package_behavior_by_frame.csv` |
 | Smallest exact-package paired effect | Direct vs translation: +3.7 points [1.5, 6.2], Holm-adjusted exact source-conversation sign-flip p=.0022 | `artifacts/behavior/full_public/package_paired_frame_contrasts.csv` |
 | Direct-response rubric overlap | 19 shared positives, 56 framing-only, 1 package-only | `artifacts/behavior/full_public/endpoint_overlap_by_frame.csv` |
-| Conversation-disjoint J-space sensitivity set (appendix only) | 67 target turns from 62 source conversations absent from discovery | `artifacts/jspace/conversation_disjoint_correction/split_integrity.json` |
-| Corrected frozen indicator | AUROC 0.687 [0.475, 0.872], 10/67 positives | correction `endpoint_performance.csv` |
-| Corrected exact-package sensitivity | AUROC 0.833 [0.686, 0.967], 4/67 positives | correction `endpoint_performance.csv` |
-| Public benchmark vs true/neutral framing delta | 1.219 vs 1.206 logits; Welch p=.955 | `artifacts/jspace/register_control.json` |
 
 Interpretive boundaries are equally important:
 
@@ -48,13 +44,3 @@ Interpretive boundaries are equally important:
   ordering but produce materially different absolute rates; 17.3% is not an
   endpoint-free failure rate. The exact package is not framing-aware, so its
   translation positives are not interpreted as real-world endorsement.
-- The original appendix J-space split leaked 36 source conversations. The 67-turn
-  metadata-only correction is post hoc, the primary interval includes chance,
-  and the package endpoint has four positives; this is sensitivity evidence,
-  not a confirmatory result.
-- The layer-26 indicator was frozen before the evaluation counterfactual readouts,
-  but the corrected interval includes chance and the result is appendix-only.
-- The true/neutral control rules out a delusion-specific interpretation of the
-  global direct-versus-question shift.
-- Predictive AUROC supports at most an observational indicator, not a
-  semantically faithful or causal gate.

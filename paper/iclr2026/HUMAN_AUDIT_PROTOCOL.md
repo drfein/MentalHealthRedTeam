@@ -17,7 +17,7 @@ Give each reviewer a separate copy of:
 
 Do not open `judge_key.csv` until both reviewers have submitted locked labels.
 The blinded file omits source row IDs, model-judge scores, rationales, sampling
-weights, and J-space readouts. Rows use a fixed random order.
+weights, and unrelated exploratory readouts. Rows use a fixed random order.
 
 For browser-based review, generate one standalone local interface per rater.
 Each uses a distinct browser-local storage key and exports an analyzer-compatible

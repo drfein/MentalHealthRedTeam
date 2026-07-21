@@ -45,7 +45,6 @@ def main() -> None:
     args = parse_args()
     artifacts = args.paper_dir / "artifacts"
     behavior_dir = artifacts / "behavior/full_public"
-    correction_dir = artifacts / "jspace/conversation_disjoint_correction"
 
     mining = read_json(artifacts / "mining_settings.json")
     verification = read_json(artifacts / "verification_summary.json")
@@ -53,7 +52,6 @@ def main() -> None:
     release_manifest = read_json(artifacts / "release_manifest.json")
     integrity = read_json(artifacts / "release_integrity.json")
     behavior_hparams = read_json(behavior_dir / "hparams.json")
-    register = read_json(artifacts / "jspace/register_control.json")
     human = read_csv(artifacts / "human_validation_metrics.csv", "metric")
     retrieval_rows = list(
         csv.DictReader(
@@ -71,14 +69,6 @@ def main() -> None:
         behavior_dir / "package_paired_frame_contrasts.csv", "comparison_arm"
     )
     overlap = read_csv(behavior_dir / "endpoint_overlap_by_frame.csv", "arm")
-    endpoint = {
-        (row["population"], row["endpoint"]): row
-        for row in csv.DictReader(
-            (correction_dir / "endpoint_performance.csv").open(
-                encoding="utf-8", newline=""
-            )
-        )
-    }
 
     assert mining["materialized_embedding_corpus_rows_approx"] == 6_130_000
     assert mining["bootstrap_labeling"] == {
@@ -241,27 +231,6 @@ def main() -> None:
     assert overlap["direct_assertion"]["framing_only_positive"] == "56"
     assert overlap["direct_assertion"]["package_only_positive"] == "1"
 
-    corrected = endpoint[("conversation_disjoint_holdout", "framing_rubric")]
-    assert int(corrected["n_target_turns"]) == 67
-    assert int(corrected["n_source_conversations"]) == 62
-    assert int(corrected["positive_n"]) == 10
-    close(corrected["auc"], 0.6868421052631579)
-    close(corrected["ci_low"], 0.4747339466089466)
-    close(corrected["ci_high"], 0.8720538720538721)
-    corrected_package = endpoint[
-        ("conversation_disjoint_holdout", "exact_package_rubric")
-    ]
-    assert int(corrected_package["positive_n"]) == 4
-    close(corrected_package["auc"], 0.8333333333333334)
-    close(corrected_package["ci_low"], 0.6861870026525199)
-    close(corrected_package["ci_high"], 0.9670247709739634)
-    original = endpoint[("original_holdout", "framing_rubric")]
-    assert int(original["n_target_turns"]) == 144
-    close(original["auc"], 0.7001437297879985)
-    close(register["public_benchmark"]["delta_mean"], 1.2186414930555556)
-    close(register["true_neutral_control"]["delta_mean"], 1.205859375)
-    close(register["welch_t_p"], 0.9554375074168648)
-
     manuscript = (args.paper_dir / "main.tex").read_text(encoding="utf-8")
     for fragment in (
         "433 LLM-context-verified target turns from 232 source conversations",
@@ -283,9 +252,6 @@ def main() -> None:
         "capped at 192 tokens",
         "67 direct-only and 5 reported-belief-only positives",
         "0.824 [0.723, 0.906]",
-        "0.687 & [0.475, 0.872]",
-        "0.833 & [0.686, 0.967]",
-        "1.219 logits) and 40 true/neutral statements (1.206)",
     ):
         require_text(manuscript, fragment)
 
@@ -300,7 +266,6 @@ def main() -> None:
             "generation and judge settings",
             "full framing-aware behavior",
             "exact-package behavior",
-            "appendix J-space sensitivity",
             "manuscript rendering strings",
         ],
         "artifact_root": str(artifacts),
