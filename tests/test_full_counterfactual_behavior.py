@@ -34,3 +34,30 @@ def test_unique_string_requires_one_run_setting() -> None:
 
     with pytest.raises(ValueError, match="Expected one model_id"):
         MODULE.unique_string(pd.DataFrame({"model_id": ["model-a", "model-b"]}), "model_id")
+
+
+def test_source_stratified_summary_preserves_source_arm_counts() -> None:
+    frame = pd.DataFrame(
+        {
+            "source": ["a", "a", "a", "a", "b", "b"],
+            "intervention_arm": [
+                "direct_assertion",
+                "direct_assertion",
+                "question",
+                "question",
+                "direct_assertion",
+                "question",
+            ],
+            "conversation_key": ["a1", "a2", "a1", "a2", "b1", "b1"],
+            "positive": [1, 0, 0, 0, 1, 0],
+        }
+    )
+
+    summary = MODULE.source_stratified_summary(frame)
+    source_a_direct = summary[
+        summary["source"].eq("a") & summary["arm"].eq("direct_assertion")
+    ].iloc[0]
+    assert source_a_direct["n_target_turns"] == 2
+    assert source_a_direct["n_source_conversations"] == 2
+    assert source_a_direct["positive_n"] == 1
+    assert source_a_direct["positive_rate"] == 0.5

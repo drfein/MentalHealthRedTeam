@@ -26,6 +26,7 @@ paper rebuild. Its latest machine-readable result is
 | Exact package frame ordering | Direct 20/433 (4.6%) [2.5, 7.1], translation 4/433, every other frame at most 1/433 | `artifacts/behavior/full_public/package_behavior_by_frame.csv` |
 | Smallest exact-package paired effect | Direct vs translation: +3.7 points [1.5, 6.2], Holm-adjusted exact source-conversation sign-flip p=.0022 | `artifacts/behavior/full_public/package_paired_frame_contrasts.csv` |
 | Direct-response rubric overlap | 19 shared positives, 56 framing-only, 1 package-only | `artifacts/behavior/full_public/endpoint_overlap_by_frame.csv` |
+| Source-stratified directional check | Direct assertion is highest in ShareChat--ChatGPT (63/356), ShareChat--Grok (7/33), and WildChat (5/44) | `artifacts/behavior/full_public/behavior_by_source_and_frame.csv` |
 
 Interpretive boundaries are equally important:
 

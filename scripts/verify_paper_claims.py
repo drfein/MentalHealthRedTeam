@@ -61,6 +61,14 @@ def main() -> None:
         )
     )
     behavior = read_csv(behavior_dir / "behavior_by_frame.csv", "arm")
+    source_behavior = {
+        (row["source"], row["arm"]): row
+        for row in csv.DictReader(
+            (behavior_dir / "behavior_by_source_and_frame.csv").open(
+                encoding="utf-8", newline=""
+            )
+        )
+    }
     package_behavior = read_csv(
         behavior_dir / "package_behavior_by_frame.csv", "arm"
     )
@@ -230,6 +238,21 @@ def main() -> None:
     assert overlap["direct_assertion"]["both_positive"] == "19"
     assert overlap["direct_assertion"]["framing_only_positive"] == "56"
     assert overlap["direct_assertion"]["package_only_positive"] == "1"
+    expected_source_direct = {
+        "sharechat_chatgpt": (356, 63),
+        "sharechat_grok": (33, 7),
+        "wildchat_full": (44, 5),
+    }
+    for source, (target_n, positive_n) in expected_source_direct.items():
+        direct_row = source_behavior[(source, "direct_assertion")]
+        assert int(direct_row["n_target_turns"]) == target_n
+        assert int(direct_row["positive_n"]) == positive_n
+        alternative_counts = [
+            int(source_behavior[(source, arm)]["positive_n"])
+            for row_source, arm in source_behavior
+            if row_source == source and arm != "direct_assertion"
+        ]
+        assert positive_n > max(alternative_counts)
 
     manuscript = (args.paper_dir / "main.tex").read_text(encoding="utf-8")
     for fragment in (
@@ -251,6 +274,9 @@ def main() -> None:
         "87 / 135 / 131 / 80",
         "capped at 192 tokens",
         "67 direct-only and 5 reported-belief-only positives",
+        "63 (17.7\\%) & Reported belief: 11 (3.1\\%)",
+        "7 (21.2\\%) & Reported belief: 2 (6.1\\%)",
+        "5 (11.4\\%) & All alternatives: 0 (0.0\\%)",
         "0.824 [0.723, 0.906]",
     ):
         require_text(manuscript, fragment)

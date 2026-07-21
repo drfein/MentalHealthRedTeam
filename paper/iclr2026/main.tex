@@ -157,6 +157,8 @@ All seven paired direct-versus-alternative cluster intervals exclude zero (Figur
 
 The exact SPIRALS package rubric marks 20/433 direct responses positive (4.6\%, 95\% source-conversation cluster-bootstrap CI [2.5, 7.1]), versus four translations, one each for reported belief, reconsideration, and question, and none in the remaining frames. All seven direct-versus-alternative cluster intervals again exclude zero. The smallest effect is direct assertion versus translation: 3.7 points [1.5, 6.2] (Holm-adjusted exact source-conversation sign-flip $p=.0022$). Nineteen direct responses are positive under both rubrics; one is package-only and 56 are framing-only. Thus the direct-assertion ordering is cross-rubric robust, while its absolute rate is strongly operationalization-dependent. Because the package rubric is not framing-aware, its four translation positives are not interpreted as real-world endorsement.
 
+The framing-aware direct-assertion rate is also descriptively highest within each released source stratum (Appendix Table~\ref{tab:source-behavior}). The WildChat and ShareChat--Grok strata are small, so this check establishes directional consistency rather than source-specific effect estimates.
+
 \section{Discussion}
 
 The primary resource contribution is a benchmark of naturally occurring, LLM-context-verified user claims drawn from two redistributable open conversation corpora after searching three. Its construction addresses two practical obstacles that scripted evaluations do not: finding a rare behavior among millions of messages and determining from prior turns whether an apparently implausible statement is asserted, quoted, translated, fictionalized, or playful. The source imbalance and retrieval enrichment limit representativeness, but the retained target turns and context provide realistic starting points for controlled model evaluation.
@@ -228,6 +230,22 @@ Verifier score \auc{} & -- & 108 & 0.824 [0.723, 0.906] \\
 \end{tabular}
 \end{table}
 
+\begin{table}[h]
+\caption{Descriptive framing-aware results by released source stratum. ``Largest alternative'' is selected within each source after excluding direct assertion; these small-stratum summaries are not additional confirmatory tests.}
+\label{tab:source-behavior}
+\centering
+\small
+\begin{tabular}{lrrl}
+\toprule
+Source & Targets & Direct assertion & Largest alternative \\
+\midrule
+ShareChat--ChatGPT & 356 & 63 (17.7\%) & Reported belief: 11 (3.1\%) \\
+ShareChat--Grok & 33 & 7 (21.2\%) & Reported belief: 2 (6.1\%) \\
+WildChat & 44 & 5 (11.4\%) & All alternatives: 0 (0.0\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \section{Reference Benchmark Protocol}
 \label{app:benchmark-protocol}
 
@@ -255,33 +273,8 @@ Let \texttt{CLAIM} be the original target message, reproduced verbatim.
 
 The judge receives the frame name, framed user message, and assistant response. It assigns \texttt{reality\_endorsement\_score} from 0 (explicitly challenges, reality-tests, or treats only as quoted/fictional) to 5 (strongly endorses as real or adds confirming real-world details), plus a 0--2 frame-adherence score. The prompt explicitly states that emotional validation is not factual endorsement and that words inside translation, quotation, story, or role-play are not endorsement unless the assistant steps outside that frame. The complete prompt is stored in \texttt{scripts/judge\_semantic\_counterfactual\_responses.py}.
 
-\begin{table}[h]
-\caption{Primary behavioral outcomes on 433 target turns from 232 source conversations. Turn rates weight targets equally; conversation-macro rates first average within source conversation and then weight conversations equally.}
-\label{tab:behavior}
-\centering
-\small
-\begin{tabular}{lrrc}
-\toprule
-Frame & Positive & Turn rate & Conv. macro \\
-\midrule
-Direct assertion & 75 & 17.3\% & 17.2\% \\
-Reported belief & 13 & 3.0\% & 1.8\% \\
-Reconsideration & 4 & 0.9\% & 0.3\% \\
-Question & 2 & 0.5\% & 0.2\% \\
-Explicit fiction & 2 & 0.5\% & 0.2\% \\
-Quotation analysis & 1 & 0.2\% & 0.2\% \\
-Skeptical role-play & 1 & 0.2\% & 0.2\% \\
-Translation & 0 & 0.0\% & 0.0\% \\
-\bottomrule
-\end{tabular}
-\end{table}
-
 \section{LLM Usage Disclosure}
 
-Large language models played a material role in this work. GPT-5.5 generated the synthetic retrieval seed; GPT-5.4-mini served as the message, conversation, and response judge where specified in the methods; and OpenAI Codex assisted with research ideation, implementation, analysis scripts, visualization, and manuscript editing. The authors inspected the resulting code and aggregate artifacts, checked manuscript claims against saved outputs, and take full responsibility for the study design, analyses, and text. No LLM is listed as an author.
-
-\section{Reproducibility Boundaries}
-
-The repository records exact model IDs, random seeds, prompts, thresholds, and bootstrap counts. The primary behavioral artifact contains all 433 public targets under all eight frames and uses 10,000 source-conversation cluster-bootstrap draws. The hosted 433-row export has canonical content digest \texttt{dd34ec93...4dc}; the release verifier checks every conversation, target turn, and metadata field against the authoritative pipeline output after excluding LMSYS-Chat-1M. API models are versioned where available, but proprietary weights and service behavior cannot be reconstructed from the repository alone. Public source datasets may also change or become gated. The derived dataset is therefore a reproducibility aid, not a substitute for preserving source snapshots under their licenses.
+Large language models played a material role. GPT-5.5 generated the retrieval seed; GPT-5.4-mini served as the message, conversation, and response judge where specified; and OpenAI Codex assisted with ideation, code, analysis, visualization, and editing. The authors inspected code and aggregate artifacts and take responsibility for the study. No LLM is an author. Exact run settings are included; proprietary API behavior and changing upstream datasets remain external reproducibility boundaries.
 
 \end{document}

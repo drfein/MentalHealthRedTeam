@@ -155,6 +155,24 @@ def behavior_summary(
     return pd.DataFrame(rows)
 
 
+def source_stratified_summary(frame: pd.DataFrame) -> pd.DataFrame:
+    rows = []
+    for source, source_rows in frame.groupby("source", sort=True):
+        for arm in ARM_ORDER:
+            subset = source_rows[source_rows["intervention_arm"].eq(arm)]
+            rows.append(
+                {
+                    "source": source,
+                    "arm": arm,
+                    "n_target_turns": len(subset),
+                    "n_source_conversations": subset["conversation_key"].nunique(),
+                    "positive_n": int(subset["positive"].sum()),
+                    "positive_rate": float(subset["positive"].mean()),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
 def contrast_summary(
     frame: pd.DataFrame, *, draws: int, seed: int
 ) -> pd.DataFrame:
@@ -399,11 +417,15 @@ def main() -> None:
     behavior = behavior_summary(
         frame, draws=args.bootstrap_draws, seed=args.seed
     )
+    source_behavior = source_stratified_summary(frame)
     contrasts = contrast_summary(
         frame, draws=args.bootstrap_draws, seed=args.seed + 1_000
     )
     args.output_dir.mkdir(parents=True, exist_ok=True)
     behavior.to_csv(args.output_dir / "behavior_by_frame.csv", index=False)
+    source_behavior.to_csv(
+        args.output_dir / "behavior_by_source_and_frame.csv", index=False
+    )
     contrasts.to_csv(args.output_dir / "paired_frame_contrasts.csv", index=False)
     package_behavior = None
     package_contrasts = None
