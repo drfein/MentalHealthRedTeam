@@ -18,7 +18,7 @@ def draw_pipeline(ax: plt.Axes, settings: dict[str, Any], summary: dict[str, Any
     stages = [
         ("6.13M", "embedded\nuser messages"),
         ("1,000", "bootstrap\njudgments"),
-        ("107", "seed true\npositives"),
+        ("107", "seed judged\npositives"),
         ("3,000", "whitened\nretrieval"),
         (f"{summary['input_context_rows']}", "candidate target\ncontexts"),
         (f"{summary['verified_positive_rows']}", "verified target\nturns"),
