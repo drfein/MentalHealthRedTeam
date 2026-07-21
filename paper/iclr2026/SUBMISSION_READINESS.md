@@ -1,5 +1,18 @@
 # Submission readiness gates
 
+## Double-blind and policy checks
+
+- [x] Main manuscript contains no author-identifying repository or dataset URL.
+- [x] Author block and PDF metadata are anonymous.
+- [x] Main text ends on page 7, within the ICLR 2026 nine-page submission limit.
+- [x] Appendix includes the required disclosure of material LLM use.
+- [x] Deterministic anonymized supplement built at
+  `output/submission/wilddelusion_anonymous_supplement.zip`; an independent
+  extraction verified 433 release rows, 3,464 rows in each behavioral artifact,
+  no LMSYS text, no Git history, and no blocked identifiers or credentials.
+- [ ] Audit the final OpenReview PDF and supplementary archive immediately before
+  submission; identity disclosure in either artifact is desk-rejectable.
+
 This checklist separates completed infrastructure from evidence that still
 changes the paper's admissible claims. Passing code tests or compiling the PDF
 does not satisfy the empirical gates.
@@ -82,9 +95,10 @@ and report null or reversed results.
 
 - [ ] Replace pending audit language using locked human-analysis outputs.
 - [ ] Re-run `CLAIM_AUDIT.md` against every number in the final manuscript.
-- [ ] Confirm the anonymous repository/release policy for the target venue.
-- [ ] Re-check the current ICLR page limit, ethics requirements, and disclosure
-  policy immediately before submission.
+- [x] Confirm the anonymous repository/release policy for the target venue and
+  remove the identifying dataset URL from the manuscript.
+- [x] Check the ICLR 2026 submission-page, ethics, and LLM-disclosure policies;
+  main text ends on page 7 and the appendix now includes an LLM-use disclosure.
 - [ ] Compile from a clean environment and visually inspect every page.
 
 Current status: technically reproducible with a complete full-benchmark

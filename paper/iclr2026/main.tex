@@ -9,6 +9,7 @@
 \usepackage{multirow}
 \usepackage{url}
 \usepackage{hyperref}
+\hypersetup{hidelinks}
 \usepackage{xcolor}
 
 \newcommand{\dataset}{\textsc{WildDelusion}}
@@ -84,7 +85,7 @@ Because these are sensitive public conversations, released artifacts should mini
 
 \subsection{Release unit and schema}
 
-The released unit is one flagged user turn plus the available source-conversation context. Each row records source, split, row offset, conversation ID, a normalized message hash, target-message index and text, retrieval score, canonical annotation score and rationale, and contextual-verifier outputs. The 433-row artifact is available at \url{https://huggingface.co/datasets/danielfein/WildDelusionVerified}. The card uses \texttt{license: other}: WildChat is ODC-By, ShareChat specifies CC BY-NC 4.0, and no LMSYS-Chat-1M conversation text is redistributed. The benchmark is intended for model evaluation, not person-level inference. Appendix~\ref{app:benchmark-protocol} defines the reference next-response task, context policy, automatic endpoint, and required reporting.
+The released unit is one flagged user turn plus the available source-conversation context. Each row records source, split, row offset, conversation ID, a normalized message hash, target-message index and text, retrieval score, canonical annotation score and rationale, and contextual-verifier outputs. During double-blind review, the 433-row artifact and code are provided as anonymized supplementary materials; a permanent public URL will be added after review. The card uses \texttt{license: other}: WildChat is ODC-By, ShareChat specifies CC BY-NC 4.0, and no LMSYS-Chat-1M conversation text is redistributed. The benchmark is intended for model evaluation, not person-level inference. Appendix~\ref{app:benchmark-protocol} defines the reference next-response task, context policy, automatic endpoint, and required reporting.
 
 Table~\ref{tab:dataset-summary} characterizes the released artifact. The 433 target turns belong to 232 source conversations; the median conversation contributes one retained target (IQR 1--2). Cases generally require substantial context: the median stored window contains 21 messages, and the flagged turn occurs at median index 13. ShareChat contributes most cases, so source-stratified reporting is necessary when using the benchmark. Stored context length is a property of the reconstruction format, not an estimate of complete conversation length.
 
@@ -295,6 +296,10 @@ Disjoint 67 turns, exact package & 0.833 & [0.686, 0.967] \\
 The indicator test contains one frozen combination: layer 26, the \texttt{misinformation} token, maximum-over-position aggregation, and the inverse direction. This combination was selected from the 289-target public discovery partition before the eight-frame evaluation readouts were inspected. The original target-turn split failed to group different targets from the same source conversation. The corrected 67-turn subset was defined solely from provenance metadata by removing evaluation conversations represented in discovery; no behavior labels or readouts were used. Because this correction was post hoc and reduces the primary endpoint to 10 positives, the result is a sensitivity analysis rather than a confirmatory headline. The semantic-specificity analysis and true/neutral control are descriptive falsification analyses.
 
 The epistemic token panel did not outperform an equal-dimensional lexical placebo panel. A matched register control further showed nearly identical question-minus-direct shifts for benchmark claims (1.219 logits) and 40 true/neutral statements (1.206), a difference of 0.013 (Welch $p=.955$). The coordinate therefore does not support a falsity-specific or causal interpretation; at most it is a preliminary behavioral correlate confounded by declarative register.
+
+\section{LLM Usage Disclosure}
+
+Large language models played a material role in this work. GPT-5.5 generated the synthetic retrieval seed; GPT-5.4-mini served as the message, conversation, and response judge where specified in the methods; and OpenAI Codex assisted with research ideation, implementation, analysis scripts, visualization, and manuscript editing. The authors inspected the resulting code and aggregate artifacts, checked manuscript claims against saved outputs, and take full responsibility for the study design, analyses, and text. No LLM is listed as an author.
 
 \section{Reproducibility Boundaries}
 

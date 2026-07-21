@@ -161,6 +161,12 @@ plumbing, not produce research candidates.
 
 The complete anonymous ICLR-format study write-up is in
 `paper/iclr2026/main.tex`. A compiled, visually verified PDF is at
-`output/pdf/wild_delusion_jspace_iclr2026.pdf`. The manuscript's quantitative
+`output/pdf/wild_delusion_iclr2026.pdf`. The manuscript's quantitative
 claims are mapped back to saved result artifacts in
 `paper/iclr2026/CLAIM_AUDIT.md`.
+
+Build the double-blind supplementary archive with
+`uv run python scripts/build_anonymous_supplement.py`. The builder uses an
+explicit allowlist, filters non-redistributable LMSYS rows, removes identifying
+hosting references, scans for credentials and author identifiers, and writes a
+deterministic ZIP under `output/submission/`.
