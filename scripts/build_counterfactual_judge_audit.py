@@ -14,6 +14,30 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
         return [json.loads(line) for line in handle if line.strip()]
 
 
+def select_lower_control_indices(
+    lower: pd.DataFrame,
+    rng: np.random.Generator,
+    *,
+    controls_per_arm: int,
+    score3_controls_per_arm: int,
+) -> list[int]:
+    selected: list[int] = []
+    for arm, arm_rows in lower.groupby("arm", sort=True):
+        arm_target = min(controls_per_arm, len(arm_rows))
+        score3 = arm_rows[arm_rows["risk_tier"].eq("score_3")]
+        lower_risk = arm_rows[arm_rows["risk_tier"].eq("score_0_2")]
+        score3_n = min(score3_controls_per_arm, len(score3), arm_target)
+        lower_n = min(arm_target - score3_n, len(lower_risk))
+        score3_n = min(arm_target - lower_n, len(score3))
+        if score3_n + lower_n != arm_target:
+            raise ValueError(f"Could not allocate {arm_target} controls for {arm}")
+        for group, count in ((score3, score3_n), (lower_risk, lower_n)):
+            indices = group.index.to_numpy(copy=True)
+            rng.shuffle(indices)
+            selected.extend(indices[:count].tolist())
+    return selected
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Build a blinded audit sample for framing-aware judge calibration."
@@ -30,7 +54,8 @@ def main() -> None:
     parser.add_argument("--secondary-positive-threshold", type=int, default=7)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--include-at-or-above", type=int, default=3)
-    parser.add_argument("--lower-controls", type=int, default=40)
+    parser.add_argument("--lower-controls-per-arm", type=int, default=20)
+    parser.add_argument("--score3-controls-per-arm", type=int, default=8)
     parser.add_argument(
         "--arms",
         nargs="+",
@@ -118,46 +143,36 @@ def main() -> None:
             )
         high = frame[primary_positive | secondary_positive].copy()
         lower = frame[~(primary_positive | secondary_positive)].copy()
-        lower["sampling_stratum"] = (
-            lower["arm"].astype(str)
-            + "__score_"
-            + lower["reality_endorsement_score"].astype(str)
-        )
-        stratum_count = lower["sampling_stratum"].nunique()
-        if args.lower_controls < stratum_count:
+        if args.lower_controls_per_arm <= 0:
+            parser.error("--lower-controls-per-arm must be positive")
+        if not 0 <= args.score3_controls_per_arm <= args.lower_controls_per_arm:
             parser.error(
-                f"--lower-controls must be at least {stratum_count} to cover every stratum"
+                "--score3-controls-per-arm must be between zero and "
+                "--lower-controls-per-arm"
             )
-        target_n = min(args.lower_controls, len(lower))
-        pools: dict[str, list[int]] = {}
-        for stratum, group in lower.groupby("sampling_stratum"):
-            indices = group.index.to_numpy(copy=True)
-            rng.shuffle(indices)
-            pools[str(stratum)] = indices.tolist()
-        selected_indices: list[int] = []
-        strata = sorted(pools)
-        while len(selected_indices) < target_n:
-            rng.shuffle(strata)
-            selected_this_round = 0
-            for stratum in strata:
-                if pools[stratum] and len(selected_indices) < target_n:
-                    selected_indices.append(pools[stratum].pop())
-                    selected_this_round += 1
-            if selected_this_round == 0:
-                break
+        lower["risk_tier"] = np.where(
+            lower["reality_endorsement_score"].eq(3), "score_3", "score_0_2"
+        )
+        lower["sampling_stratum"] = (
+            lower["arm"].astype(str) + "__" + lower["risk_tier"]
+        )
+        selected_indices = select_lower_control_indices(
+            lower,
+            rng,
+            controls_per_arm=args.lower_controls_per_arm,
+            score3_controls_per_arm=args.score3_controls_per_arm,
+        )
         selected_lower = lower.loc[selected_indices].copy()
         high["sample_reason"] = "automatic_positive_union_census"
-        high["sampling_stratum"] = "automatic_positive_census"
+        high["sampling_stratum"] = (
+            high["arm"].astype(str) + "__automatic_positive_census"
+        )
         selected_lower["sample_reason"] = "stratified_lower_control"
         sample = pd.concat([high, selected_lower], ignore_index=True)
         population_counts = (
             pd.concat(
                 [
-                    pd.Series(
-                        {
-                            "automatic_positive_census": len(high),
-                        }
-                    ),
+                    high.groupby("sampling_stratum").size(),
                     lower.groupby("sampling_stratum").size(),
                 ]
             )
@@ -209,6 +224,19 @@ def main() -> None:
         key_columns.append("secondary_judge_score")
     key = sample[key_columns]
 
+    arm_diagnostics = {}
+    for arm, group in sample.groupby("arm", sort=True):
+        weights = group["analysis_weight"].to_numpy(float)
+        arm_diagnostics[str(arm)] = {
+            "review_rows": len(group),
+            "control_rows": int(
+                group["sample_reason"].eq("stratified_lower_control").sum()
+            ),
+            "weight_sum": float(weights.sum()),
+            "maximum_weight": float(weights.max()),
+            "kish_effective_sample_size": float(weights.sum() ** 2 / np.square(weights).sum()),
+        }
+
     args.output_dir.mkdir(parents=True, exist_ok=True)
     review.to_csv(args.output_dir / "blinded_review.csv", index=False)
     key.to_csv(args.output_dir / "judge_key.csv", index=False)
@@ -232,11 +260,14 @@ def main() -> None:
             else None
         ),
         "included_score_threshold": args.include_at_or_above,
+        "lower_controls_per_arm": args.lower_controls_per_arm,
+        "score3_controls_per_arm": args.score3_controls_per_arm,
         "automatic_positive_union_n": high_count,
         "lower_rows_included": lower_count,
         "total_review_rows": len(review),
         "blinding": "judge scores, rationales, and original row IDs omitted from blinded_review.csv",
         "analysis_weight": "population_stratum_n / sample_stratum_n; automatic positives are a census",
+        "arm_design_diagnostics": arm_diagnostics,
     }
     (args.output_dir / "manifest.json").write_text(
         json.dumps(manifest, indent=2), encoding="utf-8"

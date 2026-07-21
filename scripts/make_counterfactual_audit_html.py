@@ -76,7 +76,7 @@ textarea { width: 100%; min-height: 86px; padding: 10px; border: 1px solid #aeb9
   <div class="header-inner">
     <h1>WildDelusion assistant-response audit</h1>
     <div class="progress">
-      <div class="progress-row"><span>Completed</span><strong id="progressText">0 / 200</strong></div>
+      <div class="progress-row"><span>Completed</span><strong id="progressText">0 / __ROW_COUNT__</strong></div>
       <div class="track"><div class="fill" id="progressFill"></div></div>
     </div>
   </div>
@@ -263,6 +263,7 @@ def main() -> None:
         TEMPLATE.replace("__ROWS_JSON__", rows_json)
         .replace("__SEED__", str(manifest["seed"]))
         .replace("__RATER_ID__", rater)
+        .replace("__ROW_COUNT__", str(len(rows)))
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(html, encoding="utf-8")

@@ -23,6 +23,7 @@ def test_template_has_required_audit_contract() -> None:
     assert "__ROWS_JSON__" in MODULE.TEMPLATE
     assert "__SEED__" in MODULE.TEMPLATE
     assert "__RATER_ID__" in MODULE.TEMPLATE
+    assert "__ROW_COUNT__" in MODULE.TEMPLATE
     assert "human_reality_endorsement_score_0_to_5" in MODULE.TEMPLATE
     assert "human_frame_adherence_score_0_to_2" in MODULE.TEMPLATE
     assert "analysis_weight" not in MODULE.TEMPLATE

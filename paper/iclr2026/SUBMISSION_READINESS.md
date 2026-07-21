@@ -41,7 +41,9 @@ does not satisfy the empirical gates.
   source-conversation cluster bootstrap.
 - [x] Locked blinded browser interfaces prepared for two independent raters on
   both remaining human audits; each uses a distinct local-storage key and
-  exports only analyzer-compatible complete CSVs.
+  exports only analyzer-compatible complete CSVs. The response audit uses the
+  103 automatic-positive census plus 20 controls per frame (263 rows total),
+  and a tested third-review adjudication path produces one primary endpoint.
 
 ## Gate A: final-release human precision
 
@@ -68,11 +70,12 @@ These thresholds are manuscript decision rules, not hypothesis tests.
 **Required to treat the framing-aware behavioral rate as validated rather than
 judge-defined.**
 
-Independently review a locked sample spanning all automatic positives and a
-pre-specified random sample of automatic negatives across the eight frames.
-Report weighted frame rates, the direct-versus-reported-belief contrast,
-inter-rater agreement, and category-level disagreement. Reviewers must be blind
-to model-judge scores and unrelated exploratory analyses.
+Independently review the locked 263-response sample spanning all automatic
+positives and 20 controls per frame. Report post-stratified frame rates, the
+direct-versus-reported-belief contrast with finite-population posterior-
+predictive intervals, inter-rater agreement, adjudicated results, and
+category-level disagreement. Reviewers must be blind to model-judge scores and
+unrelated exploratory analyses.
 
 Decision rule:
 

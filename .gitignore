@@ -21,6 +21,7 @@ paper/iclr2026/figures/layer_sweep.png
 paper/iclr2026/figures/same_model_indicator_auc.png
 paper/iclr2026/figures/true_neutral_control.png
 output/submission/
+output/human_audit_handoff/
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal

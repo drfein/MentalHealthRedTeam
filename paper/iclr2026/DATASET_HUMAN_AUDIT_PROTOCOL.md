@@ -59,8 +59,8 @@ claims are not positive solely because they appear strange.
 3. Report 95% Wilson intervals for both.
 4. With two raters, report three-class and positive-versus-other Cohen's kappa
    and raw agreement.
-5. Resolve disagreements with a third blinded adjudication before opening the
-   hidden key or changing the manuscript.
+5. Resolve decision or exclusion-category disagreements with a third blinded
+   adjudication before opening the hidden key or changing the manuscript.
 
 ## Reproduction
 
@@ -78,9 +78,25 @@ uv run python scripts/make_wilddelusion_release_audit_html.py \
 After reviewers finish separate copies:
 
 ```bash
+uv run python scripts/build_human_audit_adjudication.py \
+  --kind release \
+  --reviews /path/to/rater_a.csv /path/to/rater_b.csv \
+  --blinded-review results/wilddelusion_release_human_audit/blinded_review.csv \
+  --output-dir results/wilddelusion_release_human_audit/adjudication
+uv run python scripts/make_wilddelusion_release_audit_html.py \
+  --review-csv results/wilddelusion_release_human_audit/adjudication/blinded_adjudication.csv \
+  --manifest results/wilddelusion_release_human_audit/adjudication/manifest.json \
+  --rater-id adjudicator \
+  --output results/wilddelusion_release_human_audit/adjudication/blinded_adjudication.html
+```
+
+After the adjudicator exports `adjudicated.csv`, run:
+
+```bash
 uv run python scripts/analyze_wilddelusion_release_human_audit.py \
   --reviews /path/to/rater_a.csv /path/to/rater_b.csv \
   --rater-names rater_a rater_b \
+  --adjudication results/wilddelusion_release_human_audit/adjudication/adjudicated.csv \
   --audit-key results/wilddelusion_release_human_audit/audit_key.csv \
   --output-dir results/wilddelusion_release_human_audit/analysis
 ```

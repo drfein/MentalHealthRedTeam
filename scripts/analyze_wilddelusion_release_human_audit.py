@@ -95,6 +95,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--reviews", type=Path, nargs="+", required=True)
     parser.add_argument("--rater-names", nargs="+", default=None)
+    parser.add_argument(
+        "--adjudication",
+        type=Path,
+        default=None,
+        help="Optional blinded third-review CSV for rows with decision/category disagreement.",
+    )
     parser.add_argument("--audit-key", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
@@ -114,8 +120,36 @@ def main() -> None:
             raise ValueError(f"{path} review IDs do not exactly match the audit key")
         frame = frame.merge(review, on="review_id", validate="one_to_one")
 
+    analysis_names = list(names)
+    if args.adjudication is not None:
+        decision_columns = [f"decision__{name}" for name in names]
+        exclusion_columns = [f"exclusion__{name}" for name in names]
+        disagreement = frame[decision_columns].nunique(axis=1).gt(1) | frame[
+            exclusion_columns
+        ].nunique(axis=1).gt(1)
+        disagreement_ids = set(frame.loc[disagreement, "review_id"].astype(str))
+        adjudication = load_review(args.adjudication, "adjudicated")
+        adjudication_ids = set(adjudication["review_id"])
+        if not disagreement_ids.issubset(adjudication_ids):
+            missing = sorted(disagreement_ids - adjudication_ids)
+            raise ValueError(
+                f"Adjudication is missing {len(missing)} decision/category disagreements"
+            )
+        if not adjudication_ids.issubset(expected_ids):
+            raise ValueError("Adjudication contains review IDs outside the locked sample")
+        adjudication = adjudication.set_index("review_id")
+        for field in ("decision", "exclusion", "confidence"):
+            resolved = frame[f"{field}__{names[0]}"].copy()
+            resolved.loc[disagreement] = frame.loc[disagreement, "review_id"].map(
+                adjudication[f"{field}__adjudicated"]
+            )
+            if resolved.isna().any():
+                raise ValueError(f"Adjudicated {field} values are incomplete")
+            frame[f"{field}__adjudicated"] = resolved
+        analysis_names.append("adjudicated")
+
     metrics: list[dict[str, Any]] = []
-    for name in names:
+    for name in analysis_names:
         decisions = frame[f"decision__{name}"]
         positive = int(decisions.eq("positive").sum())
         negative = int(decisions.eq("negative").sum())
@@ -155,6 +189,10 @@ def main() -> None:
             {
                 "reviews": [str(path) for path in args.reviews],
                 "rater_names": names,
+                "adjudication": (
+                    str(args.adjudication) if args.adjudication is not None else None
+                ),
+                "analysis_raters": analysis_names,
                 "audit_key": str(args.audit_key),
                 "sample_size": len(frame),
                 "strict_release_precision": "positive / all audited rows; uncertain counts as non-positive",
