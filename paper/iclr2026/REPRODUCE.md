@@ -16,7 +16,7 @@ and a local `pdflatex`/`bibtex` installation.
 
 Expected output:
 
-`output/pdf/wild_delusion_jspace_iclr2026.pdf`
+`output/pdf/wild_delusion_iclr2026.pdf`
 
 ## Evidence boundaries
 
@@ -24,9 +24,10 @@ Expected output:
   artifact.
 - `DATASET_HUMAN_AUDIT_PROTOCOL.md` locks the pending simple-random final-release
   audit.
-- `HUMAN_AUDIT_PROTOCOL.md` locks the pending 144-response public human endpoint.
-- `SUBMISSION_READINESS.md` specifies when unsupported J-space claims must be
-  demoted or removed.
+- `HUMAN_AUDIT_PROTOCOL.md` locks the pending human audit of the full-benchmark
+  response endpoint.
+- `SUBMISSION_READINESS.md` specifies the remaining empirical and submission
+  gates.
 
 The cached rebuild establishes claim-to-aggregate and rendering consistency, not
 independent replication of proprietary API calls. Full mining starts from the

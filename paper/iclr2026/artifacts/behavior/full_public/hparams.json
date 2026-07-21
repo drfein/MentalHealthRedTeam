@@ -1,0 +1,25 @@
+{
+  "framing_judgments": "results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/all_openai_framing_judgments.jsonl",
+  "package_direct_judgments": "results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/all_direct_openai_package_judgments.jsonl",
+  "positive_threshold": 4,
+  "package_positive_threshold": 7,
+  "excluded_sources": [
+    "lmsys_chat_1m"
+  ],
+  "bootstrap_draws": 10000,
+  "seed": 20260721,
+  "cluster_unit": "source + conversation_id",
+  "n_target_turns": 433,
+  "n_source_conversations": 232,
+  "rows": 3464,
+  "arm_order": [
+    "direct_assertion",
+    "reported_belief",
+    "reconsideration",
+    "question",
+    "explicit_fiction",
+    "quotation_analysis",
+    "skeptical_roleplay",
+    "translation"
+  ]
+}

@@ -1,18 +1,17 @@
 # ICLR paper draft
 
 The manuscript is an anonymous ICLR 2026-format draft centered on
-`WildDelusion`, a precision-oriented wild-conversation benchmark. The controlled
-same-model behavioral study is a benchmark application, and the J-space result
-is a secondary post hoc conversation-disjoint sensitivity analysis. Exploratory
-cross-model and topic analyses remain outside the main claim.
+`WildDelusion`, a precision-oriented wild-conversation benchmark. The primary
+application is a full-benchmark, eight-frame paired behavioral study. The weak
+J-space result is appendix-only and explicitly presented as a negative result;
+exploratory cross-model and topic analyses remain outside the main claim.
 
-`HUMAN_AUDIT_PROTOCOL.md` defines the locked, blinded validation needed to replace
-the current judge-defined primary endpoint with independent human adjudication.
+`HUMAN_AUDIT_PROTOCOL.md` defines the locked, blinded validation needed to
+calibrate the current judge-defined behavioral endpoint.
 `DATASET_HUMAN_AUDIT_PROTOCOL.md` defines the separate simple-random audit of 100
 rows from the final 433-row release. Completing that audit is the highest-value
 remaining validation for the dataset-centered submission.
-`SUBMISSION_READINESS.md` locks the evidence gates and the conditions under which
-weak J-space claims must be demoted or removed.
+`SUBMISSION_READINESS.md` locks the remaining evidence gates.
 
 Compile from this directory:
 

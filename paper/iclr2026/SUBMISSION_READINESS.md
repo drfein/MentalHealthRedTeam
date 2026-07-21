@@ -18,9 +18,12 @@ does not satisfy the empirical gates.
   passing tests, clean LaTeX build, and visual PDF inspection.
 - [x] Retrieval enrichment, contextual exclusion, source imbalance, privacy,
   and non-prevalence limitations stated explicitly.
-- [x] J-space semantic placebo and true/neutral framing controls reported
-  without semantic or causal overclaiming; weak steering results removed from
-  the manuscript.
+- [x] Full 433-target, eight-frame behavioral experiment completed; uncertainty
+  clusters all 232 source conversations and every paired contrast is saved.
+- [x] Exact SPIRALS direct-response endpoint run on all 433 responses; its
+  materially lower absolute rate is reported as endpoint sensitivity.
+- [x] J-space removed from the abstract, contributions, main figure, results,
+  discussion, and conclusion; the controlled null is appendix-only.
 - [x] Source-conversation duplication audited; benchmark uncertainty changed to
   source-conversation cluster bootstrap.
 - [x] Original J-space split leakage disclosed; main association replaced with
@@ -49,42 +52,41 @@ These thresholds are manuscript decision rules, not hypothesis tests.
 
 ## Gate B: human assistant-response endpoint
 
-**Required to keep the J-space predictor in the main claims.**
+**Required to treat the framing-aware behavioral rate as validated rather than
+judge-defined.**
 
-Complete the blinded 144-response public audit in
-`results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/human_audit_direct_assertion/`.
-Use score 4--5 as the locked primary endpoint and recompute the unchanged inverse
-layer-26 `misinformation` AUROC on the 67-turn conversation-disjoint subset,
-with source-conversation cluster intervals. The complete 144-turn result is
-secondary.
+Independently review a locked sample spanning all automatic positives and a
+pre-specified random sample of automatic negatives across the eight frames.
+Report weighted frame rates, the direct-versus-reported-belief contrast,
+inter-rater agreement, and category-level disagreement. Reviewers must be blind
+to model-judge scores and to the appendix J-space values.
 
 Decision rule:
 
-- Human AUROC remains directionally above 0.5 and the corrected interval/result
-  is reasonably informative: retain the observational J-space association, led
-  by the human endpoint; move LLM-rubric estimates to robustness analysis.
-- Human labels are too sparse or AUROC is unstable: describe the J-space result
-  as exploratory and remove it from the abstract.
-- Human AUROC is near or below 0.5: move J-space to the appendix or remove it;
-  retain only the behavioral framing benchmark if human labels validate that
-  result.
+- Human labels preserve direct assertion as the highest-rate frame and the
+  weighted direct-versus-reported-belief interval excludes zero: retain the
+  paired framing result as primary, led by the human-calibrated estimate.
+- Ordering is preserved but uncertainty is broad: retain the automatic paired
+  result as a benchmark demonstration and describe human evidence as supportive.
+- Ordering reverses or systematic rubric errors explain the contrast: remove the
+  behavioral headline and retain the dataset/resource contribution only.
 
 ## Gate C: model-family scope
 
-**Resolved conservatively.** The manuscript keeps all interpretability claims
-explicitly single-model, removes J-space from the title, and labels the result a
-post hoc sensitivity analysis. A future model-family replication must freeze its
-endpoint before inspecting outcomes and report null or reversed results.
+**Resolved conservatively.** The behavioral experiment is explicitly
+single-model. J-space is appendix-only and labeled a negative result. A future
+model-family replication must freeze its endpoint before inspecting outcomes
+and report null or reversed results.
 
 ## Final preflight
 
-- [ ] Replace pending audit language and figures using locked analysis outputs.
+- [ ] Replace pending audit language using locked human-analysis outputs.
 - [ ] Re-run `CLAIM_AUDIT.md` against every number in the final manuscript.
 - [ ] Confirm the anonymous repository/release policy for the target venue.
 - [ ] Re-check the current ICLR page limit, ethics requirements, and disclosure
   policy immediately before submission.
 - [ ] Compile from a clean environment and visually inspect every page.
 
-Current status: technically reproducible but not empirically submission-ready
-until Gate A is complete. Gate B determines whether J-space belongs in the main
-paper; Gate C determines the defensible model-family scope.
+Current status: technically reproducible with a complete full-benchmark
+behavioral analysis, but not empirically submission-ready until Gate A and Gate
+B are complete. J-space no longer gates any main-paper claim.

@@ -9,8 +9,8 @@ required_files=(
   paper/iclr2026/artifacts/verification_summary.json
   paper/iclr2026/artifacts/human_validation_metrics.csv
   paper/iclr2026/artifacts/release_manifest.json
-  paper/iclr2026/artifacts/jspace/conversation_disjoint_correction/behavior_by_frame.csv
-  paper/iclr2026/artifacts/jspace/conversation_disjoint_correction/endpoint_performance.csv
+  paper/iclr2026/artifacts/behavior/full_public/behavior_by_frame.csv
+  paper/iclr2026/artifacts/behavior/full_public/paired_frame_contrasts.csv
 )
 
 for path in "${required_files[@]}"; do
@@ -26,9 +26,9 @@ uv run --extra paper python scripts/plot_wilddelusion_dataset_overview.py \
   --human-validation paper/iclr2026/artifacts/human_validation_metrics.csv \
   --release-manifest paper/iclr2026/artifacts/release_manifest.json \
   --output paper/iclr2026/figures/wilddelusion_dataset_overview.png
-uv run --extra paper python scripts/plot_jspace_paper_main_figure_v2.py \
-  --results-root paper/iclr2026/artifacts/jspace \
-  --output paper/iclr2026/figures/heldout_main_v2.png
+uv run --extra paper python scripts/plot_full_counterfactual_behavior.py \
+  --results-dir paper/iclr2026/artifacts/behavior/full_public \
+  --output paper/iclr2026/figures/full_behavior_main.png
 
 (
   cd paper/iclr2026
@@ -39,5 +39,5 @@ uv run --extra paper python scripts/plot_jspace_paper_main_figure_v2.py \
 )
 
 mkdir -p output/pdf
-cp paper/iclr2026/main.pdf output/pdf/wild_delusion_jspace_iclr2026.pdf
-printf 'Built %s\n' "$ROOT/output/pdf/wild_delusion_jspace_iclr2026.pdf"
+cp paper/iclr2026/main.pdf output/pdf/wild_delusion_iclr2026.pdf
+printf 'Built %s\n' "$ROOT/output/pdf/wild_delusion_iclr2026.pdf"

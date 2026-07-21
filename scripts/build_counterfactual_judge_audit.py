@@ -29,6 +29,12 @@ def main() -> None:
         help="Optional intervention arms to include before sampling.",
     )
     parser.add_argument(
+        "--exclude-source",
+        action="append",
+        default=[],
+        help="Exclude one or more source labels before sampling.",
+    )
+    parser.add_argument(
         "--include-all",
         action="store_true",
         help="Include every row after arm filtering instead of score-based sampling.",
@@ -52,6 +58,8 @@ def main() -> None:
     frame = judgments.merge(
         prompts[keys + ["framed_text"]], on=keys, validate="one_to_one"
     )
+    if args.exclude_source:
+        frame = frame[~frame["source"].isin(set(args.exclude_source))].copy()
     if args.selected_original_indices is not None:
         selected = {
             int(value)
@@ -71,6 +79,10 @@ def main() -> None:
     if args.include_all:
         sample = frame.copy()
         sample["sample_reason"] = "complete_filtered_set"
+        sample["sampling_stratum"] = "complete_filtered_set"
+        sample["population_stratum_n"] = len(sample)
+        sample["sample_stratum_n"] = len(sample)
+        sample["analysis_weight"] = 1.0
         high_count = int(
             (sample["reality_endorsement_score"] >= args.include_at_or_above).sum()
         )
@@ -87,20 +99,57 @@ def main() -> None:
             + "__score_"
             + lower["reality_endorsement_score"].astype(str)
         )
-        weights = 1 / lower.groupby("sampling_stratum")[
-            "sampling_stratum"
-        ].transform("size")
-        selected_lower = lower.sample(
-            n=min(args.lower_controls, len(lower)),
-            weights=weights,
-            random_state=args.seed,
-            replace=False,
-        )
+        stratum_count = lower["sampling_stratum"].nunique()
+        if args.lower_controls < stratum_count:
+            parser.error(
+                f"--lower-controls must be at least {stratum_count} to cover every stratum"
+            )
+        target_n = min(args.lower_controls, len(lower))
+        pools: dict[str, list[int]] = {}
+        for stratum, group in lower.groupby("sampling_stratum"):
+            indices = group.index.to_numpy(copy=True)
+            rng.shuffle(indices)
+            pools[str(stratum)] = indices.tolist()
+        selected_indices: list[int] = []
+        strata = sorted(pools)
+        while len(selected_indices) < target_n:
+            rng.shuffle(strata)
+            selected_this_round = 0
+            for stratum in strata:
+                if pools[stratum] and len(selected_indices) < target_n:
+                    selected_indices.append(pools[stratum].pop())
+                    selected_this_round += 1
+            if selected_this_round == 0:
+                break
+        selected_lower = lower.loc[selected_indices].copy()
         high["sample_reason"] = (
             f"judge_score_at_least_{args.include_at_or_above}"
         )
+        high["sampling_stratum"] = "automatic_positive_census"
         selected_lower["sample_reason"] = "stratified_lower_control"
         sample = pd.concat([high, selected_lower], ignore_index=True)
+        population_counts = (
+            pd.concat(
+                [
+                    pd.Series(
+                        {
+                            "automatic_positive_census": len(high),
+                        }
+                    ),
+                    lower.groupby("sampling_stratum").size(),
+                ]
+            )
+            .rename("population_stratum_n")
+            .to_dict()
+        )
+        sample_counts = sample.groupby("sampling_stratum").size().to_dict()
+        sample["population_stratum_n"] = sample["sampling_stratum"].map(
+            population_counts
+        )
+        sample["sample_stratum_n"] = sample["sampling_stratum"].map(sample_counts)
+        sample["analysis_weight"] = (
+            sample["population_stratum_n"] / sample["sample_stratum_n"]
+        )
         high_count = len(high)
         lower_count = len(selected_lower)
     order = rng.permutation(len(sample))
@@ -124,6 +173,10 @@ def main() -> None:
         "original_row_idx",
         "arm",
         "sample_reason",
+        "sampling_stratum",
+        "population_stratum_n",
+        "sample_stratum_n",
+        "analysis_weight",
         "reality_endorsement_score",
         "frame_adherence_score",
         "behavior_label",
@@ -140,6 +193,7 @@ def main() -> None:
         "prompts": str(args.prompts),
         "seed": args.seed,
         "arms": args.arms,
+        "excluded_sources": args.exclude_source,
         "include_all": args.include_all,
         "selected_original_indices": (
             str(args.selected_original_indices)
@@ -151,6 +205,7 @@ def main() -> None:
         "lower_rows_included": lower_count,
         "total_review_rows": len(review),
         "blinding": "judge scores, rationales, and original row IDs omitted from blinded_review.csv",
+        "analysis_weight": "population_stratum_n / sample_stratum_n; automatic positives are a census",
     }
     (args.output_dir / "manifest.json").write_text(
         json.dumps(manifest, indent=2), encoding="utf-8"

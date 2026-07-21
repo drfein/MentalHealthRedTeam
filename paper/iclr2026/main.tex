@@ -26,7 +26,7 @@
 \maketitle
 
 \begin{abstract}
-Evaluating whether assistants reinforce highly implausible user beliefs requires natural conversations, but uniform sampling yields few positives and context-free classifiers conflate endorsement with role-play, fiction, translation, and quotation. We introduce \dataset{}, a precision-oriented benchmark of 433 LLM-context-verified target turns from 232 source conversations, mined from 6.13M embedded user messages across WildChat, ShareChat, and LMSYS-Chat-1M. A reproducible rare-event pipeline bootstraps an embedding query from 107 judged positives, retrieves 3,000 candidates, reconstructs context for 715 candidate turns, verifies 436, and releases the 433 whose source terms permit redistribution. On a separate, non-random transfer audit, 35 of 38 strict verifier positives are human-retained (92.1\% precision, 95\% Wilson CI [79.2, 97.3]). We demonstrate the benchmark with a same-model evaluation: \model{} responds to eight matched framings of 144 target claims. Direct assertion produces 23/144 endorsements (16.0\%), versus at most 3/144 (2.1\%) in every other frame. A secondary J-space sensitivity analysis has a suggestive point estimate on source conversations absent from discovery, but its interval includes chance and matched controls reject a content-specific interpretation. \dataset{} provides realistic, context-preserving cases for behavioral and interpretability audits while illustrating the controls needed for readable internal coordinates.
+Evaluating whether assistants reinforce highly implausible user beliefs requires natural conversations, but uniform sampling yields few positives and context-free classifiers conflate endorsement with role-play, fiction, translation, and quotation. We introduce \dataset{}, a precision-oriented benchmark of 433 LLM-context-verified target turns from 232 source conversations, mined from 6.13M embedded user messages across WildChat, ShareChat, and LMSYS-Chat-1M. A reproducible rare-event pipeline bootstraps an embedding query from 107 judged positives, retrieves 3,000 candidates, reconstructs context for 715 candidate turns, verifies 436, and releases the 433 whose source terms permit redistribution. On a separate, non-random transfer audit, 35 of 38 strict verifier positives are human-retained (92.1\% precision, 95\% Wilson CI [79.2, 97.3]). We then generate \model{} responses to eight matched framings of every released target. A framing-aware judge marks 75/433 direct-assertion responses as endorsements (17.3\%, 95\% source-conversation cluster-bootstrap CI [13.1, 22.4]), versus at most 13/433 (3.0\%) in every alternative frame. The smallest paired risk difference is 14.3 percentage points [10.5, 18.8]. The exact SPIRALS package rubric is more conservative, marking 20/433 direct responses (4.6\%), which makes endpoint sensitivity explicit. \dataset{} provides a reproducible, context-preserving test bed for behavioral audits on naturally occurring claims.
 \end{abstract}
 
 \section{Introduction}
@@ -35,16 +35,16 @@ Conversational language models can validate a user's false premise instead of ch
 
 Existing open chat corpora contain millions of natural interactions, but the target behavior is too rare for uniform annotation and too context-dependent for keyword search. We therefore construct \dataset{}, 433 publicly redistributable, LLM-context-verified target turns drawn from 232 source conversations in WildChat and ShareChat. The mining pipeline also searched LMSYS-Chat-1M \citep{zhao2024wildchat,zheng2023lmsys}, but excludes its three verified targets from the public artifact and all reported experiments under that source's terms. The pipeline combines synthetic-query embedding retrieval, package-compatible message annotation, source-conversation reconstruction, and a separate contextual verifier. The resulting benchmark is enriched rather than prevalence-representative: its purpose is to support model audits and controlled experiments on a difficult, naturally occurring behavior.
 
-We demonstrate one behavioral and one interpretability use of the benchmark. First, we transform 144 evaluation-set \dataset{} claims into eight matched conversational frames that preserve claim content while changing user commitment and task. Second, we ask whether an open model's internal state predicts its own response. The Jacobian lens decodes representations that a model is poised to verbalize at intermediate layers, collectively called \jspace{} \citep{gurnee2026jspace}. A named vocabulary coordinate such as \texttt{misinformation} appears immediately interpretable, but it may predict behavior through broad prompt geometry, speech act, or item difficulty rather than a faithful falsity representation. We therefore treat J-space as a secondary sensitivity analysis and distinguish predictive association from semantic interpretation.
+We demonstrate the benchmark by transforming every released target claim into eight matched conversational frames that preserve claim content while changing user commitment and task. This paired design isolates a practical failure mode: whether the same model response changes when implausible content is directly asserted, questioned, reported, quoted, fictionalized, translated, reconsidered, or placed in skeptical role-play. An exploratory Jacobian-lens analysis is retained in the appendix as a negative-methodological case study, not as a contribution or mechanistic claim.
 
 Our contributions are:
 \begin{enumerate}
     \item \textbf{A context-verified wild benchmark.} \dataset{} contains 433 LLM-filtered target turns from 232 source conversations in two redistributable open corpora, produced by a reproducible rare-event retrieval and conversation-verification pipeline with explicit exclusion reasons and an earlier 108-case human transfer audit.
-    \item \textbf{A controlled behavioral evaluation.} Eight matched speech acts separate exposure to implausible content from user commitment; direct assertion produces at least 7.7 times the endorsement rate of every other frame.
-    \item \textbf{A controlled J-space case study.} A frozen readout shows a preliminary association on source conversations absent from discovery, while lexical placebos and true/neutral content reject a content-specific interpretation.
+    \item \textbf{A full-benchmark paired evaluation.} Eight matched speech acts separate exposure to implausible content from user commitment across all 433 released targets; direct assertion increases judged endorsement by at least 14.3 percentage points relative to every alternative frame.
+    \item \textbf{An explicit endpoint-sensitivity analysis.} A framing-aware rubric and the exact SPIRALS assistant-endorsement rubric agree on 19 direct-response positives but differ substantially in absolute rate, documenting what each operationalization supports.
 \end{enumerate}
 
-Together, the dataset and evaluation separate three questions that are often collapsed: where risky interactions occur in wild data, when matched conversational framing changes model behavior, and what an interpretable internal readout can support mechanistically.
+Together, the dataset and evaluation separate two questions that are often collapsed: where risky interactions can be found in wild data, and when matched conversational framing changes model behavior.
 
 \section{Related Work}
 
@@ -53,9 +53,6 @@ Sycophancy evaluations show that preference optimization can reward agreement ov
 
 \paragraph{Wild conversational data.}
 WildChat and LMSYS-Chat-1M make large-scale natural interactions available for model analysis \citep{zhao2024wildchat,zheng2023lmsys}. Such corpora provide ecological diversity but create severe base-rate, privacy, licensing, duplication, and context-disambiguation problems. We address retrieval and exact duplication computationally, use a conversation-level verifier for fiction, role-play, translation, quotation, and jokes, and exclude source text whose terms prohibit redistribution.
-
-\paragraph{Internal readouts and causal interpretation.}
-Latent probes can reveal information unavailable in model outputs \citep{burns2023latent,kadavath2022know}, but predictive accuracy alone does not establish that a representation is used or semantically faithful. Control tasks and capacity-matched baselines are therefore central to probe interpretation \citep{hewitt2019probes}. Activation steering can test whether a direction is causally upstream of behavior \citep{turner2023activation}, though a null may reflect an inadequate intervention as well as a noncausal coordinate. The Jacobian lens is especially relevant because it exposes vocabulary-aligned, potentially verbalizable workspace states without fitting an outcome probe \citep{gurnee2026jspace}. We evaluate both the usefulness and the semantic specificity of these readouts.
 
 \section{Constructing \dataset{}}
 \label{sec:data}
@@ -118,79 +115,55 @@ Package score 7 / 8 / 9 / 10 & 87 / 135 / 131 / 80 \\
 \section{Controlled Benchmark Application}
 \label{sec:methods}
 
-\subsection{Discovery split and conversation-overlap correction}
-
-An initial outcome-balanced split assigned 290 verified target turns to discovery and 146 to evaluation, keeping generated variants of each target together. Source-license filtering leaves 289 public discovery turns and 144 public evaluation turns. A later provenance audit found that the split did not group different targets from the same source conversation: 36 source conversations cross the public split, involving 77 of the 144 evaluation turns. We retain all 144 public turns for the matched-framing behavioral analysis and cluster uncertainty by source conversation. For the frozen J-space endpoint, we report a post hoc metadata-only correction that removes every evaluation turn whose source conversation appears in discovery. This leaves 67 target turns from 62 unseen source conversations. The correction uses no behavior labels and does not change the frozen token, layer, sign, or aggregation.
-
 \subsection{Matched framing intervention}
 
-We preserve each evaluation-set claim verbatim and deterministically wrap it in eight frames: (i) direct assertion, (ii) explicit uncertainty question, (iii) reported third-party belief, (iv) quotation analysis, (v) explicit fiction, (vi) translation to French, (vii) reconsideration requesting counterevidence, and (viii) skeptical counselor role-play. Appendix~\ref{app:prompts} gives exact templates. This produces 1,152 public prompts. \model{} generates one greedy response per prompt, capped at 192 tokens.
+We preserve each released claim verbatim and deterministically wrap it in eight frames: (i) direct assertion, (ii) explicit uncertainty question, (iii) reported third-party belief, (iv) quotation analysis, (v) explicit fiction, (vi) translation to French, (vii) reconsideration requesting counterevidence, and (viii) skeptical counselor role-play. Appendix~\ref{app:prompts} gives exact templates. This produces 3,464 public prompts. \model{} generates one greedy response per prompt, capped at 192 tokens.
 
 The counterfactual changes more than syntax: it changes the conversational task and therefore the appropriate response. That is intentional for the behavioral experiment. The direct-versus-question comparison holds propositional content fixed while manipulating user commitment; fiction and translation serve as strong negatives for judge validity.
-
-\subsection{J-space readouts}
-
-We use the public Jacobian lens trained for \model{} \citep{qwen2025technical} and evaluate the model at the assistant-response boundary. For each source layer, the lens yields vocabulary-aligned logits over prompt positions. For a named token $w$, our main statistic is the maximum readout logit over positions, $m_{\ell,w}=\max_t z_{\ell,t,w}$. The frozen primary predictor is $-m_{26,\texttt{misinformation}}$: larger values mean weaker loading on \texttt{misinformation}. Layer 26 and direction were selected from the discovery trajectory before evaluation-set counterfactual readouts were inspected.
-
-As falsification checks, we compare an eight-word epistemic panel with an equal-dimensional panel of ordinary lexical placebo words and evaluate matched true/neutral statements. These checks are descriptive: the panel analysis preceded the provenance audit, and it is not treated as an independent confirmatory endpoint.
 
 \subsection{Behavioral measurement}
 
 The primary judge is GPT-5.4-mini with low reasoning effort and a framing-aware 0--5 rubric. Scores 4--5 require accepting or elaborating the claim as real; emotional validation without factual endorsement is negative. The threshold was frozen during judge calibration because score 3 often captured ambiguous language. We retain the graded score and a threshold-3 sensitivity analysis.
 
-We test outcome robustness rather than relying on one prompt \citep{zheng2023judge}. The exact \texttt{bot-endorses-delusion} SPIRALS package rubric, positive at its published threshold of 7, is well matched to the direct-assertion arm but can mistake compliant translations for real-world endorsement in other frames. We therefore use it only as a direct-assertion robustness endpoint. The framing-aware and package rubrics identify 23 and 9 direct-assertion positives. Both use GPT-5.4-mini and are alternative rubric formulations, not independent human ground truth.
+We test outcome robustness rather than relying on one prompt \citep{zheng2023judge}. The exact \texttt{bot-endorses-delusion} SPIRALS package rubric, positive at its published threshold of 7, is well matched to the direct-assertion arm but can mistake compliant translations for real-world endorsement in other frames. We therefore use it only as a direct-assertion robustness endpoint. The framing-aware and package rubrics identify 75 and 20 direct-assertion positives; 19 are shared. Both use GPT-5.4-mini and are alternative rubric formulations, not independent human ground truth.
 
 \subsection{Statistical analysis}
 
-The source conversation is the independent sampling cluster. Bootstrap intervals resample source conversations and retain all target turns and associated frames within each sampled cluster. Behavioral rates and direct-versus-alternative risk differences use 10,000 cluster-bootstrap draws over the 98 source conversations represented by the 144-turn public evaluation set. We also report paired exact McNemar tests with Holm correction across the seven direct-versus-alternative contrasts. Corrected J-space intervals use 10,000 cluster-bootstrap draws over 62 source conversations. Paired framing comparisons retain variants of the same target claim. The public evaluation artifact contains 1,152 responses at each frozen layer with no missing or malformed rows; the corrected J-space endpoint is evaluated only on the post hoc 67-turn subset described above.
+The source conversation is the independent sampling cluster. Bootstrap intervals resample all 232 source conversations and retain all target turns and associated frames within each sampled cluster. Behavioral rates and direct-versus-alternative risk differences use 10,000 cluster-bootstrap draws. For each contrast, an exact two-sided sign-flip test jointly reverses all target-level paired differences within each source conversation; we apply Holm correction across the seven contrasts. Paired comparisons retain variants of the same target claim. The full public artifact contains 3,464 responses with no missing or malformed rows.
 
 \section{Results}
 \label{sec:results}
 
 \subsection{Direct assertion produces the highest endorsement rate}
 
-Figure~\ref{fig:main}A shows a sharp framing gradient. Direct assertions produce 23/144 endorsements (16.0\%, 95\% source-conversation cluster-bootstrap CI [8.4, 24.6]). Reported belief produces 3/144 (2.1\%, [0.0, 4.5]), reconsideration 2/144 (1.4\%, [0.0, 3.4]), quotation analysis 1/144 (0.7\%, [0.0, 2.4]), and the remaining four frames none. Giving each of the 98 source conversations equal weight yields the same ordering: 13.7\% for direct assertion and at most 1.0\% for every other frame. All seven paired direct-versus-alternative cluster intervals exclude zero. The smallest risk difference is direct assertion versus reported belief: 13.9 percentage points [6.8, 21.7], with Holm-adjusted exact McNemar $p=1.1\times10^{-5}$. Thus, among these deterministic templates, the same claim is endorsed most often when presented as the user's own assertion.
+Figure~\ref{fig:main}A shows a sharp framing gradient on the complete public benchmark. Direct assertions produce 75/433 endorsements (17.3\%, 95\% source-conversation cluster-bootstrap CI [13.1, 22.4]). Reported belief produces 13/433 (3.0\%, [1.2, 5.1]), reconsideration 4/433 (0.9\%, [0.2, 1.9]), questions and explicit fiction 2/433 each (0.5\%), quotation analysis and skeptical role-play 1/433 each (0.2\%), and translation none. Giving each source conversation equal weight yields the same ordering: 17.2\% for direct assertion and at most 1.8\% for every other frame.
+
+All seven paired direct-versus-alternative cluster intervals exclude zero (Figure~\ref{fig:main}B). The smallest risk difference is direct assertion versus reported belief: 14.3 percentage points [10.5, 18.8], with 67 direct-only and 5 reported-belief-only positives (Holm-adjusted exact source-conversation sign-flip $p=5.5\times10^{-13}$). Thus, among these deterministic templates, the same claim is endorsed most often when presented as the user's own assertion.
 
 \begin{figure*}[t]
     \centering
-    \includegraphics[width=.94\textwidth]{figures/heldout_main_v2.png}
-    \caption{Controlled same-model evaluation. \textbf{A:} Assistant endorsement by user framing (144 target turns from 98 source conversations per frame). \textbf{B:} Direct-assertion prediction by the frozen inverse \texttt{misinformation} readout after excluding every evaluation turn whose source conversation appears in discovery (67 target turns from 62 conversations). Intervals are 95\% source-conversation cluster-bootstrap intervals; $n+$ is the number of positive responses. Panel B is a post hoc metadata-only leakage correction and is interpreted as a sensitivity analysis.}
+    \includegraphics[width=.94\textwidth]{figures/full_behavior_main.png}
+    \caption{Full-benchmark controlled evaluation of \model{}. \textbf{A:} Assistant endorsement rates for all 433 target turns under each frame. \textbf{B:} Paired target-level risk differences between direct assertion and each alternative frame. Intervals are 95\% source-conversation cluster-bootstrap intervals over 232 source conversations.}
     \label{fig:main}
 \end{figure*}
 
-\subsection{The frozen association is preliminary after leakage correction}
+\subsection{Absolute endorsement depends on the rubric}
 
-On the 144-turn public evaluation set, the frozen layer-26 inverse \texttt{misinformation} indicator reaches \auc{} 0.700 under the framing-aware endpoint. After removing source-conversation overlap with discovery, its point estimate is similar at 0.687, but the 95\% source-conversation cluster-bootstrap interval is broad and includes chance [0.475, 0.872] (10 positives among 67 turns; Figure~\ref{fig:main}B). Under the exact SPIRALS package rubric, the unchanged predictor reaches 0.833 [0.686, 0.967], but only four corrected-subset responses are positive. The evidence therefore supports at most a preliminary observational association, not a confirmed predictor. Both endpoints use the same judge model and do not substitute for human validation.
-
-\subsection{Named coordinates do not establish semantic specificity}
-
-The exploratory epistemic panel does not outperform its equal-dimensional lexical placebo panel. Because this analysis predates the conversation-overlap audit, we treat it as descriptive negative evidence and do not report its selected-layer estimates as confirmatory results.
-
-Named tokens are therefore useful handles on distributed geometry, but their English labels should not be read as identified mechanisms. Exploratory discovery-panel results are reported only in the repository because they were used for selection rather than confirmation.
-
-\subsection{Item difficulty contributes, but the assertion shift is generic}
-
-An exploratory cross-arm analysis indicates that item-level plausibility or difficulty contributes to the readout. It predates the conversation-overlap correction and is not used as evidence for a mechanism.
-
-The true/neutral control rejects a strong semantic interpretation of the framing shift. We construct 40 ordinary or verifiably true statements in matched direct and question frames and extract the same layer-26 readout. The mean question-minus-direct shift is 1.219 logits for the 144 public benchmark claims and 1.206 for controls, a difference of only 0.013 (Welch $p=.955$). The global shift is therefore better understood as sensitivity to declarative versus interrogative register than as content-specific suppression of falsity representation.
+The exact SPIRALS package rubric marks 20/433 direct responses positive (4.6\%, 95\% source-conversation cluster-bootstrap CI [2.5, 7.1]). Nineteen are also positive under the framing-aware rubric; one is package-only, while 56 are framing-only. The package rubric demands stronger, more explicit assistant endorsement and was not designed to compare translation or fiction frames. The paired framing result is therefore the primary analysis, while the package count shows that the absolute direct-assertion rate is operationalization-dependent.
 
 \section{Discussion}
 
 The primary resource contribution is a benchmark of naturally occurring, LLM-context-verified user claims drawn from two redistributable open conversation corpora after searching three. Its construction addresses two practical obstacles that scripted evaluations do not: finding a rare behavior among millions of messages and determining from prior turns whether an apparently implausible statement is asserted, quoted, translated, fictionalized, or playful. The source imbalance and retrieval enrichment limit representativeness, but the retained target turns and context provide realistic starting points for controlled model evaluation.
 
-Readable internal coordinates support distinct claims. \emph{Predictive validity} asks whether a frozen readout forecasts behavior on unseen examples. \emph{Semantic specificity} asks whether the named coordinate carries information beyond matched arbitrary coordinates and nuisance factors. Our layer-26 indicator has a suggestive corrected point estimate, but the primary interval includes chance and the register control rejects a content-specific interpretation. Keeping these claims separate is the paper's main interpretability conclusion.
+The framing result is narrower but clear within this experiment. Direct user assertion produces the highest endorsement rate among our eight deterministic templates; questioning, quoting, reconsidering, or explicitly fictionalizing the same claim sharply reduces endorsement. The wrappers also change conversational purpose, so this result does not identify a universal real-world speech-act hierarchy.
 
-The framing result is narrower but clear within this experiment. Direct user assertion produces the highest endorsement rate among our eight deterministic templates; questioning, quoting, reconsidering, or explicitly fictionalizing the same claim sharply reduces endorsement. The wrappers also change conversational purpose, so this result does not identify a universal real-world speech-act hierarchy. Within direct assertions, lower \texttt{misinformation} loading is only a candidate risk marker requiring human-endpoint and model-family replication. The coordinate also encodes declarative register, and arbitrary vocabulary coordinates recover similar workspace geometry. A readable label therefore warrants no stronger default interpretation than a conventional probe.
-
-The J-space analysis does not show that the model ``knows the claim is false but chooses to agree,'' nor that it fails to represent falsity. At most, it identifies a vocabulary-aligned correlate whose interpretation remains confounded by register and whose uncertainty is large after conversation-disjoint correction.
+The framing-aware endpoint is intentionally sensitive to accepting or elaborating a claim as real, whereas the package endpoint is stricter. Their discrepancy rules out presenting 17.3\% as an endpoint-free failure rate. The robust automatic conclusion is comparative: under the framing-aware rubric, direct assertion is the condition most likely to elicit agreement. Human adjudication and replication across model families remain necessary before treating either automatic rate as a model-level safety score.
 
 \section{Limitations}
 
 The positive class is selected by embedding retrieval and LLM judges, so \dataset{} is not a prevalence sample of public chatbot use. The 6.13M corpus count is the materialized embedding set, not every extracted row, and the source distribution is dominated by ShareChat. The public 433 rows represent 232 source conversations, and 62 conversations contribute multiple retained targets; exact deduplication does not remove paraphrases or repeated users. Analyses must therefore cluster by source conversation rather than treating rows as independent.
 
-The dataset's conversation verifier has a 108-case human transfer audit, but that audit is non-random, predates the final retrieval pool, and was not independently double-coded; the 433 released rows are not exhaustively human-adjudicated. The original public 289/144 target-turn split allowed 36 source conversations to cross partitions. Our post hoc metadata-only correction leaves 67 evaluation turns from 62 unseen conversations, but the reduced primary endpoint has only 10 positives and its interval includes chance; the package endpoint has four positives. The assistant-response endpoint is entirely judge-defined, and both rubric formulations use the same judge model. Our deterministic wrappers alter conversational purpose in addition to linguistic form, and generated one-turn responses do not model long feedback loops.
-
-Mechanistically, we study one open-weight model and one pretrained Jacobian lens. The layer-26 result may depend on model family, lens training corpus, tokenization, or maximum-over-position aggregation. Lexical placebos are useful but do not span every nuisance direction, and the true/neutral control contains only 40 manually written English statements. Replication in additional model families with public lenses and more same-model positive outcomes is required.
+The dataset's conversation verifier has a 108-case human transfer audit, but that audit is non-random, predates the final retrieval pool, and was not independently double-coded; the 433 released rows are not exhaustively human-adjudicated. The assistant-response endpoint is entirely judge-defined, and both rubric formulations use the same judge model. Their different absolute rates demonstrate material rubric sensitivity. Our deterministic wrappers alter conversational purpose in addition to linguistic form, and generated one-turn responses do not model long feedback loops. The behavioral experiment covers one open-weight model under greedy decoding, so it establishes a benchmark use case rather than a model-family generalization.
 
 \section{Ethics and Data Governance}
 \label{sec:ethics}
@@ -201,7 +174,7 @@ The dataset is enriched for implausible beliefs and must not be used as a clinic
 
 \section{Conclusion}
 
-We introduce \dataset{}, a context-preserving benchmark of 433 target turns from 232 source conversations, mined from 6.13M user messages with a reproducible rare-event retrieval and verification pipeline. Its natural claims support controlled evaluations that would be difficult to construct from synthetic prompts alone: direct user assertion is the highest-endorsement framing among eight matched templates. A secondary J-space case study yields a preliminary observational association on unseen conversations, while a matched register control rejects the stronger semantic story. The central contribution is the reusable wild-data benchmark; the accompanying experiments show both its value for behavioral audits and the care required when interpreting readable internal coordinates.
+We introduce \dataset{}, a context-preserving benchmark of 433 target turns from 232 source conversations, mined from 6.13M user messages with a reproducible rare-event retrieval and verification pipeline. Its natural claims support controlled evaluations that would be difficult to construct from synthetic prompts alone: across all released targets, direct user assertion is the highest-endorsement framing among eight matched templates. The central contribution is the reusable wild-data benchmark and a full-benchmark paired evaluation with transparent endpoint sensitivity.
 
 \bibliography{references}
 \bibliographystyle{iclr2026_conference}
@@ -252,7 +225,7 @@ Verifier score \auc{} & -- & 108 & 0.824 [0.723, 0.906] \\
 \section{Reference Benchmark Protocol}
 \label{app:benchmark-protocol}
 
-The reference task is to generate the next assistant response after the flagged user turn. The evaluated model receives \texttt{messages[:target\_message\_index + 1]} using its standard chat template, with no source turns after the target and no retrieval or external tools. Reports must identify the model revision, system prompt, decoding parameters, and maximum output length. We recommend evaluating all 433 target turns. Because these belong to 232 source conversations, uncertainty must be clustered by the composite source and conversation ID. The study-specific public 289/144 split was stratified on \model{} outcomes, permits source-conversation overlap, and must not be used as a general-purpose leaderboard split.
+The reference task is to generate the next assistant response after the flagged user turn. The evaluated model receives \texttt{messages[:target\_message\_index + 1]} using its standard chat template, with no source turns after the target and no retrieval or external tools. Reports must identify the model revision, system prompt, decoding parameters, and maximum output length. We recommend evaluating all 433 target turns. Because these belong to 232 source conversations, uncertainty must be clustered by the composite source and conversation ID.
 
 The reproducible automatic endpoint is the pinned package's exact \texttt{bot-endorses-delusion} rubric at threshold 7, with the judge model and revision reported. Results should include the positive count, target-turn-weighted rate, source-conversation-macro rate, and 95\% source-conversation cluster-bootstrap intervals, plus source-stratified counts for ShareChat--ChatGPT, WildChat, and ShareChat--Grok. Automatic labels are not human ground truth, and a lower endorsement rate alone does not establish response quality; comparative claims should include human validation and a separately specified audit for refusal, irrelevance, or other unhelpful behavior. The machine-readable contract is stored in \texttt{configs/wilddelusion\_benchmark\_protocol.json}.
 
@@ -277,7 +250,7 @@ Let \texttt{CLAIM} be the original target message, reproduced verbatim.
 The judge receives the frame name, framed user message, and assistant response. It assigns \texttt{reality\_endorsement\_score} from 0 (explicitly challenges, reality-tests, or treats only as quoted/fictional) to 5 (strongly endorses as real or adds confirming real-world details), plus a 0--2 frame-adherence score. The prompt explicitly states that emotional validation is not factual endorsement and that words inside translation, quotation, story, or role-play are not endorsement unless the assistant steps outside that frame. The complete prompt is stored in \texttt{scripts/judge\_semantic\_counterfactual\_responses.py}.
 
 \begin{table}[h]
-\caption{Primary behavioral outcomes on 144 target turns from 98 source conversations. Turn rates weight targets equally; conversation-macro rates first average within source conversation and then weight conversations equally. Cluster-bootstrap intervals are reported in the main text and saved artifact.}
+\caption{Primary behavioral outcomes on 433 target turns from 232 source conversations. Turn rates weight targets equally; conversation-macro rates first average within source conversation and then weight conversations equally.}
 \label{tab:behavior}
 \centering
 \small
@@ -285,20 +258,22 @@ The judge receives the frame name, framed user message, and assistant response. 
 \toprule
 Frame & Positive & Turn rate & Conv. macro \\
 \midrule
-Direct assertion & 23 & 16.0\% & 13.7\% \\
-Reported belief & 3 & 2.1\% & 1.0\% \\
-Reconsideration & 2 & 1.4\% & 0.5\% \\
-Quotation analysis & 1 & 0.7\% & 1.0\% \\
-Question & 0 & 0.0\% & 0.0\% \\
-Explicit fiction & 0 & 0.0\% & 0.0\% \\
-Skeptical role-play & 0 & 0.0\% & 0.0\% \\
+Direct assertion & 75 & 17.3\% & 17.2\% \\
+Reported belief & 13 & 3.0\% & 1.8\% \\
+Reconsideration & 4 & 0.9\% & 0.3\% \\
+Question & 2 & 0.5\% & 0.2\% \\
+Explicit fiction & 2 & 0.5\% & 0.2\% \\
+Quotation analysis & 1 & 0.2\% & 0.2\% \\
+Skeptical role-play & 1 & 0.2\% & 0.2\% \\
 Translation & 0 & 0.0\% & 0.0\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\section{Additional J-space Results}
+\section{Exploratory J-space Negative Result}
 \label{app:additional}
+
+We explored whether a public Jacobian lens for \model{} \citep{qwen2025technical,gurnee2026jspace} could predict the model's direct-assertion behavior at the assistant-response boundary. For vocabulary token $w$, the readout was the maximum logit over prompt positions, $m_{\ell,w}=\max_t z_{\ell,t,w}$. A discovery analysis selected the inverse layer-26 \texttt{misinformation} coordinate. This analysis is appendix-only because the original target-level split allowed source-conversation overlap, the corrected interval includes chance, and the named coordinate failed semantic-specificity controls.
 
 \begin{table}[h]
 \caption{Frozen layer-26 indicator sensitivity after source-conversation leakage correction. Higher predictor values mean weaker \texttt{misinformation} loading. Intervals cluster-bootstrap source conversations.}
@@ -319,8 +294,10 @@ Disjoint 67 turns, exact package & 0.833 & [0.686, 0.967] \\
 \paragraph{Selection and multiplicity.}
 The indicator test contains one frozen combination: layer 26, the \texttt{misinformation} token, maximum-over-position aggregation, and the inverse direction. This combination was selected from the 289-target public discovery partition before the eight-frame evaluation readouts were inspected. The original target-turn split failed to group different targets from the same source conversation. The corrected 67-turn subset was defined solely from provenance metadata by removing evaluation conversations represented in discovery; no behavior labels or readouts were used. Because this correction was post hoc and reduces the primary endpoint to 10 positives, the result is a sensitivity analysis rather than a confirmatory headline. The semantic-specificity analysis and true/neutral control are descriptive falsification analyses.
 
+The epistemic token panel did not outperform an equal-dimensional lexical placebo panel. A matched register control further showed nearly identical question-minus-direct shifts for benchmark claims (1.219 logits) and 40 true/neutral statements (1.206), a difference of 0.013 (Welch $p=.955$). The coordinate therefore does not support a falsity-specific or causal interpretation; at most it is a preliminary behavioral correlate confounded by declarative register.
+
 \section{Reproducibility Boundaries}
 
-The repository records exact model IDs, random seeds, split IDs, prompts, readout layers, thresholds, and bootstrap counts. Core values are: split seed 20260716; the public 289/144 target-turn discovery/evaluation split; a metadata-only 67-turn, 62-conversation corrected subset; seven-layer discovery sweep at layers 4, 8, 12, 16, 20, 24, and 26; and 10,000 source-conversation cluster-bootstrap draws for corrected behavioral and indicator intervals. The hosted 433-row export has canonical content digest \texttt{dd34ec93...4dc}; the release verifier checks every conversation, target turn, and metadata field against the authoritative pipeline output after excluding LMSYS-Chat-1M. API models are versioned where available, but proprietary weights and service behavior cannot be reconstructed from the repository alone. Public source datasets may also change or become gated. The derived dataset is therefore a reproducibility aid, not a substitute for preserving source snapshots under their licenses.
+The repository records exact model IDs, random seeds, prompts, thresholds, and bootstrap counts. The primary behavioral artifact contains all 433 public targets under all eight frames and uses 10,000 source-conversation cluster-bootstrap draws. The appendix also preserves the exploratory split IDs, readout layers, and controls needed to reproduce the negative J-space case study. The hosted 433-row export has canonical content digest \texttt{dd34ec93...4dc}; the release verifier checks every conversation, target turn, and metadata field against the authoritative pipeline output after excluding LMSYS-Chat-1M. API models are versioned where available, but proprietary weights and service behavior cannot be reconstructed from the repository alone. Public source datasets may also change or become gated. The derived dataset is therefore a reproducibility aid, not a substitute for preserving source snapshots under their licenses.
 
 \end{document}
