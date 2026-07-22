@@ -21,9 +21,12 @@ does not satisfy the empirical gates.
 
 - [x] Dataset-first title, abstract, contribution order, Figure 1, discussion,
   and conclusion.
-- [x] Public 433-target-turn release from 232 source conversations with a detailed
-  dataset card, intended-use limits, explicit source-license filtering, and a
-  reference next-response protocol.
+- [x] Public 522-target-turn release from 321 source conversations with two
+  explicit discovery splits, a detailed dataset card, intended-use limits,
+  explicit source-license filtering, and a reference next-response protocol.
+- [x] Hosted combined parquet verified byte-for-byte: 522 rows, no LMSYS text,
+  no target integrity errors, SHA-256
+  `4aa19e12933e16ef3119be00d3031fc16a8fd22db56a18d84c6b53ae51c8cab3`.
 - [x] Exact release-integrity verification against authoritative pipeline rows:
   433 unique rows, no conversation or target mismatches, canonical SHA-256
   `dd34ec93a5fae80e4d9b82017940342206e7cd849dc03cbb9e74e822fadc94dc`.
@@ -50,9 +53,11 @@ does not satisfy the empirical gates.
 
 **Required for a dataset-centered submission.**
 
-Complete two independent reviews of the locked 100-row simple-random sample in
-`results/wilddelusion_release_human_audit/`. Report strict precision with a 95%
-Wilson interval and inter-rater agreement.
+Complete two independent reviews of the locked 100-row sample in
+`results/wilddelusion_combined_human_audit/`, containing 62 primary-route and 38
+legacy-route rows. Report strict precision with 95% Wilson intervals by route,
+post-stratified combined precision with a stratified bootstrap interval, and
+inter-rater agreement.
 
 Decision rule:
 
@@ -61,7 +66,7 @@ Decision rule:
   audit in the abstract and Figure 1 with the final-release estimate.
 - Strict precision 0.70--0.85: describe the artifact as an LLM-enriched candidate
   benchmark, publish human labels, and make adjudication part of evaluation.
-- Strict precision below 0.70: do not headline the 433 rows as verified cases;
+- Strict precision below 0.70: do not headline the 522 rows as verified cases;
   filter or relabel the release before submission.
 
 These thresholds are manuscript decision rules, not hypothesis tests.

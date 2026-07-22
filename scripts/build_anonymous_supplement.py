@@ -16,11 +16,12 @@ import zipfile
 from pathlib import Path
 
 
-PUBLIC_ROWS = 433
+PUBLIC_ROWS = 522
+PRIMARY_BEHAVIOR_TARGETS = 433
 PUBLIC_BEHAVIOR_ROWS = 3_464
 FIXED_ZIP_TIME = (2026, 1, 1, 0, 0, 0)
-RELEASE_JSONL = Path("data/releases/WildDelusionVerified/train.jsonl")
-RELEASE_MANIFEST = Path("data/releases/WildDelusionVerified/manifest.json")
+RELEASE_JSONL = Path("data/releases/WildDelusionCombined/train.jsonl")
+RELEASE_MANIFEST = Path("data/releases/WildDelusionCombined/manifest.json")
 
 ROOT_FILES = ("pyproject.toml", "uv.lock")
 COPY_TREES = (
@@ -30,6 +31,9 @@ COPY_TREES = (
 ARTIFACT_FILES = (
     "paper/iclr2026/artifacts/README.md",
     "paper/iclr2026/artifacts/claim_verification.json",
+    "paper/iclr2026/artifacts/combined_release_characterization.json",
+    "paper/iclr2026/artifacts/combined_release_integrity.json",
+    "paper/iclr2026/artifacts/combined_release_manifest.json",
     "paper/iclr2026/artifacts/human_validation_metrics.csv",
     "paper/iclr2026/artifacts/mining_settings.json",
     "paper/iclr2026/artifacts/release_characterization.json",
@@ -41,6 +45,7 @@ ARTIFACT_FILES = (
 CONFIG_FILES = (
     "configs/default.yaml",
     "configs/wilddelusion_benchmark_protocol.json",
+    "configs/wilddelusion_combined_release_summary.json",
     "configs/wilddelusion_release_summary.json",
 )
 PAPER_FILES = (
@@ -68,8 +73,11 @@ SCRIPT_FILES = (
     "scripts/bootstrap_embedding_mechanisms.py",
     "scripts/build_counterfactual_judge_audit.py",
     "scripts/build_human_audit_adjudication.py",
+    "scripts/build_legacy_expansion_candidates.py",
+    "scripts/build_wilddelusion_combined_release.py",
     "scripts/build_wilddelusion_public_release.py",
     "scripts/build_wilddelusion_release_human_audit.py",
+    "scripts/filter_positive_annotations.py",
     "scripts/finalize_openai_embeddings_and_retrieve.py",
     "scripts/judge_generated_responses_with_package.py",
     "scripts/judge_semantic_counterfactual_responses.py",
@@ -81,6 +89,7 @@ SCRIPT_FILES = (
     "scripts/populate_verification_contexts.py",
     "scripts/rebuild_paper.sh",
     "scripts/run_hypothetical_bucket_calibration.py",
+    "scripts/verify_hf_combined_release.py",
     "scripts/verify_wilddelusion_release.py",
     "scripts/verify_paper_claims.py",
 )
@@ -90,6 +99,7 @@ TEST_FILES = (
     "tests/test_dataset_adapters.py",
     "tests/test_full_counterfactual_behavior.py",
     "tests/test_human_audit_analysis.py",
+    "tests/test_legacy_expansion.py",
     "tests/test_release_audit_tools.py",
     "tests/test_response_audit_html.py",
     "tests/test_retrieval.py",
@@ -158,18 +168,16 @@ def redact_text_files(stage: Path) -> None:
             "results/full_public_behavior/prompts.jsonl",
         ),
         (
-            'dataset = load_dataset("danielfein/WildDelusionVerified", split="train")',
-            'dataset = load_dataset("json", data_files="data/releases/WildDelusionVerified/train.jsonl", split="train")',
+            'dataset = load_dataset("danielfein/WildDelusionCombined", split="train")',
+            'dataset = load_dataset("json", data_files="data/releases/WildDelusionCombined/train.jsonl", split="train")',
         ),
         (
-            "https://huggingface.co/datasets/danielfein/WildDelusionVerified",
+            "https://huggingface.co/datasets/danielfein/WildDelusionCombined",
             "ANONYMOUS_DATASET_URL_ADDED_AFTER_REVIEW",
         ),
-        (
-            "hf://datasets/danielfein/WildDelusionVerified@7639c02b593e437bcea32259db4c0a5da29bd79d/train.jsonl",
-            "supplement://data/releases/WildDelusionVerified/train.jsonl",
-        ),
+        ("danielfein/WildDelusionCombined", "anonymous/WildDelusionCombined"),
         ("danielfein/WildDelusionVerified", "anonymous/WildDelusionVerified"),
+        ("danielfein/WildDelusion", "anonymous/WildDelusion"),
         (
             "[`drfein/MentalHealthRedTeam`](https://github.com/drfein/MentalHealthRedTeam)",
             "the anonymized code in this supplement",
@@ -219,14 +227,15 @@ def write_readme(stage: Path) -> None:
     (stage / "README.md").write_text(
         """# WildDelusion anonymous supplement
 
-This archive accompanies an anonymous submission. It contains the 433-row
-redistributable benchmark, the 3,464 public matched-frame generations and both
-judge outputs, aggregate paper artifacts, and the code needed to reproduce the
-mining and evaluation analyses. No LMSYS-Chat-1M conversation text is included.
+This archive accompanies an anonymous submission. It contains the 522-row
+redistributable benchmark, the 3,464 matched-frame generations and both judge
+outputs for the 433-row primary discovery cohort, aggregate paper artifacts,
+and the code needed to reproduce the mining and evaluation analyses. No
+LMSYS-Chat-1M conversation text is included.
 
 Install with `uv sync --extra paper --extra dev`, run tests with `uv run pytest`,
 and rebuild the manuscript with `scripts/rebuild_paper.sh`. See
-`docs/WILDDELUSION_DATASET_CARD.md` for licensing, privacy, and intended-use
+`docs/WILDDELUSION_COMBINED_DATASET_CARD.md` for licensing, privacy, and intended-use
 constraints. The permanent public repository and dataset URLs are withheld
 during double-blind review.
 """,
@@ -297,7 +306,7 @@ def validate_contents(stage: Path) -> None:
                     raise ValueError(f"{relative}:{line_number}: contains excluded LMSYS text")
 
     documented_paths = (
-        "data/releases/WildDelusionVerified/train.jsonl",
+        "data/releases/WildDelusionCombined/train.jsonl",
         "results/full_public_behavior/prompts.jsonl",
         "results/full_public_behavior/generations_complete.jsonl",
         "results/full_public_behavior/all_openai_framing_judgments.jsonl",
@@ -369,7 +378,7 @@ def main() -> None:
         copy_file(root, stage, relative)
     for relative in COPY_TREES:
         copy_tree(root, stage, relative)
-    copy_file(root, stage, "docs/WILDDELUSION_DATASET_CARD.md")
+    copy_file(root, stage, "docs/WILDDELUSION_COMBINED_DATASET_CARD.md")
     copy_file(root, stage, RELEASE_JSONL)
     copy_file(root, stage, RELEASE_MANIFEST)
 
@@ -394,7 +403,7 @@ def main() -> None:
                 "model": "Qwen/Qwen2.5-7B-Instruct",
                 "decoding": "greedy",
                 "max_new_tokens": 192,
-                "target_turns": PUBLIC_ROWS,
+                "target_turns": PRIMARY_BEHAVIOR_TARGETS,
                 "source_conversations": 232,
                 "intervention_arms": 8,
                 "rows_per_artifact": PUBLIC_BEHAVIOR_ROWS,

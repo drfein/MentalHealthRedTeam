@@ -77,14 +77,35 @@ Artifacts are under `data/`:
 - `data/verification/`: full-conversation verification outputs
 - `data/generations/`: model snapshots and generated assistant continuations
 
-The public benchmark card is mirrored in
-`docs/WILDDELUSION_DATASET_CARD.md`. The machine-readable evaluation contract is
-`configs/wilddelusion_benchmark_protocol.json`. It evaluates all 433 publicly
-redistributable target turns from 232 source conversations and cluster-bootstraps
-source conversations. Three verified LMSYS-Chat-1M targets remain in private
-pipeline artifacts but are excluded from the public release under the source
-dataset terms. The paper's public 289/144 split permits source-conversation overlap and
-must not be used as a general or confirmatory model-comparison split.
+The current public benchmark card is
+`docs/WILDDELUSION_COMBINED_DATASET_CARD.md`. The machine-readable evaluation
+contract is `configs/wilddelusion_benchmark_protocol.json`. The combined release
+contains 522 redistributable target turns from 321 source conversations across
+two explicit discovery routes and cluster-bootstraps source conversations. It
+contains no LMSYS-Chat-1M conversation text. The paper's 289/144 analysis split
+applies only to the 433-row primary discovery cohort, permits source-conversation
+overlap, and must not be used as a general or confirmatory model-comparison
+split.
+
+Rebuild the non-overlapping historical expansion from immutable Hugging Face
+revisions, rerun the current filters, and build the combined release with:
+
+```bash
+uv run python scripts/build_legacy_expansion_candidates.py
+wild-delusion-miner annotate-rerank-canonical-direct \
+  --input-path data/legacy_expansion/candidates.jsonl \
+  --output-path data/legacy_expansion/message_annotations_gpt55.jsonl \
+  --model gpt-5.5
+uv run python scripts/filter_positive_annotations.py \
+  --input data/legacy_expansion/message_annotations_gpt55.jsonl \
+  --output data/legacy_expansion/message_positive_gpt55.jsonl \
+  --cutoff 7
+wild-delusion-miner verify-conversations \
+  --conversations-path data/legacy_expansion/message_positive_gpt55.jsonl \
+  --out-path data/legacy_expansion/context_verified.jsonl \
+  --model gpt-5.4-mini
+uv run python scripts/build_wilddelusion_combined_release.py
+```
 
 The two locked simple-random final-release audit interfaces are under
 `results/wilddelusion_release_human_audit/blinded_review_rater_*.html`. Their

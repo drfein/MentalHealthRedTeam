@@ -51,6 +51,9 @@ def main() -> None:
     release = read_json(artifacts / "release_characterization.json")
     release_manifest = read_json(artifacts / "release_manifest.json")
     integrity = read_json(artifacts / "release_integrity.json")
+    combined = read_json(artifacts / "combined_release_characterization.json")
+    combined_manifest = read_json(artifacts / "combined_release_manifest.json")
+    combined_integrity = read_json(artifacts / "combined_release_integrity.json")
     behavior_hparams = read_json(behavior_dir / "hparams.json")
     human = read_csv(artifacts / "human_validation_metrics.csv", "metric")
     retrieval_rows = list(
@@ -138,6 +141,36 @@ def main() -> None:
     assert integrity["passed"] is True
     assert integrity["canonical_sha256"] == (
         "dd34ec93a5fae80e4d9b82017940342206e7cd849dc03cbb9e74e822fadc94dc"
+    )
+    assert combined["rows"] == combined_manifest["rows"] == combined_integrity["rows"] == 522
+    assert combined["distinct_source_conversations"] == 321
+    assert combined["multi_target_source_conversations"] == 62
+    assert combined_manifest["discovery_split_target_counts"] == {
+        "legacy_probe_gpt52": 89,
+        "openai_embedding_whitened": 433,
+    }
+    assert combined_manifest["discovery_split_conversation_counts"] == {
+        "legacy_probe_gpt52": 89,
+        "openai_embedding_whitened": 232,
+    }
+    assert combined["source_counts"] == {
+        "sharechat_chatgpt": 405,
+        "sharechat_claude": 2,
+        "sharechat_gemini": 5,
+        "sharechat_grok": 42,
+        "wildchat_full": 68,
+    }
+    assert combined["annotation_score_counts"] == {
+        "7": 103,
+        "8": 157,
+        "9": 164,
+        "10": 98,
+    }
+    assert combined_integrity["passed"] is True
+    assert combined_integrity["lmsys_rows"] == 0
+    assert combined_integrity["target_integrity_errors"] == 0
+    assert combined_integrity["parquet_sha256"] == (
+        "4aa19e12933e16ef3119be00d3031fc16a8fd22db56a18d84c6b53ae51c8cab3"
     )
 
     precision = human["audited_precision_ppv"]
@@ -256,9 +289,13 @@ def main() -> None:
 
     manuscript = (args.paper_dir / "main.tex").read_text(encoding="utf-8")
     for fragment in (
-        "context-verified, retrieval-enriched benchmark of 433 LLM-filtered target turns from 232 source conversations",
-        "6.13M embedded user messages",
-        "reconstructs context for 715 candidate turns, verifies 436",
+        "context-verified, retrieval-enriched benchmark of 522 LLM-filtered target turns from 321 source conversations",
+        "89 non-overlapping turns recovered from a historical linear-probe route",
+        "135 full target turns through the current pinned package prompt",
+        "104 pass",
+        "retains 89",
+        "6.13M unique user messages had materialized",
+        "Of 715 reconstructed candidate target contexts from 418 source conversations",
         "Audited precision & 35 & 38 & 92.1\\% [79.2, 97.3]",
         "75/433 direct-assertion responses",
         "14.3 percentage points [10.5, 18.8]",
@@ -268,10 +305,10 @@ def main() -> None:
         "Of 715 reconstructed candidate target contexts from 418 source conversations",
         "436 target turns are verified, 271 are rejected, and 8 are uncertain",
         "ShareChat-ChatGPT (356), WildChat (44), and ShareChat-Grok (33)",
-        "21 [9, 40]",
-        "13 [4, 26]",
-        "103 [52, 198]",
-        "87 / 135 / 131 / 80",
+        "23 [9, 48]",
+        "13 [4, 27]",
+        "82 [44, 186]",
+        "103 / 157 / 164 / 98",
         "capped at 192 tokens",
         "67 direct-only and 5 reported-belief-only positives",
         "63 (17.7\\%) & Reported belief: 11 (3.1\\%)",
@@ -287,6 +324,7 @@ def main() -> None:
             "mining",
             "conversation verification",
             "release characterization and integrity",
+            "combined release expansion and hosted integrity",
             "transfer audit",
             "retrieval ablation",
             "generation and judge settings",

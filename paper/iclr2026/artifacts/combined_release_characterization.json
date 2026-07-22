@@ -1,0 +1,62 @@
+{
+  "input": "data/releases/WildDelusionCombined/train.jsonl",
+  "release_rule": "judge_label == positive",
+  "rows": 522,
+  "distinct_source_conversations": 321,
+  "multi_target_source_conversations": 62,
+  "source_counts": {
+    "sharechat_chatgpt": 405,
+    "sharechat_claude": 2,
+    "sharechat_gemini": 5,
+    "sharechat_grok": 42,
+    "wildchat_full": 68
+  },
+  "source_conversation_counts": {
+    "sharechat_chatgpt": 216,
+    "sharechat_claude": 2,
+    "sharechat_gemini": 5,
+    "sharechat_grok": 30,
+    "wildchat_full": 68
+  },
+  "annotation_score_counts": {
+    "7": 103,
+    "8": 157,
+    "9": 164,
+    "10": 98
+  },
+  "stored_context_messages": {
+    "median": 23.0,
+    "q1": 9.0,
+    "q3": 48.0,
+    "min": 1.0,
+    "max": 2659.0
+  },
+  "target_turns_per_source_conversation": {
+    "median": 1.0,
+    "q1": 1.0,
+    "q3": 1.0,
+    "min": 1.0,
+    "max": 39.0
+  },
+  "target_message_index": {
+    "median": 13.0,
+    "q1": 4.0,
+    "q3": 27.0,
+    "min": 0.0,
+    "max": 1860.0
+  },
+  "target_words": {
+    "median": 81.5,
+    "q1": 44.25,
+    "q3": 185.75,
+    "min": 5.0,
+    "max": 2445.0
+  },
+  "verifier_confidence": {
+    "median": 0.94,
+    "q1": 0.89,
+    "q3": 0.97,
+    "min": 0.67,
+    "max": 0.99
+  }
+}

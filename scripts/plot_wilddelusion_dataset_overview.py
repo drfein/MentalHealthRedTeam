@@ -14,15 +14,21 @@ def read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def draw_pipeline(ax: plt.Axes, settings: dict[str, Any], summary: dict[str, Any]) -> None:
+def draw_pipeline(
+    ax: plt.Axes,
+    settings: dict[str, Any],
+    summary: dict[str, Any],
+    combined: dict[str, Any],
+) -> None:
+    split_counts = combined["discovery_split_target_counts"]
     stages = [
         ("6.13M", "embedded\nuser messages"),
         ("1,000", "bootstrap\njudgments"),
         ("107", "seed judged\npositives"),
         ("3,000", "whitened\nretrieval"),
-        (f"{summary['input_context_rows']}", "candidate target\ncontexts"),
-        (f"{summary['verified_positive_rows']}", "verified target\nturns"),
-        (f"{summary['released_rows']}", "redistributable\ntarget turns"),
+        (f"{split_counts['openai_embedding_whitened']}", "primary released\ntarget turns"),
+        (f"+{split_counts['legacy_probe_gpt52']}", "non-overlapping\nlegacy probe turns"),
+        (f"{combined['rows']}", "combined released\ntarget turns"),
     ]
     expected = int(round(settings["materialized_embedding_corpus_rows_approx"] / 10_000))
     if expected != 613:
@@ -54,7 +60,7 @@ def draw_pipeline(ax: plt.Axes, settings: dict[str, Any], summary: dict[str, Any
     ax.text(
         0.5,
         0.13,
-        "Embedding retrieval enriches a rare class; conversation context removes role-play, fiction, and text tasks.",
+        "Two retrieval routes are kept explicit; both use the same current message and context verification rules.",
         ha="center",
         va="center",
         fontsize=11,
@@ -100,12 +106,12 @@ def main() -> None:
     parser.add_argument(
         "--release-characterization",
         type=Path,
-        default=Path("paper/iclr2026/artifacts/release_characterization.json"),
+        default=Path("paper/iclr2026/artifacts/combined_release_characterization.json"),
     )
     parser.add_argument(
         "--release-manifest",
         type=Path,
-        default=Path("data/releases/WildDelusionVerified/manifest.json"),
+        default=Path("paper/iclr2026/artifacts/combined_release_manifest.json"),
     )
     parser.add_argument(
         "--output",
@@ -118,24 +124,20 @@ def main() -> None:
     summary = read_json(args.verification_summary)
     release = read_json(args.release_manifest)
     characterization = read_json(args.release_characterization)
-    summary["released_rows"] = release["rows"]
-    source_counts = release["source_target_turn_counts"]
-    sources = ["ShareChat-ChatGPT", "WildChat", "ShareChat-Grok"]
+    source_counts = release["source_target_counts"]
+    sources = [
+        "ShareChat-ChatGPT",
+        "WildChat",
+        "ShareChat-Grok",
+        "ShareChat-Gemini",
+        "ShareChat-Claude",
+    ]
     source_values = [
         source_counts["sharechat_chatgpt"],
         source_counts["wildchat_full"],
         source_counts["sharechat_grok"],
-    ]
-    exclusions = summary["exclusion_counts"]
-    exclusion_order = [
-        ("Role-play", "roleplay"),
-        ("Ordinary plausible", "ordinary_plausible"),
-        ("Fiction/story", "fiction_or_story"),
-        ("Joke/absurd", "joke_or_absurd"),
-        ("Translation/text task", "translation_or_text_task"),
-        ("Insufficient context", "insufficient_context"),
-        ("Third party/quoted", "third_party_or_quoted"),
-        ("Dream report", "dreams"),
+        source_counts["sharechat_gemini"],
+        source_counts["sharechat_claude"],
     ]
 
     plt.rcParams.update(
@@ -159,11 +161,13 @@ def main() -> None:
     )
     pipeline_ax = fig.add_subplot(grid[0, :])
     source_ax = fig.add_subplot(grid[1, 0])
-    exclusion_ax = fig.add_subplot(grid[1, 1])
+    split_ax = fig.add_subplot(grid[1, 1])
     concentration_ax = fig.add_subplot(grid[1, 2])
 
-    draw_pipeline(pipeline_ax, settings, summary)
-    pipeline_ax.set_title("A  Mining a rare behavior from three open conversation corpora", loc="left", weight="bold")
+    draw_pipeline(pipeline_ax, settings, summary, release)
+    pipeline_ax.set_title(
+        "A  Mining a rare behavior with two retrieval routes", loc="left", weight="bold"
+    )
 
     horizontal_bars(
         source_ax,
@@ -175,14 +179,14 @@ def main() -> None:
     source_ax.set_title("B  Context-verified target turns by source", loc="left", weight="bold")
     source_ax.set_xlabel("Retained target turns")
 
-    horizontal_bars(
-        exclusion_ax,
-        [label for label, _ in exclusion_order],
-        [exclusions[key] for _, key in exclusion_order],
-        "#C96A3D",
-    )
-    exclusion_ax.set_title("C  Contextual exclusions", loc="left", weight="bold")
-    exclusion_ax.set_xlabel("Excluded or uncertain conversations")
+    split_labels = ["Whitened embedding", "Legacy probe"]
+    split_values = [
+        release["discovery_split_target_counts"]["openai_embedding_whitened"],
+        release["discovery_split_target_counts"]["legacy_probe_gpt52"],
+    ]
+    horizontal_bars(split_ax, split_labels, split_values, "#C96A3D", denominator=release["rows"])
+    split_ax.set_title("C  Explicit discovery splits", loc="left", weight="bold")
+    split_ax.set_xlabel("Retained target turns")
 
     conversation_n = characterization["distinct_source_conversations"]
     multi_target_n = characterization["multi_target_source_conversations"]
@@ -199,7 +203,7 @@ def main() -> None:
     concentration_ax.text(
         0,
         -0.72,
-        "Maximum: 39 retained targets in one conversation",
+        f"Maximum: {int(characterization['target_turns_per_source_conversation']['max'])} retained targets in one conversation",
         fontsize=9.5,
         color="#555555",
     )

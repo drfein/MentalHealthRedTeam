@@ -1,10 +1,10 @@
 {
-  "benchmark": "WildDelusionVerified",
-  "version": "1.0",
+  "benchmark": "WildDelusionCombined",
+  "version": "1.1",
   "population": {
-    "rows": 433,
+    "rows": 522,
     "unit": "contextualized_target_turn",
-    "distinct_source_conversations": 232,
+    "distinct_source_conversations": 321,
     "source_conversation_group_key": [
       "source",
       "conversation_id"
@@ -40,7 +40,13 @@
     "source_strata": [
       "sharechat_chatgpt",
       "wildchat_full",
-      "sharechat_grok"
+      "sharechat_grok",
+      "sharechat_gemini",
+      "sharechat_claude"
+    ],
+    "discovery_strata": [
+      "openai_embedding_whitened",
+      "legacy_probe_gpt52"
     ],
     "excluded_sources": {
       "lmsys_chat_1m": "Conversation text is not redistributed under the LMSYS-Chat-1M dataset terms."
@@ -48,6 +54,7 @@
     "response_quality_audit_required_for_quality_claims": true
   },
   "study_specific_split": {
+    "scope": "openai_embedding_whitened discovery split only",
     "discovery_rows": 289,
     "holdout_rows": 144,
     "recommended_for_general_model_comparison": false,

@@ -192,3 +192,82 @@ def test_release_audit_sample_and_rater_interfaces_are_deterministic(tmp_path: P
     subprocess.run(html_command + ["--rater-id", "rater_b", "--output", str(html_b)], check=True)
     assert "seed-17-rater_a" in html_a.read_text(encoding="utf-8")
     assert "seed-17-rater_b" in html_b.read_text(encoding="utf-8")
+
+
+def test_release_audit_can_require_discovery_split_coverage(tmp_path: Path) -> None:
+    source = tmp_path / "source.jsonl"
+    rows = []
+    for index in range(20):
+        item = source_row(index)
+        item["discovery_split"] = "primary" if index < 16 else "legacy"
+        rows.append(item)
+    write_jsonl(source, rows)
+    output = tmp_path / "audit"
+    subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "scripts/build_wilddelusion_release_human_audit.py"),
+            "--input",
+            str(source),
+            "--output-dir",
+            str(output),
+            "--sample-size",
+            "10",
+            "--seed",
+            "19",
+            "--stratify-field",
+            "discovery_split",
+            "--min-per-stratum",
+            "3",
+        ],
+        check=True,
+    )
+    manifest = json.loads((output / "manifest.json").read_text())
+    assert manifest["sample_stratum_counts"]["primary"] >= 3
+    assert manifest["sample_stratum_counts"]["legacy"] >= 3
+
+
+def test_poststratified_precision_uses_population_weights(tmp_path: Path) -> None:
+    key = tmp_path / "audit_key.csv"
+    review = tmp_path / "review.csv"
+    output = tmp_path / "analysis"
+    pd.DataFrame(
+        {
+            "review_id": ["a", "b", "c", "d"],
+            "discovery_split": ["primary", "primary", "legacy", "legacy"],
+        }
+    ).to_csv(key, index=False)
+    pd.DataFrame(
+        {
+            "review_id": ["a", "b", "c", "d"],
+            "decision": ["positive", "positive", "negative", "negative"],
+            "exclusion_reason": ["none", "none", "other", "other"],
+            "confidence_1_to_5": [5, 5, 5, 5],
+        }
+    ).to_csv(review, index=False)
+    subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "scripts/analyze_wilddelusion_release_human_audit.py"),
+            "--reviews",
+            str(review),
+            "--rater-names",
+            "rater",
+            "--audit-key",
+            str(key),
+            "--output-dir",
+            str(output),
+            "--stratum-field",
+            "discovery_split",
+            "--stratum-population",
+            "primary=80",
+            "--stratum-population",
+            "legacy=20",
+            "--bootstrap-draws",
+            "100",
+        ],
+        check=True,
+    )
+    result = pd.read_csv(output / "poststratified_precision.csv")
+    strict = result[result["metric"] == "strict_release_precision"].iloc[0]
+    assert strict["estimate"] == 0.8

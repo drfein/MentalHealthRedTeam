@@ -91,6 +91,55 @@ def metric_row(rater: str, metric: str, numerator: int, denominator: int) -> dic
     }
 
 
+def parse_populations(values: list[str]) -> dict[str, int]:
+    populations = {}
+    for value in values:
+        label, separator, raw_count = value.partition("=")
+        if not separator or not label or int(raw_count) <= 0:
+            raise ValueError(f"Invalid stratum population {value!r}; expected LABEL=COUNT")
+        populations[label] = int(raw_count)
+    return populations
+
+
+def poststratified_precision(
+    frame: pd.DataFrame,
+    *,
+    decision_column: str,
+    stratum_field: str,
+    populations: dict[str, int],
+    resolved_only: bool,
+    draws: int,
+    seed: int,
+) -> dict[str, Any]:
+    total_population = sum(populations.values())
+    rng = np.random.default_rng(seed)
+    point = 0.0
+    bootstrap = np.zeros(draws, dtype=float)
+    sample_sizes = {}
+    for stratum, population in sorted(populations.items()):
+        decisions = frame.loc[frame[stratum_field].astype(str) == stratum, decision_column]
+        if resolved_only:
+            decisions = decisions[decisions != "uncertain"]
+        values = decisions.eq("positive").to_numpy(dtype=float)
+        if not len(values):
+            raise ValueError(f"No eligible audit rows for stratum {stratum!r}")
+        weight = population / total_population
+        point += weight * float(values.mean())
+        sample_sizes[stratum] = len(values)
+        indices = rng.integers(0, len(values), size=(draws, len(values)))
+        bootstrap += weight * values[indices].mean(axis=1)
+    low, high = np.quantile(bootstrap, [0.025, 0.975])
+    return {
+        "estimate": point,
+        "ci_low": float(low),
+        "ci_high": float(high),
+        "interval": "95% stratified percentile bootstrap",
+        "bootstrap_draws": draws,
+        "population_by_stratum": populations,
+        "sample_by_stratum": sample_sizes,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--reviews", type=Path, nargs="+", required=True)
@@ -103,6 +152,15 @@ def main() -> None:
     )
     parser.add_argument("--audit-key", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--stratum-field", default=None)
+    parser.add_argument(
+        "--stratum-population",
+        action="append",
+        default=[],
+        help="Population count as LABEL=COUNT. Repeat for each stratum.",
+    )
+    parser.add_argument("--bootstrap-draws", type=int, default=10_000)
+    parser.add_argument("--bootstrap-seed", type=int, default=20260721)
     args = parser.parse_args()
 
     names = args.rater_names or [f"rater_{i + 1}" for i in range(len(args.reviews))]
@@ -149,6 +207,10 @@ def main() -> None:
         analysis_names.append("adjudicated")
 
     metrics: list[dict[str, Any]] = []
+    poststratified: list[dict[str, Any]] = []
+    populations = parse_populations(args.stratum_population)
+    if bool(args.stratum_field) != bool(populations):
+        parser.error("Provide both --stratum-field and --stratum-population")
     for name in analysis_names:
         decisions = frame[f"decision__{name}"]
         positive = int(decisions.eq("positive").sum())
@@ -159,6 +221,38 @@ def main() -> None:
             metric_row(name, "resolved_case_precision", positive, positive + negative)
         )
         metrics.append(metric_row(name, "uncertain_rate", uncertain, len(frame)))
+        if populations:
+            observed_strata = set(frame[args.stratum_field].astype(str))
+            if observed_strata != set(populations):
+                raise ValueError(
+                    f"Audit strata {sorted(observed_strata)} do not match populations "
+                    f"{sorted(populations)}"
+                )
+            for stratum in sorted(populations):
+                stratum_decisions = decisions[frame[args.stratum_field].astype(str) == stratum]
+                stratum_positive = int(stratum_decisions.eq("positive").sum())
+                strict = metric_row(
+                    name,
+                    "strict_release_precision",
+                    stratum_positive,
+                    len(stratum_decisions),
+                )
+                strict["stratum"] = stratum
+                metrics.append(strict)
+            for resolved_only, metric in (
+                (False, "strict_release_precision"),
+                (True, "resolved_case_precision"),
+            ):
+                estimate = poststratified_precision(
+                    frame,
+                    decision_column=f"decision__{name}",
+                    stratum_field=args.stratum_field,
+                    populations=populations,
+                    resolved_only=resolved_only,
+                    draws=args.bootstrap_draws,
+                    seed=args.bootstrap_seed,
+                )
+                poststratified.append({"rater": name, "metric": metric, **estimate})
 
     agreements = []
     for first, second in combinations(names, 2):
@@ -182,6 +276,10 @@ def main() -> None:
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(metrics).to_csv(args.output_dir / "precision_metrics.csv", index=False)
+    if poststratified:
+        pd.DataFrame(poststratified).to_csv(
+            args.output_dir / "poststratified_precision.csv", index=False
+        )
     pd.DataFrame(agreements).to_csv(args.output_dir / "rater_agreement.csv", index=False)
     frame.to_csv(args.output_dir / "audit_analysis_rows.csv", index=False)
     (args.output_dir / "hparams.json").write_text(
@@ -195,6 +293,10 @@ def main() -> None:
                 "analysis_raters": analysis_names,
                 "audit_key": str(args.audit_key),
                 "sample_size": len(frame),
+                "stratum_field": args.stratum_field,
+                "stratum_populations": populations,
+                "bootstrap_draws": args.bootstrap_draws,
+                "bootstrap_seed": args.bootstrap_seed,
                 "strict_release_precision": "positive / all audited rows; uncertain counts as non-positive",
                 "resolved_case_precision": "positive / (positive + negative); uncertain excluded",
             },

@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "repo": "danielfein/WildDelusionCombined",
+  "revision": "f547346d490fe7b5be9553a24eebe02aee777015",
+  "rows": 522,
+  "lmsys_rows": 0,
+  "target_integrity_errors": 0,
+  "parquet_sha256": "4aa19e12933e16ef3119be00d3031fc16a8fd22db56a18d84c6b53ae51c8cab3"
+}

@@ -18,6 +18,8 @@ paper rebuild. Its latest machine-readable result is
 | License exclusion | 3 verified LMSYS-Chat-1M targets excluded from redistribution and reported experiments | `artifacts/release_manifest.json` |
 | Release characteristics | median 21 stored messages; target index 13; target length 103 words | `artifacts/release_characterization.json` |
 | Hosted release integrity | 433/433 exact rows; canonical SHA-256 `dd34ec93...4dc` | `artifacts/release_integrity.json` |
+| Combined release | 522 target turns from 321 source conversations; 433 whitened-embedding and 89 legacy-probe targets | `artifacts/combined_release_characterization.json`, `artifacts/combined_release_manifest.json` |
+| Hosted combined integrity | 522 rows, zero LMSYS rows, zero target errors; parquet SHA-256 `4aa19e12...ab3` | `artifacts/combined_release_integrity.json` |
 | Earlier human transfer audit | strict-rule precision 35/38 = 92.1% [79.2, 97.3] | `artifacts/human_validation_metrics.csv` |
 | Counterfactual artifact | 433 x 8 = 3,464 public responses | `artifacts/behavior/full_public/hparams.json` plus private response cache |
 | Direct-assertion endorsement | 75/433 (17.3%), source-conversation cluster CI [13.1, 22.4] | `artifacts/behavior/full_public/behavior_by_frame.csv` |
@@ -39,8 +41,9 @@ Interpretive boundaries are equally important:
   is available.
 - Rows are target turns, not independent conversations. All benchmark
   uncertainty must cluster by `(source, conversation_id)`.
-- The primary behavioral analysis uses all 433 public targets and therefore has
-  no outcome-selected train/evaluation split. Its uncertainty clusters the 232
+- The primary behavioral analysis uses all 433 targets from the whitened-
+  embedding discovery cohort, not the 89-row legacy expansion. It has no
+  outcome-selected train/evaluation split. Its uncertainty clusters the 232
   source conversations.
 - The framing-aware and exact package judges preserve the direct-assertion
   ordering but produce materially different absolute rates; 17.3% is not an

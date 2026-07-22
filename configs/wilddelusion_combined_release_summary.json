@@ -1,0 +1,37 @@
+{
+  "dataset": "danielfein/WildDelusionCombined",
+  "hosted_revision": "f547346d490fe7b5be9553a24eebe02aee777015",
+  "unit": "contextualized_target_turn",
+  "rows": 522,
+  "distinct_source_conversations": 321,
+  "multi_target_source_conversations": 62,
+  "maximum_target_turns_per_source_conversation": 39,
+  "discovery_splits": {
+    "openai_embedding_whitened": {
+      "target_turns": 433,
+      "source_conversations": 232,
+      "retrieval": "whitened text-embedding-3-small positive-mean query"
+    },
+    "legacy_probe_gpt52": {
+      "target_turns": 89,
+      "source_conversations": 89,
+      "retrieval": "historical linear-probe routes with GPT-5.2 candidate confirmation"
+    }
+  },
+  "current_filters": {
+    "canonical_message_judge": "gpt-5.5 with pinned package prompt and cutoff 7",
+    "conversation_verifier": "gpt-5.4-mini with low reasoning effort",
+    "excluded_sources": [
+      "lmsys_chat_1m"
+    ]
+  },
+  "source_target_turn_counts": {
+    "sharechat_chatgpt": 405,
+    "wildchat_full": 68,
+    "sharechat_grok": 42,
+    "sharechat_gemini": 5,
+    "sharechat_claude": 2
+  },
+  "lmsys_rows": 0,
+  "parquet_sha256": "4aa19e12933e16ef3119be00d3031fc16a8fd22db56a18d84c6b53ae51c8cab3"
+}

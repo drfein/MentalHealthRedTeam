@@ -2,15 +2,17 @@
 
 ## Purpose
 
-Estimate the precision of the final 433-row WildDelusion release on a locked,
-simple random sample. This audit supersedes the earlier non-random transfer audit
-for final-release precision once complete.
+Estimate the precision of the final 522-row WildDelusionCombined release on a
+locked sample representing both discovery routes. This audit supersedes the
+earlier non-random transfer audit for final-release precision once complete.
 
 ## Sampling and blinding
 
-- Population: all 433 public rows satisfying `judge_label == positive` after
+- Population: all 522 public rows satisfying `judge_label == positive` after
   excluding LMSYS-Chat-1M conversation text under its source terms.
-- Sample: 100 rows selected uniformly without replacement.
+- Sample: 100 rows selected without replacement, stratified by discovery route.
+  The locked allocation is 62/433 whitened-embedding rows and 38/89 legacy-probe
+  rows. The legacy route is oversampled to support a route-specific estimate.
 - Seed: `20260721`.
 - Reviewer view: the same compact context policy used by the conversation
   verifier, with the flagged user turn visibly marked.
@@ -18,7 +20,7 @@ for final-release precision once complete.
   rationale, and all conversation-verifier outputs.
 
 Give each reviewer a separate copy of
-`results/wilddelusion_release_human_audit/blinded_review.csv`. Do not open
+`results/wilddelusion_combined_human_audit/blinded_review.csv`. Do not open
 `audit_key.csv` until labels are locked.
 
 For browser-based review, give each rater their corresponding standalone local
@@ -53,26 +55,39 @@ claims are not positive solely because they appear strange.
 
 ## Locked estimands
 
-1. Primary: strict release precision = `positive / 100`, counting uncertain rows
-   as not confirmed positive.
-2. Secondary: resolved-case precision = `positive / (positive + negative)`.
-3. Report 95% Wilson intervals for both.
-4. With two raters, report three-class and positive-versus-other Cohen's kappa
+1. Primary: post-stratified strict release precision, weighting route-specific
+   strict precision by 433/522 and 89/522. Uncertain rows count as not confirmed
+   positive.
+2. Report strict precision and 95% Wilson intervals separately for each route.
+3. Report a 95% stratified bootstrap interval for the combined estimator,
+   resampling within route and preserving population weights.
+4. Secondary: resolved-case precision, computed analogously after excluding
+   uncertain decisions.
+5. With two raters, report three-class and positive-versus-other Cohen's kappa
    and raw agreement.
-5. Resolve decision or exclusion-category disagreements with a third blinded
+6. Resolve decision or exclusion-category disagreements with a third blinded
    adjudication before opening the hidden key or changing the manuscript.
 
 ## Reproduction
 
 ```bash
 uv run python scripts/build_wilddelusion_release_human_audit.py \
-  --input data/releases/WildDelusionVerified/train.jsonl
+  --input data/releases/WildDelusionCombined/train.jsonl \
+  --output-dir results/wilddelusion_combined_human_audit \
+  --sample-size 100 \
+  --seed 20260721 \
+  --stratify-field discovery_split \
+  --min-per-stratum 30
 uv run python scripts/make_wilddelusion_release_audit_html.py \
+  --review-csv results/wilddelusion_combined_human_audit/blinded_review.csv \
+  --manifest results/wilddelusion_combined_human_audit/manifest.json \
   --rater-id rater_a \
-  --output results/wilddelusion_release_human_audit/blinded_review_rater_a.html
+  --output results/wilddelusion_combined_human_audit/blinded_review_rater_a.html
 uv run python scripts/make_wilddelusion_release_audit_html.py \
+  --review-csv results/wilddelusion_combined_human_audit/blinded_review.csv \
+  --manifest results/wilddelusion_combined_human_audit/manifest.json \
   --rater-id rater_b \
-  --output results/wilddelusion_release_human_audit/blinded_review_rater_b.html
+  --output results/wilddelusion_combined_human_audit/blinded_review_rater_b.html
 ```
 
 After reviewers finish separate copies:
@@ -81,13 +96,13 @@ After reviewers finish separate copies:
 uv run python scripts/build_human_audit_adjudication.py \
   --kind release \
   --reviews /path/to/rater_a.csv /path/to/rater_b.csv \
-  --blinded-review results/wilddelusion_release_human_audit/blinded_review.csv \
-  --output-dir results/wilddelusion_release_human_audit/adjudication
+  --blinded-review results/wilddelusion_combined_human_audit/blinded_review.csv \
+  --output-dir results/wilddelusion_combined_human_audit/adjudication
 uv run python scripts/make_wilddelusion_release_audit_html.py \
-  --review-csv results/wilddelusion_release_human_audit/adjudication/blinded_adjudication.csv \
-  --manifest results/wilddelusion_release_human_audit/adjudication/manifest.json \
+  --review-csv results/wilddelusion_combined_human_audit/adjudication/blinded_adjudication.csv \
+  --manifest results/wilddelusion_combined_human_audit/adjudication/manifest.json \
   --rater-id adjudicator \
-  --output results/wilddelusion_release_human_audit/adjudication/blinded_adjudication.html
+  --output results/wilddelusion_combined_human_audit/adjudication/blinded_adjudication.html
 ```
 
 After the adjudicator exports `adjudicated.csv`, run:
@@ -96,9 +111,12 @@ After the adjudicator exports `adjudicated.csv`, run:
 uv run python scripts/analyze_wilddelusion_release_human_audit.py \
   --reviews /path/to/rater_a.csv /path/to/rater_b.csv \
   --rater-names rater_a rater_b \
-  --adjudication results/wilddelusion_release_human_audit/adjudication/adjudicated.csv \
-  --audit-key results/wilddelusion_release_human_audit/audit_key.csv \
-  --output-dir results/wilddelusion_release_human_audit/analysis
+  --adjudication results/wilddelusion_combined_human_audit/adjudication/adjudicated.csv \
+  --audit-key results/wilddelusion_combined_human_audit/audit_key.csv \
+  --stratum-field discovery_split \
+  --stratum-population openai_embedding_whitened=433 \
+  --stratum-population legacy_probe_gpt52=89 \
+  --output-dir results/wilddelusion_combined_human_audit/analysis
 ```
 
 The analyzer refuses incomplete labels, invalid exclusion combinations,

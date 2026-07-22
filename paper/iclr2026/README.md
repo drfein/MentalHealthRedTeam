@@ -11,9 +11,10 @@ calibrate the current judge-defined behavioral endpoint.
 `HUMAN_AUDIT_REVIEWER_INSTRUCTIONS.md` is the only methodological document
 shared with raters. `scripts/build_human_audit_handoff.py` packages separate,
 key-free local review archives under `output/human_audit_handoff/`.
-`DATASET_HUMAN_AUDIT_PROTOCOL.md` defines the separate simple-random audit of 100
-rows from the final 433-row release. Completing that audit is the highest-value
-remaining validation for the dataset-centered submission.
+`DATASET_HUMAN_AUDIT_PROTOCOL.md` defines the separate audit of 100 rows from
+the final 522-row release, stratified to represent both discovery routes.
+Completing that audit is the highest-value remaining validation for the
+dataset-centered submission.
 `SUBMISSION_READINESS.md` locks the remaining evidence gates.
 
 Compile from this directory:

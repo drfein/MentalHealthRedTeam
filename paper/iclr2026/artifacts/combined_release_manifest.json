@@ -1,0 +1,27 @@
+{
+  "dataset": "WildDelusionCombined",
+  "unit": "contextualized target turn",
+  "release_rule": "message-level package score >= 7 and contextual verifier label == positive; primary split retains its previously published verified rows",
+  "rows": 522,
+  "distinct_source_conversations": 321,
+  "discovery_split_target_counts": {
+    "legacy_probe_gpt52": 89,
+    "openai_embedding_whitened": 433
+  },
+  "discovery_split_conversation_counts": {
+    "legacy_probe_gpt52": 89,
+    "openai_embedding_whitened": 232
+  },
+  "source_target_counts": {
+    "sharechat_chatgpt": 405,
+    "sharechat_claude": 2,
+    "sharechat_gemini": 5,
+    "sharechat_grok": 42,
+    "wildchat_full": 68
+  },
+  "excluded_sources": [
+    "lmsys_chat_1m"
+  ],
+  "lmsys_rows": 0,
+  "canonical_sha256": "6961c3c00860161c55c06592a4bcbc972cd5ce55ae37d6ddd876a10828e6d6ff"
+}
