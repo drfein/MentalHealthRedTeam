@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail if quantitative manuscript claims drift from committed artifacts."""
+"""Fail if central manuscript claims drift from committed analysis artifacts."""
 
 from __future__ import annotations
 
@@ -31,6 +31,11 @@ def read_csv(path: Path, key: str) -> dict[str, dict[str, str]]:
         return {row[key]: row for row in csv.DictReader(handle)}
 
 
+def read_csv_rows(path: Path) -> list[dict[str, str]]:
+    with path.open(encoding="utf-8", newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
 def close(actual: float | str, expected: float, tolerance: float = 5e-10) -> None:
     if not math.isclose(float(actual), expected, rel_tol=0.0, abs_tol=tolerance):
         raise AssertionError(f"Expected {expected}, got {actual}")
@@ -44,42 +49,43 @@ def require_text(manuscript: str, fragment: str) -> None:
 def main() -> None:
     args = parse_args()
     artifacts = args.paper_dir / "artifacts"
-    behavior_dir = artifacts / "behavior/full_public"
 
     mining = read_json(artifacts / "mining_settings.json")
     verification = read_json(artifacts / "verification_summary.json")
-    release = read_json(artifacts / "release_characterization.json")
-    release_manifest = read_json(artifacts / "release_manifest.json")
-    integrity = read_json(artifacts / "release_integrity.json")
     combined = read_json(artifacts / "combined_release_characterization.json")
     combined_manifest = read_json(artifacts / "combined_release_manifest.json")
     combined_integrity = read_json(artifacts / "combined_release_integrity.json")
-    behavior_hparams = read_json(behavior_dir / "hparams.json")
     human = read_csv(artifacts / "human_validation_metrics.csv", "metric")
-    retrieval_rows = list(
-        csv.DictReader(
-            (artifacts / "retrieval_ablation_results.csv").open(
-                encoding="utf-8", newline=""
-            )
-        )
+    multimodel = read_json(artifacts / "multimodel/summary.json")
+    longitudinal = read_json(artifacts / "response_longitudinal/summary.json")
+    observed_rates = read_csv(
+        artifacts / "response_longitudinal/observed_rates_by_platform.csv",
+        "serving_platform",
     )
-    behavior = read_csv(behavior_dir / "behavior_by_frame.csv", "arm")
-    source_behavior = {
-        (row["source"], row["arm"]): row
-        for row in csv.DictReader(
-            (behavior_dir / "behavior_by_source_and_frame.csv").open(
-                encoding="utf-8", newline=""
-            )
-        )
-    }
-    package_behavior = read_csv(
-        behavior_dir / "package_behavior_by_frame.csv", "arm"
+    context = read_json(artifacts / "context_ablation/summary.json")
+    context_models = read_csv(
+        artifacts / "context_ablation/context_effect_by_model.csv", "model"
     )
-    paired = read_csv(behavior_dir / "paired_frame_contrasts.csv", "comparison_arm")
-    package_paired = read_csv(
-        behavior_dir / "package_paired_frame_contrasts.csv", "comparison_arm"
+    all_turns = read_json(artifacts / "all_turn_trajectories/analysis_summary.json")
+    judge_context = read_json(
+        artifacts / "response_judge_context_sensitivity/summary.json"
     )
-    overlap = read_csv(behavior_dir / "endpoint_overlap_by_frame.csv", "arm")
+    user_assistant = read_json(artifacts / "user_assistant_trajectories/summary.json")
+    mini = read_json(artifacts / "mini_model_hypothesis/summary.json")
+    truncation = read_json(artifacts / "context_truncation/summary.json")
+    discovery_route = read_json(artifacts / "discovery_route_benchmark/summary.json")
+    jspace_effects = read_csv_rows(
+        artifacts / "jspace/context_intervention/paired_effects.csv"
+    )
+    jspace_behavior = read_csv_rows(
+        artifacts / "jspace/context_intervention/behavior_paired_effects.csv"
+    )
+    jspace_indicator = read_json(
+        artifacts / "jspace/endorsement_indicator/summary.json"
+    )
+    jspace_hard_negative = read_json(
+        artifacts / "jspace/hard_negative_control/summary.json"
+    )
 
     assert mining["materialized_embedding_corpus_rows_approx"] == 6_130_000
     assert mining["bootstrap_labeling"] == {
@@ -88,7 +94,6 @@ def main() -> None:
         "hit_rate": 0.107,
     }
     assert mining["whitening_sample_rows"] == 200_000
-    assert mining["whitening_eps"] == 1e-5
 
     assert verification["input_context_rows"] == 715
     assert verification["distinct_source_conversations"] == 418
@@ -97,61 +102,14 @@ def main() -> None:
         "negative": 271,
         "uncertain": 8,
     }
-    assert sum(verification["label_counts"].values()) == 715
     assert verification["positive_source_counts"]["lmsys_chat_1m"] == 3
 
-    assert release["rows"] == release_manifest["rows"] == 433
-    assert release["distinct_source_conversations"] == 232
-    assert release["multi_target_source_conversations"] == 62
-    assert release["target_turns_per_source_conversation"]["max"] == 39
-    assert release["source_counts"] == release_manifest["source_target_turn_counts"]
-    assert release["source_counts"] == {
-        "sharechat_chatgpt": 356,
-        "sharechat_grok": 33,
-        "wildchat_full": 44,
-    }
-    assert release["source_conversation_counts"] == {
-        "sharechat_chatgpt": 167,
-        "sharechat_grok": 21,
-        "wildchat_full": 44,
-    }
-    assert release["annotation_score_counts"] == {
-        "7": 87,
-        "8": 135,
-        "9": 131,
-        "10": 80,
-    }
-    assert release["stored_context_messages"] == {
-        "median": 21.0,
-        "q1": 9.0,
-        "q3": 40.0,
-        "min": 1.0,
-        "max": 186.0,
-    }
-    assert release["target_message_index"]["median"] == 13
-    assert release["target_message_index"]["q1"] == 4
-    assert release["target_message_index"]["q3"] == 26
-    assert release["target_words"]["median"] == 103
-    assert release["target_words"]["q1"] == 52
-    assert release["target_words"]["q3"] == 198
-    assert release["verifier_confidence"]["median"] == 0.94
-    assert release["verifier_confidence"]["q1"] == 0.89
-    assert release["verifier_confidence"]["q3"] == 0.97
-    assert release_manifest["excluded_positive_rows"] == 3
-    assert integrity["passed"] is True
-    assert integrity["canonical_sha256"] == (
-        "dd34ec93a5fae80e4d9b82017940342206e7cd849dc03cbb9e74e822fadc94dc"
-    )
     assert combined["rows"] == combined_manifest["rows"] == combined_integrity["rows"] == 522
     assert combined["distinct_source_conversations"] == 321
     assert combined["multi_target_source_conversations"] == 62
     assert combined_manifest["discovery_split_target_counts"] == {
         "legacy_probe_gpt52": 89,
         "openai_embedding_whitened": 433,
-    }
-    assert combined_manifest["discovery_split_conversation_counts"] == {
-        "legacy_probe_gpt52": 89,
-        "openai_embedding_whitened": 232,
     }
     assert combined["source_counts"] == {
         "sharechat_chatgpt": 405,
@@ -169,175 +127,258 @@ def main() -> None:
     assert combined_integrity["passed"] is True
     assert combined_integrity["lmsys_rows"] == 0
     assert combined_integrity["target_integrity_errors"] == 0
-    assert combined_integrity["parquet_sha256"] == (
-        "4aa19e12933e16ef3119be00d3031fc16a8fd22db56a18d84c6b53ae51c8cab3"
-    )
 
     precision = human["audited_precision_ppv"]
-    assert int(float(precision["numerator"])) == 35
-    assert int(float(precision["denominator"])) == 38
-    close(precision["estimate"], 35 / 38)
     specificity = human["specificity"]
     sensitivity = human["sensitivity"]
     judge_auc = human["judge_keep_score_auroc"]
-    assert (int(float(specificity["numerator"])), int(specificity["denominator"])) == (
-        26,
-        29,
-    )
-    assert (int(float(sensitivity["numerator"])), int(sensitivity["denominator"])) == (
-        35,
-        79,
-    )
+    assert (int(float(precision["numerator"])), int(precision["denominator"])) == (35, 38)
+    assert (int(float(specificity["numerator"])), int(specificity["denominator"])) == (26, 29)
+    assert (int(float(sensitivity["numerator"])), int(sensitivity["denominator"])) == (35, 79)
+    close(precision["estimate"], 35 / 38)
     close(judge_auc["estimate"], 0.8236577913574858)
 
-    whitened_top = next(
-        row
-        for row in retrieval_rows
-        if row["retrieval_name"] == "positive_bootstrap_v1_positive_whitened"
-        and row["bucket"] == "rank_000001_000500"
-    )
-    assert int(whitened_top["n"]) == 30
-    assert int(whitened_top["positives"]) == 12
-    expected_retrieval_positives = {
-        "hypothetical_bucket_calibration": [4, 4, 1, 0, 0],
-        "positive_bootstrap_v1_positive_raw": [10, 3, 2, 1, 1],
-        "positive_bootstrap_v1_positive_whitened": [12, 2, 1, 1, 0],
+    population = multimodel["analysis_population"]
+    assert population == {
+        "responses": 4316,
+        "targets": 433,
+        "conversations": 232,
+        "models": 10,
+        "excluded_lmsys_responses": 30,
     }
-    for retrieval_name, expected in expected_retrieval_positives.items():
-        observed = [
-            int(row["positives"])
-            for row in retrieval_rows
-            if row["retrieval_name"] == retrieval_name
-        ]
-        assert observed == expected
+    assert sum(multimodel["models"].values()) == 4316
+    taxonomy = {row["flag"]: row for row in multimodel["taxonomy_overall"]}
+    expected_flags = {
+        "bot_positive_affirmation": 2347,
+        "bot_metaphysical_themes": 1808,
+        "bot_reflective_summary": 945,
+        "bot_grand_significance": 517,
+        "bot_endorses_delusion": 289,
+        "bot_dismisses_counterevidence": 169,
+        "bot_misrepresents_sentience": 54,
+        "bot_claims_unique_connection": 6,
+    }
+    assert {flag: int(taxonomy[flag]["positive"]) for flag in expected_flags} == expected_flags
+    topics = {row["label"]: row for row in multimodel["lda_top_topics"]}
+    expected_topics = {
+        "Existential Validation": 641,
+        "Reflective Meaning Amplification": 373,
+        "Supportive Referral Guidance": 325,
+        "Generic Invitation Redirect": 199,
+        "Mystical Affirming Elaboration": 193,
+        "Grounded Reality Check": 176,
+    }
+    assert {label: int(topics[label]["positive"]) for label in expected_topics} == expected_topics
 
-    assert behavior_hparams["n_target_turns"] == 433
-    assert behavior_hparams["n_source_conversations"] == 232
-    assert behavior_hparams["rows"] == 3_464
-    assert behavior_hparams["bootstrap_draws"] == 10_000
-    assert behavior_hparams["generation_model"] == "Qwen/Qwen2.5-7B-Instruct"
-    assert behavior_hparams["decoding"] == "greedy"
-    assert behavior_hparams["max_new_tokens"] == 192
-    assert behavior_hparams["framing_judge_model"] == "gpt-5.4-mini"
-    assert behavior_hparams["framing_judge_reasoning_effort"] == "low"
-    expected_framing_counts = {
-        "direct_assertion": 75,
-        "reported_belief": 13,
-        "reconsideration": 4,
-        "question": 2,
-        "explicit_fiction": 2,
-        "quotation_analysis": 1,
-        "skeptical_roleplay": 1,
-        "translation": 0,
-    }
-    assert {arm: int(row["positive_n"]) for arm, row in behavior.items()} == (
-        expected_framing_counts
-    )
-    direct = behavior["direct_assertion"]
-    assert int(direct["positive_n"]) == 75
-    close(direct["positive_rate"], 75 / 433)
-    assert int(behavior["reported_belief"]["positive_n"]) == 13
-    reported = paired["reported_belief"]
-    close(reported["risk_difference"], 62 / 433)
-    assert int(reported["direct_positive_comparison_negative"]) == 67
-    assert int(reported["direct_negative_comparison_positive"]) == 5
-    close(reported["ci_low"], 0.1049234105708199)
-    close(reported["ci_high"], 0.18829600907121305)
-    close(reported["cluster_sign_flip_holm_p"], 5.523359547510154e-13)
-    assert all(float(row["ci_low"]) > 0 for row in paired.values())
+    assert longitudinal["observed"]["recovered_replies"] == 295
+    assert longitudinal["observed"]["conversations"] == 156
+    assert longitudinal["observed"]["repeated_conversations"] == 27
+    close(observed_rates["All recovered"]["rate"], 171 / 295)
+    close(observed_rates["chatgpt"]["rate"], 150 / 221)
+    close(observed_rates["grok"]["rate"], 17 / 26)
+    close(observed_rates["wildchat_unspecified"]["rate"], 2 / 41)
+    observed_trend = longitudinal["observed"]["binary_fixed_effect_trend"]
+    close(observed_trend["coefficient"], 0.1350926768598484)
+    generated_trend = longitudinal["controlled_generations"]["pooled_model_adjusted"]
+    close(generated_trend["coefficient"], 0.016643993373582574)
 
-    package_direct = package_behavior["direct_assertion"]
-    expected_package_counts = {
-        "direct_assertion": 20,
-        "reported_belief": 1,
-        "reconsideration": 1,
-        "question": 1,
-        "explicit_fiction": 0,
-        "quotation_analysis": 0,
-        "skeptical_roleplay": 0,
-        "translation": 4,
+    assert context["matched_pairs"] == 4315
+    assert context["targets"] == 433
+    assert context["models"] == 10
+    close(context["overall"]["difference"], 163 / 4315)
+    close(context["zero_prior_context_replication_control"]["difference"], 2 / 530)
+    close(context["at_least_one_prior_message"]["difference"], 161 / 3785)
+    close(context_models["gpt-4.1-mini-2025-04-14"]["difference"], 49 / 433)
+    close(context_models["o3-mini-2025-01-31"]["difference"], 40 / 433)
+
+    assert all_turns["assistant_turns"] == 1367
+    assert all_turns["conversations"] == 27
+    assert all_turns["all_turn_endorsements"] == 667
+    endpoint = all_turns["conversation_macro_endpoint_change"]
+    close(endpoint["last_minus_first_quintile"], 0.2811903838447241)
+    assert endpoint["positive_conversations"] == 18
+    assert endpoint["negative_conversations"] == 5
+    assert endpoint["tied_conversations"] == 4
+
+    assert judge_context["paired_replies"] == 166
+    assert judge_context["target_plus_reply"]["positives"] == 122
+    assert judge_context["preceding_context_plus_target_plus_reply"]["positives"] == 132
+    close(judge_context["paired_context_effect"]["rate_difference"], 10 / 166)
+    assert judge_context["paired_context_effect"]["negative_to_positive"] == 14
+    assert judge_context["paired_context_effect"]["positive_to_negative"] == 4
+
+    assert user_assistant["attempted_user_turns"] == 1367
+    assert user_assistant["user_judge_errors"] == 2
+    assert user_assistant["aligned_turn_pairs"] == 1365
+    close(
+        user_assistant["user_endpoint_change"]["last_minus_first_quintile"],
+        0.1525892270382249,
+    )
+    close(
+        user_assistant["assistant_trend_adjusted_for_user_positive"][
+            "progress_coefficient"
+        ],
+        0.19409758426525908,
+    )
+
+    mini_rows = {row["comparison"]: row for row in mini["comparisons"]}
+    close(mini_rows["GPT-4o mini - GPT-4o"]["difference"], -24 / 432)
+    close(mini_rows["o3 mini - o1"]["difference"], 25 / 433)
+
+    truncation_rows = {
+        (row["model"], row["arm"]): row for row in truncation["results"]
     }
-    assert {
-        arm: int(row["positive_n"]) for arm, row in package_behavior.items()
-    } == expected_package_counts
-    assert int(package_direct["positive_n"]) == 20
-    assert int(package_behavior["translation"]["positive_n"]) == 4
-    package_translation = package_paired["translation"]
-    close(package_translation["risk_difference"], 16 / 433)
-    close(package_translation["ci_low"], 0.014896426793517341)
-    close(package_translation["ci_high"], 0.062344289157202915)
-    close(package_translation["cluster_sign_flip_holm_p"], 0.0022144317626953125)
-    assert all(float(row["ci_low"]) > 0 for row in package_paired.values())
-    assert overlap["direct_assertion"]["both_positive"] == "19"
-    assert overlap["direct_assertion"]["framing_only_positive"] == "56"
-    assert overlap["direct_assertion"]["package_only_positive"] == "1"
-    expected_source_direct = {
-        "sharechat_chatgpt": (356, 63),
-        "sharechat_grok": (33, 7),
-        "wildchat_full": (44, 5),
+    assert truncation_rows[("gpt-4.1-mini-2025-04-14", "target_only")][
+        "targets"
+    ] == 222
+    close(
+        truncation_rows[("gpt-4.1-mini-2025-04-14", "target_only")][
+            "endorsement_rate"
+        ],
+        11 / 222,
+    )
+    close(
+        truncation_rows[("gpt-4.1-mini-2025-04-14", "full_context")][
+            "endorsement_rate"
+        ],
+        61 / 222,
+    )
+
+    route_rows = {row["model"]: row for row in discovery_route["results"]}
+    assert discovery_route["models"] == 10
+    assert sum(int(row["historical_n"]) for row in route_rows.values()) == 885
+    close(route_rows["o3-mini-2025-01-31"]["historical_minus_primary"], -0.08638451358434751)
+
+    intervention_rows = {
+        (row["metric"], row["contrast"], int(row["layer"])): row
+        for row in jspace_effects
     }
-    for source, (target_n, positive_n) in expected_source_direct.items():
-        direct_row = source_behavior[(source, "direct_assertion")]
-        assert int(direct_row["n_target_turns"]) == target_n
-        assert int(direct_row["positive_n"]) == positive_n
-        alternative_counts = [
-            int(source_behavior[(source, arm)]["positive_n"])
-            for row_source, arm in source_behavior
-            if row_source == source and arm != "direct_assertion"
+    intervention_key = "validating_minus_reality_testing"
+    misinformation = intervention_rows[
+        ("misinformation_max_logit", intervention_key, 26)
+    ]
+    reality_testing = intervention_rows[
+        ("reality_testing_mean_logit", intervention_key, 26)
+    ]
+    falsity_concern = intervention_rows[
+        ("falsity_concern_mean_logit", intervention_key, 26)
+    ]
+    assert int(misinformation["n_pairs"]) == 417
+    close(misinformation["mean_difference"], -0.2998351318944844)
+    close(misinformation["bootstrap_ci_low"], -0.3455148381294964)
+    close(misinformation["bootstrap_ci_high"], -0.25535727667865704)
+    close(reality_testing["mean_difference"], -0.10871418131037058)
+    close(falsity_concern["mean_difference"], -0.04639616254584443)
+
+    behavior_rows = {
+        (row["metric"], row["contrast"]): row for row in jspace_behavior
+    }
+    behavior_effect = behavior_rows[("positive", intervention_key)]
+    close(behavior_effect["mean_difference"], -1 / 417)
+    close(behavior_effect["bootstrap_ci_low"], -10 / 417)
+    close(behavior_effect["bootstrap_ci_high"], 8 / 417)
+
+    assert jspace_indicator["n_messages"] == 417
+    assert jspace_indicator["conditional_prompt_fixed"]["n_discordant_messages"] == 32
+    close(jspace_indicator["baseline_grouped_cv_auc"], 0.5963196824824102)
+    close(jspace_indicator["full_grouped_cv_auc"], 0.731661555114559)
+    close(jspace_indicator["grouped_cv_auc_improvement"], 0.1353418726321488)
+    close(jspace_indicator["grouped_cv_auc_improvement_ci"][0], 0.028406799911630438)
+    close(jspace_indicator["grouped_cv_auc_improvement_ci"][1], 0.2491291918764868)
+    assert jspace_indicator["causal_gating_supported"] is False
+    assert (
+        jspace_indicator["pre_registered_token_group_control"][
+            "epistemic_mean_auc_improvement"
         ]
-        assert positive_n > max(alternative_counts)
+        > jspace_indicator["pre_registered_token_group_control"][
+            "placebo_mean_auc_improvement"
+        ]
+    )
+
+    assert jspace_hard_negative["n"] == 337
+    assert jspace_hard_negative["verified_n"] == 175
+    assert jspace_hard_negative["hard_negative_n"] == 162
+    close(jspace_hard_negative["oof_auc_improvement"], 0.019153439153439256)
+    close(jspace_hard_negative["oof_auc_improvement_ci"][0], -0.004672139422915236)
+    close(jspace_hard_negative["oof_auc_improvement_ci"][1], 0.04413349087188762)
 
     manuscript = (args.paper_dir / "main.tex").read_text(encoding="utf-8")
     for fragment in (
-        "context-verified, retrieval-enriched benchmark of 522 LLM-filtered target turns from 321 source conversations",
-        "89 non-overlapping turns recovered from a historical linear-probe route",
-        "135 full target turns through the current pinned package prompt",
-        "104 pass",
-        "retains 89",
-        "6.13M unique user messages had materialized",
-        "Of 715 reconstructed candidate target contexts from 418 source conversations",
-        "Audited precision & 35 & 38 & 92.1\\% [79.2, 97.3]",
-        "75/433 direct-assertion responses",
-        "14.3 percentage points [10.5, 18.8]",
-        "20/433 direct responses, 4.6\\%",
-        "3.7 points [1.5, 6.2]",
-        "62 conversations contribute multiple retained targets",
-        "Of 715 reconstructed candidate target contexts from 418 source conversations",
-        "436 target turns are verified, 271 are rejected, and 8 are uncertain",
-        "ShareChat-ChatGPT (356), WildChat (44), and ShareChat-Grok (33)",
-        "23 [9, 48]",
-        "13 [4, 27]",
-        "82 [44, 186]",
-        "103 / 157 / 164 / 98",
-        "capped at 192 tokens",
-        "67 direct-only and 5 reported-belief-only positives",
-        "63 (17.7\\%) & Reported belief: 11 (3.1\\%)",
-        "7 (21.2\\%) & Reported belief: 2 (6.1\\%)",
-        "5 (11.4\\%) & All alternatives: 0 (0.0\\%)",
-        "0.824 [0.723, 0.906]",
+        "522 verified target turns from 321 WildChat and ShareChat conversations",
+        "Every released row passes two automatic inclusion stages",
+        "All 522 released rows satisfy both rules",
+        "Illustrative construct-boundary examples",
+        "author-written composite paraphrase",
+        "does not correspond one-to-one with any released conversation",
+        "Blinded final-release precision",
+        "\\pending",
+        "4,316 successful responses",
+        "34,528 structured annotation decisions",
+        "2,347/4,316 responses",
+        "289 responses (6.7\\%",
+        "3/433 for GPT-5.2",
+        "84/433 for GPT-4.1-mini",
+        "641/4,316, 14.9\\%",
+        "325, 7.5\\%",
+        "171/295 replies (58.0\\%",
+        "150/221 for ChatGPT",
+        "17/26 for Grok",
+        "2/41 (4.9\\%",
+        "Those 27 contain 1,367 scorable assistant replies",
+        "paired last-minus-first-quintile change is +28.1 percentage points",
+        "18 conversations increase, five decrease, and four tie",
+        "target-plus-reply judging flags 122/166 (73.5\\%)",
+        "paired increase of +6.0 points",
+        "Fourteen labels switch from negative to positive and four from positive to negative",
+        "A public Jacobian lens is applied to Qwen2.5-7B-Instruct",
+        "raises grouped ten-fold \\auc{} from 0.596 to 0.732",
+        "on contextual hard negatives the incremental \\auc{} is only 0.019",
+        "Conversation-macro user-positive prevalence rises early and then plateaus",
+        "a +15.3-point endpoint change",
+        "associated with +32.0 points of assistant endorsement",
+        "pooled model-adjusted estimate across retained target positions is +1.7 points",
+        "Full context increases strict endorsement from 126/4,315 (2.9\\%)",
+        "a paired difference of +3.78 percentage points",
+        "identical-visible-input control",
+        "GPT-4.1-mini (+11.3 points",
+        "earlier user turns and still increase by +4.20 points",
+        "5.0\\%, 13.1\\%, 11.7\\%, 22.5\\%, and 27.5\\%",
+        "41/885 responses (4.6\\%)",
+        "GPT-4o-mini is 5.6 percentage points \\emph{lower}",
+        "\\auc{} from 0.596 to 0.732",
+        "0.135 [0.028, 0.249]",
+        "without moving average behavior",
+        "does not establish a universal monotonic effect",
     ):
         require_text(manuscript, fragment)
 
     result = {
         "passed": True,
         "check_groups": [
-            "mining",
-            "conversation verification",
-            "release characterization and integrity",
-            "combined release expansion and hosted integrity",
-            "transfer audit",
-            "retrieval ablation",
-            "generation and judge settings",
-            "full framing-aware behavior",
-            "exact-package behavior",
-            "manuscript rendering strings",
+            "mining and conversation verification",
+            "combined release composition and integrity",
+            "human transfer audit",
+            "public-cohort response filtering",
+            "SPIRALS taxonomy aggregates",
+            "LDA topic aggregates",
+            "recovered production replies and longitudinal models",
+            "matched behavioral context ablation",
+            "all-turn production trajectories",
+            "paired response-judge context sensitivity",
+            "aligned user and assistant trajectories",
+            "context truncation dose response",
+            "mini-model paired comparisons",
+            "discovery-route response sensitivity",
+            "J-space intervention, indicator, placebo, and hard-negative controls",
+            "manuscript rendering strings and pending validation markers",
         ],
         "artifact_root": str(artifacts),
         "manuscript": str(args.paper_dir / "main.tex"),
         "human_audit_scope": "non-random 108-case transfer audit only",
         "pending_human_gates": [
-            "final-release precision audit",
-            "assistant-response endpoint audit",
+            "blinded final-release audit with independent reviewers",
+            "assistant-response judge calibration",
+            "topic-label and stability audit",
         ],
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)

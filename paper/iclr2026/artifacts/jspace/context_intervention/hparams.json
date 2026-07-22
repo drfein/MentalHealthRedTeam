@@ -1,0 +1,9 @@
+{
+  "readouts": "results/jspace_context_interventions/qwen2_5_7b_it_probe_free/jspace_layer_readouts.jsonl",
+  "input": "data/jspace/context_interventions_probe_free.jsonl",
+  "prompt_variants": "results/jspace_controls/qwen2_5_7b_probe_free_misunderstanding/prompt_variants.csv",
+  "max_prompt_tokens": 1024,
+  "bootstrap_draws": 10000,
+  "seed": 20260711,
+  "multiplicity": "Holm across layers within metric and contrast"
+}

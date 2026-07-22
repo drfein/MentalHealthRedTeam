@@ -1,0 +1,60 @@
+{
+  "n_messages": 417,
+  "n_observations": 1251,
+  "positive_n": 46,
+  "positive_rate": 0.03677058353317346,
+  "excluded_oversize_messages": 19,
+  "unadjusted_inverse_logit_auc": 0.7448493595525888,
+  "baseline_grouped_cv_auc": 0.5963196824824102,
+  "full_grouped_cv_auc": 0.731661555114559,
+  "grouped_cv_auc_improvement": 0.1353418726321488,
+  "grouped_cv_auc_improvement_ci": [
+    0.028406799911630438,
+    0.2491291918764868
+  ],
+  "full_grouped_cv_average_precision": 0.090815534363386,
+  "full_grouped_cv_brier": 0.1982186547043367,
+  "group_pattern_permutation_p": 0.0004997501249375312,
+  "permutation_null_auc_95pct": [
+    0.3920798755186722,
+    0.6045830326537976
+  ],
+  "conditional_prompt_fixed": {
+    "n_discordant_messages": 32,
+    "n_observations": 96,
+    "primary_log_odds_per_sd": -1.0075914544765607,
+    "primary_odds_ratio_per_sd": 0.3650972748468095,
+    "ci_low": 0.06373367206762101,
+    "ci_high": 2.091453634730799,
+    "p_value": 0.25786840113705956
+  },
+  "primary_adjusted_token_rank": 5,
+  "adjusted_token_count": 60,
+  "pre_registered_token_group_control": {
+    "epistemic_tokens": [
+      "misunderstanding",
+      "misunderstood",
+      "confusion",
+      "confused",
+      "misinterpretation",
+      "misinterpreted"
+    ],
+    "lexical_placebo_tokens": [
+      "window",
+      "table",
+      "water",
+      "music",
+      "number",
+      "question",
+      "answer",
+      "morning"
+    ],
+    "epistemic_mean_auc_improvement": 0.08901617655902348,
+    "placebo_mean_auc_improvement": 0.03129397438210363,
+    "mean_difference": 0.057722202176919854,
+    "exact_two_sided_permutation_p": 0.015984015984015984,
+    "assignment_count": 3003
+  },
+  "interpretation_rule": "Support causal gating only if the prompt-fixed primary coefficient is negative and its two-sided p-value is below 0.05. Across-message AUC alone is predictive, not causal.",
+  "causal_gating_supported": false
+}

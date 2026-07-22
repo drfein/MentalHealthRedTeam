@@ -1,0 +1,26 @@
+{
+  "paired_replies": 166,
+  "conversations": 27,
+  "target_plus_reply": {
+    "positives": 122,
+    "rate": 0.7349397590361446,
+    "mean_score": 7.451807228915663
+  },
+  "preceding_context_plus_target_plus_reply": {
+    "positives": 132,
+    "rate": 0.7951807228915663,
+    "mean_score": 7.759036144578313
+  },
+  "paired_context_effect": {
+    "rate_difference": 0.060240963855421686,
+    "rate_ci_low": 0.016573444134971006,
+    "rate_ci_high": 0.1111111111111111,
+    "score_difference": 0.3072289156626506,
+    "score_ci_low": -0.04606025618682467,
+    "score_ci_high": 0.6666666666666666,
+    "negative_to_positive": 14,
+    "positive_to_negative": 4,
+    "exact_mcnemar_p": 0.0308837890625
+  },
+  "interpretation": "The 58.0% rate uses all 295 recoverable target-adjacent replies and is not the context-free comparator for the 79.5% repeated-conversation rate. On the same 166 replies, supplying preceding context increases strict endorsement by the paired rate difference reported here."
+}

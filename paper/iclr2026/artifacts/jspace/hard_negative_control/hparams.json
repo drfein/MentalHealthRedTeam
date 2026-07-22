@@ -1,0 +1,12 @@
+{
+  "readouts": "results/jspace_controls/qwen2_5_7b_hard_negative_full/jspace_layer_readouts.jsonl",
+  "metadata": "data/verification/whitened_top3k_verified_gpt54mini.jsonl",
+  "prompt_variants": "results/jspace_controls/qwen2_5_7b_hard_negative_full/prompt_variants.csv",
+  "max_prompt_tokens": 1024,
+  "out_dir": "results/jspace_controls/qwen2_5_7b_hard_negative_full/analysis_misinformation_filtered",
+  "layer": 26,
+  "primary_token": "misinformation",
+  "cv_folds": 10,
+  "bootstrap_draws": 5000,
+  "seed": 20260715
+}

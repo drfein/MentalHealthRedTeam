@@ -1,22 +1,29 @@
 {
   "passed": true,
   "check_groups": [
-    "mining",
-    "conversation verification",
-    "release characterization and integrity",
-    "combined release expansion and hosted integrity",
-    "transfer audit",
-    "retrieval ablation",
-    "generation and judge settings",
-    "full framing-aware behavior",
-    "exact-package behavior",
-    "manuscript rendering strings"
+    "mining and conversation verification",
+    "combined release composition and integrity",
+    "human transfer audit",
+    "public-cohort response filtering",
+    "SPIRALS taxonomy aggregates",
+    "LDA topic aggregates",
+    "recovered production replies and longitudinal models",
+    "matched behavioral context ablation",
+    "all-turn production trajectories",
+    "paired response-judge context sensitivity",
+    "aligned user and assistant trajectories",
+    "context truncation dose response",
+    "mini-model paired comparisons",
+    "discovery-route response sensitivity",
+    "J-space intervention, indicator, placebo, and hard-negative controls",
+    "manuscript rendering strings and pending validation markers"
   ],
   "artifact_root": "paper/iclr2026/artifacts",
   "manuscript": "paper/iclr2026/main.tex",
   "human_audit_scope": "non-random 108-case transfer audit only",
   "pending_human_gates": [
-    "final-release precision audit",
-    "assistant-response endpoint audit"
+    "blinded final-release audit with independent reviewers",
+    "assistant-response judge calibration",
+    "topic-label and stability audit"
   ]
 }

@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "paper": "paper/iclr2026/main.tex",
+  "experiments": [
+    {
+      "id": "dataset_construction_and_verification",
+      "paper_sections": ["3", "A", "B"],
+      "code": [
+        "src/wild_delusion_miner/cli.py",
+        "src/wild_delusion_miner/datasets.py",
+        "src/wild_delusion_miner/embed.py",
+        "src/wild_delusion_miner/legacy_expansion.py",
+        "src/wild_delusion_miner/rerank.py",
+        "src/wild_delusion_miner/retrieval.py",
+        "src/wild_delusion_miner/store.py",
+        "src/wild_delusion_miner/synthetic.py",
+        "src/wild_delusion_miner/verify.py",
+        "scripts/build_legacy_expansion_candidates.py",
+        "scripts/filter_positive_annotations.py",
+        "scripts/build_wilddelusion_combined_release.py",
+        "scripts/analyze_conversation_verifier_human_validation.py",
+        "scripts/analyze_wilddelusion_dataset.py",
+        "scripts/verify_wilddelusion_release.py"
+      ],
+      "artifacts": [
+        "paper/iclr2026/artifacts/mining_settings.json",
+        "paper/iclr2026/artifacts/verification_summary.json",
+        "paper/iclr2026/artifacts/combined_release_characterization.json",
+        "paper/iclr2026/artifacts/combined_release_manifest.json",
+        "paper/iclr2026/artifacts/combined_release_integrity.json",
+        "paper/iclr2026/artifacts/human_validation_metrics.csv"
+      ]
+    },
+    {
+      "id": "ten_model_response_benchmark",
+      "paper_sections": ["4", "C", "E"],
+      "code": [
+        "src/wild_delusion_miner/assistant_responses.py",
+        "src/wild_delusion_miner/response_analysis.py",
+        "scripts/build_multimodel_benchmark_inputs.py",
+        "scripts/judge_generated_responses_with_package.py",
+        "scripts/run_generated_response_annotations.py",
+        "scripts/run_fine_response_topics.py",
+        "scripts/build_paper_multimodel_results.py"
+      ],
+      "artifacts": [
+        "paper/iclr2026/artifacts/multimodel/summary.json",
+        "paper/iclr2026/artifacts/multimodel/spirals_taxonomy_by_model.csv",
+        "paper/iclr2026/artifacts/multimodel/lda_topics_by_model.csv",
+        "paper/iclr2026/figures/multimodel_spirals_taxonomy.pdf",
+        "paper/iclr2026/figures/multimodel_lda_topics.pdf"
+      ]
+    },
+    {
+      "id": "observed_reply_trajectories",
+      "paper_sections": ["5.1", "5.2", "D.1", "D.2"],
+      "code": [
+        "scripts/build_observed_response_dataset.py",
+        "scripts/build_all_turn_trajectory_inputs.py",
+        "scripts/build_all_turn_user_inputs.py",
+        "scripts/judge_generated_responses_with_package.py",
+        "scripts/judge_user_turns_with_package.py",
+        "scripts/analyze_all_turn_trajectories.py",
+        "scripts/analyze_response_judge_context_sensitivity.py",
+        "scripts/analyze_user_assistant_trajectories.py",
+        "scripts/analyze_response_longitudinal.py"
+      ],
+      "artifacts": [
+        "paper/iclr2026/artifacts/response_longitudinal/summary.json",
+        "paper/iclr2026/artifacts/all_turn_trajectories/analysis_summary.json",
+        "paper/iclr2026/artifacts/response_judge_context_sensitivity/summary.json",
+        "paper/iclr2026/artifacts/user_assistant_trajectories/summary.json",
+        "paper/iclr2026/figures/response_longitudinal.pdf"
+      ]
+    },
+    {
+      "id": "behavioral_context_ablation",
+      "paper_sections": ["5.3", "D.3"],
+      "code": [
+        "src/wild_delusion_miner/assistant_responses.py",
+        "scripts/build_context_ablation_inputs.py",
+        "scripts/prepare_context_ablation_judgments.py",
+        "scripts/analyze_context_ablation.py",
+        "scripts/build_context_truncation_inputs.py",
+        "scripts/prepare_context_truncation_judgments.py",
+        "scripts/analyze_context_truncation.py",
+        "scripts/analyze_mini_model_hypothesis.py"
+      ],
+      "artifacts": [
+        "paper/iclr2026/artifacts/context_ablation/summary.json",
+        "paper/iclr2026/artifacts/context_truncation/summary.json",
+        "paper/iclr2026/artifacts/mini_model_hypothesis/summary.json",
+        "paper/iclr2026/figures/context_ablation.pdf",
+        "paper/iclr2026/figures/context_truncation.pdf"
+      ]
+    },
+    {
+      "id": "discovery_route_sensitivity",
+      "paper_sections": ["4", "A.3"],
+      "code": [
+        "scripts/build_discovery_split_benchmark.py",
+        "scripts/prepare_discovery_route_judgments.py",
+        "scripts/analyze_discovery_route_sensitivity.py"
+      ],
+      "artifacts": [
+        "paper/iclr2026/artifacts/discovery_route_benchmark/summary.json",
+        "paper/iclr2026/artifacts/discovery_route_benchmark/endorsement_by_discovery_route.csv"
+      ]
+    },
+    {
+      "id": "jspace_audit",
+      "paper_sections": ["6"],
+      "code": [
+        "scripts/build_jspace_context_interventions.py",
+        "scripts/run_jspace_context_ablation.py",
+        "scripts/generate_context_intervention_responses.py",
+        "scripts/judge_generated_responses_with_package.py",
+        "scripts/analyze_jspace_context_interventions.py",
+        "scripts/analyze_jspace_behavior_link.py",
+        "scripts/analyze_jspace_endorsement_gate.py",
+        "scripts/analyze_jspace_hard_negative_control.py"
+      ],
+      "artifacts": [
+        "paper/iclr2026/artifacts/jspace/context_intervention/paired_effects.csv",
+        "paper/iclr2026/artifacts/jspace/context_intervention/behavior_paired_effects.csv",
+        "paper/iclr2026/artifacts/jspace/endorsement_indicator/summary.json",
+        "paper/iclr2026/artifacts/jspace/endorsement_indicator/token_placebo_ranking.csv",
+        "paper/iclr2026/artifacts/jspace/hard_negative_control/summary.json"
+      ]
+    }
+  ]
+}

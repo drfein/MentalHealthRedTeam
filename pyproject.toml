@@ -30,6 +30,7 @@ dev = [
 ]
 paper = [
   "matplotlib>=3.9.0",
+  "statsmodels>=0.14.0",
 ]
 jspace = [
   "accelerate>=1.12.0",

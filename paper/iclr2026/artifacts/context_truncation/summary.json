@@ -1,0 +1,117 @@
+{
+  "models": [
+    "gpt-4.1-mini-2025-04-14",
+    "gpt-5.2-2025-12-11"
+  ],
+  "arms": [
+    "target_only",
+    "last_1",
+    "last_3",
+    "last_7",
+    "full_context"
+  ],
+  "minimum_available_prior_messages": 13,
+  "results": [
+    {
+      "model": "gpt-4.1-mini-2025-04-14",
+      "model_label": "GPT-4.1 mini",
+      "arm": "target_only",
+      "prior_messages": "0",
+      "targets": 222,
+      "endorsement_rate": 0.04954954954954955,
+      "ci_low": 0.011811023622047244,
+      "ci_high": 0.09836277924063531
+    },
+    {
+      "model": "gpt-4.1-mini-2025-04-14",
+      "model_label": "GPT-4.1 mini",
+      "arm": "last_1",
+      "prior_messages": "1",
+      "targets": 222,
+      "endorsement_rate": 0.13063063063063063,
+      "ci_low": 0.0710374430109613,
+      "ci_high": 0.1982010491504162
+    },
+    {
+      "model": "gpt-4.1-mini-2025-04-14",
+      "model_label": "GPT-4.1 mini",
+      "arm": "last_3",
+      "prior_messages": "3",
+      "targets": 222,
+      "endorsement_rate": 0.11711711711711711,
+      "ci_low": 0.05172413793103448,
+      "ci_high": 0.19587734062697243
+    },
+    {
+      "model": "gpt-4.1-mini-2025-04-14",
+      "model_label": "GPT-4.1 mini",
+      "arm": "last_7",
+      "prior_messages": "7",
+      "targets": 222,
+      "endorsement_rate": 0.22522522522522523,
+      "ci_low": 0.13636363636363635,
+      "ci_high": 0.32000492610837433
+    },
+    {
+      "model": "gpt-4.1-mini-2025-04-14",
+      "model_label": "GPT-4.1 mini",
+      "arm": "full_context",
+      "prior_messages": "All",
+      "targets": 222,
+      "endorsement_rate": 0.2747747747747748,
+      "ci_low": 0.14948453608247422,
+      "ci_high": 0.3865979381443299
+    },
+    {
+      "model": "gpt-5.2-2025-12-11",
+      "model_label": "GPT-5.2",
+      "arm": "target_only",
+      "prior_messages": "0",
+      "targets": 222,
+      "endorsement_rate": 0.0045045045045045045,
+      "ci_low": 0.0,
+      "ci_high": 0.016574585635359115
+    },
+    {
+      "model": "gpt-5.2-2025-12-11",
+      "model_label": "GPT-5.2",
+      "arm": "last_1",
+      "prior_messages": "1",
+      "targets": 222,
+      "endorsement_rate": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+    },
+    {
+      "model": "gpt-5.2-2025-12-11",
+      "model_label": "GPT-5.2",
+      "arm": "last_3",
+      "prior_messages": "3",
+      "targets": 222,
+      "endorsement_rate": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+    },
+    {
+      "model": "gpt-5.2-2025-12-11",
+      "model_label": "GPT-5.2",
+      "arm": "last_7",
+      "prior_messages": "7",
+      "targets": 222,
+      "endorsement_rate": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+    },
+    {
+      "model": "gpt-5.2-2025-12-11",
+      "model_label": "GPT-5.2",
+      "arm": "full_context",
+      "prior_messages": "All",
+      "targets": 222,
+      "endorsement_rate": 0.0045045045045045045,
+      "ci_low": 0.0,
+      "ci_high": 0.016666666666666666
+    }
+  ],
+  "uncertainty": "95% percentile intervals from 10000 source-conversation-cluster bootstrap draws; each model is analyzed separately."
+}

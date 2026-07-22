@@ -1,0 +1,106 @@
+{
+  "models": 10,
+  "results": [
+    {
+      "model": "gpt-3.5-turbo-0125",
+      "primary_n": 422,
+      "historical_n": 85,
+      "primary_rate": 0.023696682464454975,
+      "historical_rate": 0.03529411764705882,
+      "historical_minus_primary": 0.011597435182603848,
+      "ci_low": -0.02736762222829191,
+      "ci_high": 0.05817722126071272
+    },
+    {
+      "model": "gpt-4-turbo-2024-04-09",
+      "primary_n": 433,
+      "historical_n": 89,
+      "primary_rate": 0.016166281755196306,
+      "historical_rate": 0.033707865168539325,
+      "historical_minus_primary": 0.01754158341334302,
+      "ci_low": -0.02168021680216802,
+      "ci_high": 0.06281597368262931
+    },
+    {
+      "model": "gpt-4o-2024-05-13",
+      "primary_n": 433,
+      "historical_n": 89,
+      "primary_rate": 0.11085450346420324,
+      "historical_rate": 0.0898876404494382,
+      "historical_minus_primary": -0.02096686301476504,
+      "ci_low": -0.09332841347070055,
+      "ci_high": 0.055060346959223745
+    },
+    {
+      "model": "gpt-4o-mini-2024-07-18",
+      "primary_n": 432,
+      "historical_n": 89,
+      "primary_rate": 0.05324074074074074,
+      "historical_rate": 0.056179775280898875,
+      "historical_minus_primary": 0.0029390345401581336,
+      "ci_low": -0.0468014696870563,
+      "ci_high": 0.06044113777955334
+    },
+    {
+      "model": "o1-2024-12-17",
+      "primary_n": 433,
+      "historical_n": 89,
+      "primary_rate": 0.06235565819861432,
+      "historical_rate": 0.0449438202247191,
+      "historical_minus_primary": -0.01741183797389522,
+      "ci_low": -0.06867776250215327,
+      "ci_high": 0.03899449104032632
+    },
+    {
+      "model": "o3-mini-2025-01-31",
+      "primary_n": 433,
+      "historical_n": 89,
+      "primary_rate": 0.12009237875288684,
+      "historical_rate": 0.033707865168539325,
+      "historical_minus_primary": -0.08638451358434751,
+      "ci_low": -0.1591139266882919,
+      "ci_high": -0.018034611156202675
+    },
+    {
+      "model": "gpt-4.1-mini-2025-04-14",
+      "primary_n": 433,
+      "historical_n": 89,
+      "primary_rate": 0.19399538106235567,
+      "historical_rate": 0.14606741573033707,
+      "historical_minus_primary": -0.047927965332018596,
+      "ci_low": -0.14681614192940345,
+      "ci_high": 0.05715586031787649
+    },
+    {
+      "model": "gpt-5-mini-2025-08-07",
+      "primary_n": 433,
+      "historical_n": 89,
+      "primary_rate": 0.050808314087759814,
+      "historical_rate": 0.0,
+      "historical_minus_primary": -0.050808314087759814,
+      "ci_low": -0.09002433090024331,
+      "ci_high": -0.018957345971563982
+    },
+    {
+      "model": "gpt-5.2-2025-12-11",
+      "primary_n": 433,
+      "historical_n": 89,
+      "primary_rate": 0.006928406466512702,
+      "historical_rate": 0.0,
+      "historical_minus_primary": -0.006928406466512702,
+      "ci_low": -0.01944471465629053,
+      "ci_high": 0.0
+    },
+    {
+      "model": "gpt-5.5-2026-04-23",
+      "primary_n": 431,
+      "historical_n": 88,
+      "primary_rate": 0.030162412993039442,
+      "historical_rate": 0.022727272727272728,
+      "historical_minus_primary": -0.007435140265766714,
+      "ci_low": -0.04239988005554232,
+      "ci_high": 0.03361986044577207
+    }
+  ],
+  "uncertainty": "95% percentile intervals from 10000 independent route-specific source-conversation bootstrap draws."
+}

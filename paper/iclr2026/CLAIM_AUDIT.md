@@ -1,51 +1,69 @@
 # Manuscript claim audit
 
-This file maps the paper's quantitative claims to authoritative saved artifacts.
-It is intended to prevent prose revisions from drifting away from the analyzed
-data. `scripts/verify_paper_claims.py` checks the listed aggregate inputs,
-cross-artifact invariants, generation and judge settings, confidence intervals,
-paired-test outputs, and corresponding manuscript strings during every full
-paper rebuild. Its latest machine-readable result is
-`artifacts/claim_verification.json`.
+This file maps every quantitative result in the paper to the text-free aggregate
+that is committed with the manuscript. `scripts/verify_paper_claims.py` checks
+the exact values, cross-artifact invariants, and corresponding manuscript text.
+`configs/paper_experiments.json` separately maps every experiment to its source
+code, and `scripts/verify_paper_code_manifest.py` verifies that map.
 
-| Claim | Value in manuscript | Authoritative artifact |
-|---|---:|---|
-| Materialized embedding corpus | about 6.13M user messages | `artifacts/mining_settings.json` |
-| Top-1k bootstrap positives | 107/1,000 | `artifacts/mining_settings.json` |
-| Top-500 whitened retrieval hit rate | 12/30 (40.0%) | `artifacts/retrieval_ablation_results.csv` |
-| Contextually verified set | 436 positive target turns, 271 negative, 8 uncertain | `artifacts/verification_summary.json` |
-| Public release unit count | 433 target turns from 232 source conversations; 62 multi-target conversations; maximum 39 targets/conversation | `artifacts/release_characterization.json` |
-| License exclusion | 3 verified LMSYS-Chat-1M targets excluded from redistribution and reported experiments | `artifacts/release_manifest.json` |
-| Release characteristics | median 21 stored messages; target index 13; target length 103 words | `artifacts/release_characterization.json` |
-| Hosted release integrity | 433/433 exact rows; canonical SHA-256 `dd34ec93...4dc` | `artifacts/release_integrity.json` |
-| Combined release | 522 target turns from 321 source conversations; 433 whitened-embedding and 89 legacy-probe targets | `artifacts/combined_release_characterization.json`, `artifacts/combined_release_manifest.json` |
-| Hosted combined integrity | 522 rows, zero LMSYS rows, zero target errors; parquet SHA-256 `4aa19e12...ab3` | `artifacts/combined_release_integrity.json` |
-| Earlier human transfer audit | strict-rule precision 35/38 = 92.1% [79.2, 97.3] | `artifacts/human_validation_metrics.csv` |
-| Counterfactual artifact | 433 x 8 = 3,464 public responses | `artifacts/behavior/full_public/hparams.json` plus private response cache |
-| Direct-assertion endorsement | 75/433 (17.3%), source-conversation cluster CI [13.1, 22.4] | `artifacts/behavior/full_public/behavior_by_frame.csv` |
-| Conversation-macro direct endorsement | 17.2%; every other frame at most 1.8% | same `behavior_by_frame.csv` |
-| Smallest paired direct-versus-alternative effect | Direct vs reported belief: +14.3 points [10.5, 18.8], Holm-adjusted exact source-conversation sign-flip p=5.5e-13 | `artifacts/behavior/full_public/paired_frame_contrasts.csv` |
-| Exact package frame ordering | Direct 20/433 (4.6%) [2.5, 7.1], translation 4/433, every other frame at most 1/433 | `artifacts/behavior/full_public/package_behavior_by_frame.csv` |
-| Smallest exact-package paired effect | Direct vs translation: +3.7 points [1.5, 6.2], Holm-adjusted exact source-conversation sign-flip p=.0022 | `artifacts/behavior/full_public/package_paired_frame_contrasts.csv` |
-| Direct-response rubric overlap | 19 shared positives, 56 framing-only, 1 package-only | `artifacts/behavior/full_public/endpoint_overlap_by_frame.csv` |
-| Source-stratified directional check | Direct assertion is highest in ShareChat--ChatGPT (63/356), ShareChat--Grok (7/33), and WildChat (5/44) | `artifacts/behavior/full_public/behavior_by_source_and_frame.csv` |
+## Dataset and verification
 
-Interpretive boundaries are equally important:
+| Manuscript result | Committed source |
+|---|---|
+| Approximately 6.13M materialized user-message embeddings; 107/1,000 bootstrap positives; 200,000-row whitening fit | `artifacts/mining_settings.json` |
+| 715 contextual-verifier inputs from 418 conversations; 436 positive, 271 negative, 8 uncertain | `artifacts/verification_summary.json` |
+| 522 released targets from 321 conversations; 433 primary-route and 89 historical-route targets | `artifacts/combined_release_characterization.json`, `artifacts/combined_release_manifest.json` |
+| Zero redistributed LMSYS rows and zero target-integrity errors | `artifacts/combined_release_integrity.json` |
+| Earlier transfer audit: precision 35/38, specificity 26/29, sensitivity 35/79, AUROC 0.824 | `artifacts/human_validation_metrics.csv` |
 
-- The retrieval ablation estimates precision in sampled rank buckets, not recall
-  or corpus prevalence.
-- The 108-case manual transfer audit is non-random and predates the final
-  retrieval pool; it provides limited supporting evidence about verifier
-  transfer but does not convert all 433 rows into human-adjudicated gold labels.
-  The decisions were not independently double-coded, so no inter-rater estimate
-  is available.
-- Rows are target turns, not independent conversations. All benchmark
-  uncertainty must cluster by `(source, conversation_id)`.
-- The primary behavioral analysis uses all 433 targets from the whitened-
-  embedding discovery cohort, not the 89-row legacy expansion. It has no
-  outcome-selected train/evaluation split. Its uncertainty clusters the 232
-  source conversations.
-- The framing-aware and exact package judges preserve the direct-assertion
-  ordering but produce materially different absolute rates; 17.3% is not an
-  endpoint-free failure rate. The exact package is not framing-aware, so its
-  translation positives are not interpreted as real-world endorsement.
+## Ten-model response benchmark
+
+| Manuscript result | Committed source |
+|---|---|
+| 4,316 successful public-cohort responses from 10 model snapshots, covering 433 targets and 232 conversations | `artifacts/multimodel/summary.json` |
+| All eight SPIRALS totals and model-specific rates, including 289 strict endorsement flags | `artifacts/multimodel/summary.json`, `artifacts/multimodel/spirals_taxonomy_by_model.csv` |
+| Fixed 40-topic LDA prevalence and model-specific topic assignments | `artifacts/multimodel/summary.json`, `artifacts/multimodel/lda_topics_by_model.csv` |
+| Historical-route benchmark: 885 judged generations and 41 endorsements | `artifacts/discovery_route_benchmark/summary.json`, `artifacts/discovery_route_benchmark/endorsement_by_discovery_route.csv` |
+| Four paired mini/flagship comparisons and pooled descriptive contrast | `artifacts/mini_model_hypothesis/summary.json`, `artifacts/mini_model_hypothesis/paired_comparisons.csv` |
+
+## Observed replies and trajectories
+
+| Manuscript result | Committed source |
+|---|---|
+| 295 recovered target-adjacent replies from 156 conversations; 171 strict flags; serving-platform counts | `artifacts/response_longitudinal/summary.json`, `artifacts/response_longitudinal/observed_rates_by_platform.csv` |
+| 1,367 assistant turns in 27 repeated-target conversations; 667 strict flags; +28.1-point endpoint change | `artifacts/all_turn_trajectories/analysis_summary.json`, `artifacts/all_turn_trajectories/all_turn_progress_bins.csv` |
+| Same-166-reply judge-context comparison: 122 target-only versus 132 context-supplied positives | `artifacts/response_judge_context_sensitivity/summary.json` |
+| 1,365 aligned user/assistant pairs; user trajectory and assistant model adjusted for the contemporaneous user label | `artifacts/user_assistant_trajectories/summary.json`, `artifacts/user_assistant_trajectories/trajectory_bins.csv` |
+| Controlled repeated-target response trajectory across 2,619 responses | `artifacts/response_longitudinal/summary.json`, `artifacts/response_longitudinal/generated_longitudinal_by_model.csv` |
+
+## Behavioral context experiments
+
+| Manuscript result | Committed source |
+|---|---|
+| 4,315 matched target-only/full-prefix pairs; 2.9% versus 6.7%; +3.78 points | `artifacts/context_ablation/summary.json` |
+| Model, history-length, and history-role heterogeneity | `artifacts/context_ablation/context_effect_by_model.csv`, `context_effect_by_length.csv`, `context_effect_by_history_type.csv` |
+| 222-target truncation sweep for GPT-4.1-mini and GPT-5.2 | `artifacts/context_truncation/summary.json`, `artifacts/context_truncation/context_truncation_rates.csv` |
+
+## Exploratory J-space audit
+
+| Manuscript result | Committed source |
+|---|---|
+| 417 paired valid targets; validating-minus-reality-testing shifts for misinformation, reality-testing, and falsity-concern coordinates | `artifacts/jspace/context_intervention/paired_effects.csv` |
+| Behavioral effect of the same intervention: -0.24 points [-2.40, 1.92] | `artifacts/jspace/context_intervention/behavior_paired_effects.csv` |
+| Grouped 10-fold AUROC 0.596 to 0.732; +0.135 [0.028, 0.249]; 32 behaviorally varying items; predefined epistemic/placebo comparison | `artifacts/jspace/endorsement_indicator/summary.json`, `token_placebo_ranking.csv` |
+| Contextual hard-negative incremental AUROC +0.019 [-0.005, 0.044] | `artifacts/jspace/hard_negative_control/summary.json` |
+
+## Evidence boundaries
+
+- Raw generations, judge rationales, and source conversation text are not
+  committed. They may contain sensitive or license-restricted text. The public
+  repository commits code, settings, text-free aggregates, and figures.
+- The zero-network rebuild verifies consistency between the committed evidence
+  bundle and manuscript; it does not recreate proprietary API outputs.
+- Rows are target turns, not independent users or conversations. Reported
+  uncertainty follows the conversation-clustering rule specified by each
+  experiment.
+- Retrieval sampling estimates precision in rank ranges, not corpus prevalence
+  or recall.
+- The final 522-row release still requires the independently double-coded audit
+  marked as pending in the manuscript.

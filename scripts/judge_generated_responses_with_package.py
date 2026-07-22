@@ -22,9 +22,15 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
         return [json.loads(line) for line in handle if line.strip()]
 
 
-def row_key(row: dict[str, Any]) -> tuple[int, str]:
-    return int(row["original_row_idx"]), str(
-        row.get("condition", row.get("intervention_arm", ""))
+def row_key(row: dict[str, Any]) -> tuple[str, ...]:
+    generation_id = str(row.get("generation_id") or "")
+    if generation_id:
+        return ("generation_id", generation_id)
+    return (
+        "row_arm_model",
+        str(int(row["original_row_idx"])),
+        str(row.get("condition", row.get("intervention_arm", ""))),
+        str(row.get("model_id", row.get("model", ""))),
     )
 
 
@@ -47,6 +53,11 @@ async def main() -> None:
     )
     parser.add_argument("--max-rows", type=int, default=None)
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument(
+        "--retry-errors",
+        action="store_true",
+        help="On resume, discard prior error rows and retry them without creating duplicates.",
+    )
     args = parser.parse_args()
 
     rows = read_jsonl(args.input)
@@ -64,7 +75,13 @@ async def main() -> None:
         selected_arms = set(args.intervention_arm)
         rows = [row for row in rows if row.get("intervention_arm") in selected_arms]
     if args.resume and args.output.exists():
-        completed = {row_key(row) for row in read_jsonl(args.output)}
+        prior_rows = read_jsonl(args.output)
+        if args.retry_errors:
+            prior_rows = [row for row in prior_rows if "judge_error" not in row]
+            with args.output.open("w", encoding="utf-8") as handle:
+                for row in prior_rows:
+                    handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+        completed = {row_key(row) for row in prior_rows}
         rows = [row for row in rows if row_key(row) not in completed]
     if args.max_rows is not None:
         rows = rows[: args.max_rows]

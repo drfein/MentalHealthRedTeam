@@ -1,0 +1,16 @@
+{
+  "n": 337,
+  "verified_n": 175,
+  "hard_negative_n": 162,
+  "excluded_oversize_n": 378,
+  "unadjusted_primary_auc": 0.588589065255732,
+  "baseline_oof_auc": 0.6905114638447971,
+  "full_oof_auc": 0.7096649029982364,
+  "oof_auc_improvement": 0.019153439153439256,
+  "oof_auc_improvement_ci": [
+    -0.004672139422915236,
+    0.04413349087188762
+  ],
+  "full_oof_average_precision": 0.6959636654474608,
+  "control_definition": "Hard negatives passed the message-level delusion judge but were excluded by the full-conversation verifier as roleplay, fiction, joking, translation, third-party quotation, ordinary plausible content, or insufficient context."
+}

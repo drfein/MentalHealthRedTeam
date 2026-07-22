@@ -1,0 +1,60 @@
+{
+  "attempted_user_turns": 1367,
+  "user_judge_errors": 2,
+  "aligned_turn_pairs": 1365,
+  "conversations": 27,
+  "user_positive_rate": 0.31648351648351647,
+  "assistant_positive_rate": 0.48717948717948717,
+  "user_binary_fixed_effect_trend": {
+    "coefficient": 0.008851675203700237,
+    "ci_low": -0.1875350328001026,
+    "ci_high": 0.20523838320750307,
+    "p_value": 0.9268932456030955,
+    "rows": 1365,
+    "conversations": 27
+  },
+  "user_score_fixed_effect_trend": {
+    "coefficient": 0.014447173075301883,
+    "ci_low": -1.9283010891679324,
+    "ci_high": 1.9571954353185363,
+    "p_value": 0.987920814095482,
+    "rows": 1365,
+    "conversations": 27
+  },
+  "assistant_binary_fixed_effect_trend": {
+    "coefficient": 0.19693301007656583,
+    "ci_low": -0.03292694116385586,
+    "ci_high": 0.4267929613169875,
+    "p_value": 0.08998346203279875,
+    "rows": 1365,
+    "conversations": 27
+  },
+  "assistant_trend_adjusted_for_user_positive": {
+    "rows": 1365,
+    "conversations": 27,
+    "progress_coefficient": 0.19409758426525908,
+    "progress_ci_low": -0.010866516115679514,
+    "progress_ci_high": 0.3990616846461977,
+    "progress_p_value": 0.062469398730123936,
+    "user_positive_coefficient": 0.3203264631900194,
+    "user_positive_ci_low": 0.20620289409205886,
+    "user_positive_ci_high": 0.43445003228797996,
+    "user_positive_p_value": 4.4701923042481985e-06
+  },
+  "user_endpoint_change": {
+    "last_minus_first_quintile": 0.1525892270382249,
+    "ci_low": -0.02114204623216414,
+    "ci_high": 0.3338658410169283
+  },
+  "assistant_endpoint_change": {
+    "last_minus_first_quintile": 0.2811903838447241,
+    "ci_low": 0.10910512193963852,
+    "ci_high": 0.4524738152642146
+  },
+  "assistant_minus_user_endpoint_change": {
+    "last_minus_first_quintile": 0.12860115680649928,
+    "ci_low": -0.034046571232495805,
+    "ci_high": 0.30178928625944285
+  },
+  "uncertainty": "Plot and endpoint intervals use 10000 conversation-cluster bootstrap draws; regressions use conversation-clustered small-sample-corrected t inference."
+}

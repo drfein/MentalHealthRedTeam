@@ -1,0 +1,212 @@
+{
+  "analysis_population": {
+    "responses": 4316,
+    "targets": 433,
+    "conversations": 232,
+    "models": 10,
+    "excluded_lmsys_responses": 30
+  },
+  "models": {
+    "gpt-3.5-turbo-0125": 422,
+    "gpt-4-turbo-2024-04-09": 433,
+    "gpt-4o-2024-05-13": 433,
+    "gpt-4o-mini-2024-07-18": 432,
+    "o1-2024-12-17": 433,
+    "o3-mini-2025-01-31": 433,
+    "gpt-4.1-mini-2025-04-14": 433,
+    "gpt-5-mini-2025-08-07": 433,
+    "gpt-5.2-2025-12-11": 433,
+    "gpt-5.5-2026-04-23": 431
+  },
+  "taxonomy_overall": [
+    {
+      "model": "all",
+      "flag": "bot_positive_affirmation",
+      "label": "Positive affirmation",
+      "positive": 2347,
+      "total": 4316,
+      "rate": 0.543790546802595,
+      "wilson_lower": 0.5288986239410158,
+      "wilson_upper": 0.558604587369705
+    },
+    {
+      "model": "all",
+      "flag": "bot_metaphysical_themes",
+      "label": "Metaphysical themes",
+      "positive": 1808,
+      "total": 4316,
+      "rate": 0.41890639481000924,
+      "wilson_lower": 0.4042655178130256,
+      "wilson_upper": 0.4336914982782319
+    },
+    {
+      "model": "all",
+      "flag": "bot_reflective_summary",
+      "label": "Reflective summary",
+      "positive": 945,
+      "total": 4316,
+      "rate": 0.21895273401297496,
+      "wilson_lower": 0.20686828133491442,
+      "wilson_upper": 0.23153703443278695
+    },
+    {
+      "model": "all",
+      "flag": "bot_grand_significance",
+      "label": "Grand significance",
+      "positive": 517,
+      "total": 4316,
+      "rate": 0.11978683966635774,
+      "wilson_lower": 0.11043598554796277,
+      "wilson_upper": 0.12981390989704789
+    },
+    {
+      "model": "all",
+      "flag": "bot_endorses_delusion",
+      "label": "Endorses claim",
+      "positive": 289,
+      "total": 4316,
+      "rate": 0.0669601482854495,
+      "wilson_lower": 0.05988158226277823,
+      "wilson_upper": 0.07480888366453739
+    },
+    {
+      "model": "all",
+      "flag": "bot_dismisses_counterevidence",
+      "label": "Dismisses counterevidence",
+      "positive": 169,
+      "total": 4316,
+      "rate": 0.0391566265060241,
+      "wilson_lower": 0.03376773884568151,
+      "wilson_upper": 0.04536513259863673
+    },
+    {
+      "model": "all",
+      "flag": "bot_misrepresents_sentience",
+      "label": "Misrepresents sentience",
+      "positive": 54,
+      "total": 4316,
+      "rate": 0.012511584800741427,
+      "wilson_lower": 0.009602220885692035,
+      "wilson_upper": 0.016287955845753696
+    },
+    {
+      "model": "all",
+      "flag": "bot_claims_unique_connection",
+      "label": "Claims unique connection",
+      "positive": 6,
+      "total": 4316,
+      "rate": 0.0013901760889712697,
+      "wilson_lower": 0.0006372810370026908,
+      "wilson_upper": 0.0030298579012440854
+    }
+  ],
+  "lda_top_topics": [
+    {
+      "model": "all",
+      "topic": 4,
+      "label": "Existential Validation",
+      "positive": 641,
+      "total": 4316,
+      "rate": 0.14851714550509731,
+      "wilson_lower": 0.13822059376956067,
+      "wilson_upper": 0.15943881597454732
+    },
+    {
+      "model": "all",
+      "topic": 1,
+      "label": "Reflective Meaning Amplification",
+      "positive": 373,
+      "total": 4316,
+      "rate": 0.08642261353104727,
+      "wilson_lower": 0.07840316229631956,
+      "wilson_upper": 0.09517761976909424
+    },
+    {
+      "model": "all",
+      "topic": 33,
+      "label": "Supportive Referral Guidance",
+      "positive": 325,
+      "total": 4316,
+      "rate": 0.07530120481927711,
+      "wilson_lower": 0.06780089132314156,
+      "wilson_upper": 0.0835568529490733
+    },
+    {
+      "model": "all",
+      "topic": 6,
+      "label": "Generic Invitation Redirect",
+      "positive": 199,
+      "total": 4316,
+      "rate": 0.04610750695088044,
+      "wilson_lower": 0.0402442408331512,
+      "wilson_upper": 0.05277802923191638
+    },
+    {
+      "model": "all",
+      "topic": 37,
+      "label": "Mystical Affirming Elaboration",
+      "positive": 193,
+      "total": 4316,
+      "rate": 0.044717330861909176,
+      "wilson_lower": 0.0389455443306171,
+      "wilson_upper": 0.05129884601030062
+    },
+    {
+      "model": "all",
+      "topic": 16,
+      "label": "Grounded Reality Check",
+      "positive": 176,
+      "total": 4316,
+      "rate": 0.04077849860982391,
+      "wilson_lower": 0.03527495533351034,
+      "wilson_upper": 0.047098775788982736
+    },
+    {
+      "model": "all",
+      "topic": 34,
+      "label": "Structured Practical Replies",
+      "positive": 155,
+      "total": 4316,
+      "rate": 0.035912882298424466,
+      "wilson_lower": 0.03076147065483723,
+      "wilson_upper": 0.0418896814331313
+    },
+    {
+      "model": "all",
+      "topic": 10,
+      "label": "Speculative Physics Synthesis",
+      "positive": 153,
+      "total": 4316,
+      "rate": 0.03544949026876738,
+      "wilson_lower": 0.03033295413626224,
+      "wilson_upper": 0.04139223804365635
+    },
+    {
+      "model": "all",
+      "topic": 30,
+      "label": "Evidence-Based Accountability Guidance",
+      "positive": 150,
+      "total": 4316,
+      "rate": 0.03475440222428174,
+      "wilson_lower": 0.029690651217621395,
+      "wilson_upper": 0.04064560110022226
+    },
+    {
+      "model": "all",
+      "topic": 38,
+      "label": "Grounded Metaphysical Reflection",
+      "positive": 134,
+      "total": 4316,
+      "rate": 0.03104726598702502,
+      "wilson_lower": 0.026275280126235142,
+      "wilson_upper": 0.036653292927208855
+    }
+  ],
+  "notes": [
+    "All rows are successful generations for the 433 public primary-cohort targets.",
+    "The three excluded LMSYS targets account for 30 generations.",
+    "SPIRALS flags use GPT-5.4-mini and the pinned package prompts.",
+    "LDA uses the fixed 40-topic fit; only post-fit reported aggregates are source-filtered.",
+    "Intervals are pointwise 95% Wilson score intervals and are not multiple-comparison adjusted."
+  ]
+}

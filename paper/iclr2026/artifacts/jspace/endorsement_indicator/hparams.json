@@ -1,0 +1,19 @@
+{
+  "readouts": "results/jspace_controls/qwen2_5_7b_probe_free_misunderstanding/jspace_layer_readouts.jsonl",
+  "judged_responses": "results/jspace_context_interventions/qwen2_5_7b_it_probe_free/openai_package_bot_endorses_judged.jsonl",
+  "prompt_variants": "results/jspace_controls/qwen2_5_7b_probe_free_misunderstanding/prompt_variants.csv",
+  "max_prompt_tokens": 1024,
+  "out_dir": "results/jspace_controls/qwen2_5_7b_probe_free_misunderstanding/gating_controls_misinformation",
+  "metadata": "data/jspace/context_interventions_probe_free.jsonl",
+  "dataset_id": "danielfein/WildDelusionVerified",
+  "dataset_split": "train",
+  "layer": 26,
+  "primary_token": "misinformation",
+  "score_column": "openai_score",
+  "positive_threshold": 7,
+  "cv_folds": 10,
+  "bootstrap_draws": 5000,
+  "permutation_draws": 2000,
+  "seed": 20260715,
+  "primary_hypothesis": "Lower pre-response token logit predicts explicit endorsement."
+}

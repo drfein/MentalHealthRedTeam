@@ -186,6 +186,21 @@ The complete anonymous ICLR-format study write-up is in
 claims are mapped back to saved result artifacts in
 `paper/iclr2026/CLAIM_AUDIT.md`.
 
+Reviewer-facing reproducibility is split into two explicit commands:
+
+```bash
+# Fresh clone: verify committed aggregates and compile without network/API/GPU.
+scripts/rebuild_paper.sh
+
+# Archival workspace: recompute all paper analyses from saved raw outputs.
+scripts/reproduce_paper_analyses.sh
+```
+
+`paper/iclr2026/EXPERIMENTS.md` gives the exact API/GPU generation recipes.
+`configs/paper_experiments.json` maps each paper section to its source code and
+committed aggregate; validate the map with
+`uv run python scripts/verify_paper_code_manifest.py`.
+
 Build the double-blind supplementary archive with
 `uv run python scripts/build_anonymous_supplement.py`. The builder uses an
 explicit allowlist, filters non-redistributable LMSYS rows, removes identifying

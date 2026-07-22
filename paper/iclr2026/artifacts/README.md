@@ -1,24 +1,24 @@
 # Paper aggregate artifacts
 
-These files contain the text-free aggregate values needed to audit manuscript
-claims and regenerate both paper figures. They contain no conversation text,
-user identifiers, API credentials, or model responses.
+This directory is the public, text-free evidence bundle for the manuscript. It
+contains aggregate counts, rates, intervals, fitted-model summaries, frozen
+hyperparameters, and figure inputs. It contains no conversation text, model
+responses, judge rationales, user identifiers, or API credentials.
 
-`combined_release_*.json` characterizes and verifies the 522-row combined
-release while preserving the 433-row whitened-embedding and 89-row legacy-probe
-discovery splits. `behavior/full_public/` contains the eight-frame behavioral
-analysis on the 433-target primary discovery cohort under both rubric
-formulations: frame rates, paired risk differences, source-stratified
-descriptive rates, endpoint overlap, and frozen analysis settings. Exploratory
-interpretability artifacts are not part of the submission evidence bundle.
+Top-level JSON and CSV files characterize dataset construction, verification,
+release integrity, and the earlier human transfer audit. Subdirectories contain
+the ten-model taxonomy/LDA summaries, observed-reply trajectories, judge-context
+sensitivity, user/assistant trajectories, matched context ablations, truncation
+sweeps, discovery-route checks, descriptive mini-model comparisons, and the
+exploratory J-space controls reported in the paper.
 
-The full analysis scripts operate on local source and model-output caches that
-cannot all be redistributed. `scripts/rebuild_paper.sh` intentionally consumes
-this compact bundle instead, making the public figure and PDF build independent
-of those private caches. `CLAIM_AUDIT.md` maps every reported number to a file in
-this directory.
+`../CLAIM_AUDIT.md` maps every manuscript result to these files.
+`../../../configs/paper_experiments.json` maps each result family to its source
+code. `../../../scripts/verify_paper_claims.py` checks exact values and
+cross-artifact invariants during every paper rebuild.
 
-The primary release is independently verified by `release_integrity.json`; the
-hosted combined parquet is independently verified by
-`combined_release_integrity.json` at SHA-256
-`4aa19e12933e16ef3119be00d3031fc16a8fd22db56a18d84c6b53ae51c8cab3`.
+The full analysis scripts operate on ignored archival inputs under `data/` and
+`results/`, which can include sensitive or license-restricted text.
+`scripts/reproduce_paper_analyses.sh` refreshes this bundle from those raw
+outputs. `scripts/rebuild_paper.sh` is the reviewer-facing zero-network path and
+uses only this bundle plus committed figures.

@@ -1,23 +1,29 @@
 # ICLR paper draft
 
-The manuscript is an anonymous ICLR 2026-format draft centered on
-`WildDelusion`, a retrieval-enriched wild-conversation benchmark. The primary
-application is a full-benchmark, eight-frame paired behavioral study. Weak
-exploratory interpretability, cross-model, and topic analyses remain outside the
-manuscript and anonymous supplement.
+The anonymous ICLR 2026-format manuscript introduces `WildDelusion`, a
+context-verified wild-conversation benchmark, and reports a ten-model response
+benchmark, observed production-reply trajectories, behavioral context
+ablations, descriptive SPIRALS/LDA analyses, and an exploratory Qwen
+Jacobian-lens audit.
 
-`HUMAN_AUDIT_PROTOCOL.md` defines the locked, blinded validation needed to
-calibrate the current judge-defined behavioral endpoint.
-`HUMAN_AUDIT_REVIEWER_INSTRUCTIONS.md` is the only methodological document
-shared with raters. `scripts/build_human_audit_handoff.py` packages separate,
-key-free local review archives under `output/human_audit_handoff/`.
-`DATASET_HUMAN_AUDIT_PROTOCOL.md` defines the separate audit of 100 rows from
-the final 522-row release, stratified to represent both discovery routes.
-Completing that audit is the highest-value remaining validation for the
-dataset-centered submission.
-`SUBMISSION_READINESS.md` locks the remaining evidence gates.
+## Reproducibility entry points
 
-Compile from this directory:
+- `REPRODUCE.md`: three-level verification and reproduction workflow.
+- `EXPERIMENTS.md`: exact data, API, GPU, judging, and analysis commands.
+- `CLAIM_AUDIT.md`: every numerical claim mapped to a committed aggregate.
+- `configs/paper_experiments.json`: machine-readable paper-to-code coverage.
+- `scripts/rebuild_paper.sh`: zero-network verification and PDF build.
+- `scripts/reproduce_paper_analyses.sh`: deterministic refresh from saved raw
+  outputs in the archival workspace.
+
+## Remaining validation
+
+`DATASET_HUMAN_AUDIT_PROTOCOL.md` defines the pending blinded final-release
+audit. `HUMAN_AUDIT_PROTOCOL.md` defines the separate assistant-response audit.
+The manuscript leaves those cells visibly pending rather than treating
+automatic-judge agreement as human ground truth.
+
+## Direct compilation
 
 ```bash
 pdflatex main
@@ -26,13 +32,9 @@ pdflatex main
 pdflatex main
 ```
 
-For a complete cached-artifact rebuild from the repository root, run
-`scripts/rebuild_paper.sh`; see `REPRODUCE.md` for evidence boundaries.
+Use `scripts/rebuild_paper.sh` from the repository root for the full claim and
+code-manifest checks before compilation.
 
-The official, unmodified ICLR 2026 style and bibliography files are vendored in
-this directory. `template_reference.tex` is retained only as the official
-formatting reference.
-
-Author names remain anonymous. Before a camera-ready release, uncomment
-`\iclrfinalcopy`, replace the author block, and re-check the then-current ICLR
-format and disclosure requirements.
+The official ICLR 2026 style and bibliography files are vendored here. Author
+names remain anonymous; camera-ready identity and `\iclrfinalcopy` changes must
+be made only after review.
