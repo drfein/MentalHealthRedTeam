@@ -108,6 +108,26 @@
       ]
     },
     {
+      "id": "assistant_history_substitution",
+      "paper_sections": ["5.3", "D.4"],
+      "code": [
+        "src/wild_delusion_miner/assistant_responses.py",
+        "src/wild_delusion_miner/context_interventions.py",
+        "scripts/build_assistant_history_replacement_inputs.py",
+        "scripts/build_assistant_history_intervention_inputs.py",
+        "scripts/prepare_assistant_history_intervention_judgments.py",
+        "scripts/judge_generated_responses_with_package.py",
+        "scripts/judge_assistant_history_substitution_coherence.py",
+        "scripts/analyze_assistant_history_substitution.py",
+        "configs/assistant_history_substitution.json"
+      ],
+      "artifacts": [
+        "paper/iclr2026/artifacts/assistant_history_substitution/summary.json",
+        "paper/iclr2026/artifacts/assistant_history_substitution/substitution_effect_by_model.csv",
+        "paper/iclr2026/figures/assistant_history_substitution.pdf"
+      ]
+    },
+    {
       "id": "jspace_audit",
       "paper_sections": ["6"],
       "code": [

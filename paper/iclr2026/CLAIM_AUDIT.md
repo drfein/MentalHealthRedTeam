@@ -43,6 +43,8 @@ code, and `scripts/verify_paper_code_manifest.py` verifies that map.
 | 4,315 matched target-only/full-prefix pairs; 2.9% versus 6.7%; +3.78 points | `artifacts/context_ablation/summary.json` |
 | Model, history-length, and history-role heterogeneity | `artifacts/context_ablation/context_effect_by_model.csv`, `context_effect_by_length.csv`, `context_effect_by_history_type.csv` |
 | 222-target truncation sweep for GPT-4.1-mini and GPT-5.2 | `artifacts/context_truncation/summary.json`, `artifacts/context_truncation/context_truncation_rates.csv` |
+| 94-conversation assistant-history intervention; 924 complete three-arm sets; 18.1% original versus 8.8% GPT-5.2-substituted | `artifacts/assistant_history_substitution/summary.json`, `artifacts/assistant_history_substitution/substitution_effect_by_model.csv` |
+| Replacement coherence: 70/94 pass at 7/10; coherent-only substitution effect $-8.55$ points | `artifacts/assistant_history_substitution/summary.json` |
 
 ## Exploratory J-space audit
 

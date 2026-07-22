@@ -73,6 +73,9 @@ def main() -> None:
     user_assistant = read_json(artifacts / "user_assistant_trajectories/summary.json")
     mini = read_json(artifacts / "mini_model_hypothesis/summary.json")
     truncation = read_json(artifacts / "context_truncation/summary.json")
+    substitution = read_json(
+        artifacts / "assistant_history_substitution/summary.json"
+    )
     discovery_route = read_json(artifacts / "discovery_route_benchmark/summary.json")
     jspace_effects = read_csv_rows(
         artifacts / "jspace/context_intervention/paired_effects.csv"
@@ -244,6 +247,35 @@ def main() -> None:
         61 / 222,
     )
 
+    substitution_overall = substitution["overall"]
+    assert substitution_overall["model_target_sets"] == 924
+    assert substitution_overall["targets"] == 94
+    assert substitution_overall["conversations"] == 94
+    close(substitution_overall["rates"]["original"]["rate"], 167 / 924)
+    close(
+        substitution_overall["rates"]["assistant_removed"]["rate"],
+        141 / 924,
+    )
+    close(
+        substitution_overall["rates"]["gpt52_substituted"]["rate"],
+        81 / 924,
+    )
+    primary_substitution = substitution_overall["contrasts"][
+        "gpt52_substituted_minus_original"
+    ]
+    close(primary_substitution["difference"], -86 / 924)
+    close(primary_substitution["ci_low"], -0.12864864864864864)
+    close(primary_substitution["ci_high"], -0.06047516198704104)
+    assert substitution["coherence"]["passing_targets"] == 70
+    coherent_substitution = substitution["coherent_only_sensitivity"]
+    assert coherent_substitution["model_target_sets"] == 690
+    close(
+        coherent_substitution["contrasts"][
+            "gpt52_substituted_minus_original"
+        ]["difference"],
+        -59 / 690,
+    )
+
     route_rows = {row["model"]: row for row in discovery_route["results"]}
     assert discovery_route["models"] == 10
     assert sum(int(row["historical_n"]) for row in route_rows.values()) == 885
@@ -343,6 +375,10 @@ def main() -> None:
         "GPT-4.1-mini (+11.3 points",
         "earlier user turns and still increase by +4.20 points",
         "5.0\\%, 13.1\\%, 11.7\\%, 22.5\\%, and 27.5\\%",
+        "Across 924 complete model--target sets, endorsement is 18.1\\%, 15.3\\%, and 8.8\\%",
+        "substitution also reduces endorsement relative to deletion by $-6.49$ points",
+        "Seventy of 94 replacements score at least 7/10",
+        "endorsement falls from 15.8\\% to 7.2\\%",
         "41/885 responses (4.6\\%)",
         "GPT-4o-mini is 5.6 percentage points \\emph{lower}",
         "\\auc{} from 0.596 to 0.732",
@@ -367,6 +403,7 @@ def main() -> None:
             "paired response-judge context sensitivity",
             "aligned user and assistant trajectories",
             "context truncation dose response",
+            "assistant-history substitution and coherence sensitivity",
             "mini-model paired comparisons",
             "discovery-route response sensitivity",
             "J-space intervention, indicator, placebo, and hard-negative controls",

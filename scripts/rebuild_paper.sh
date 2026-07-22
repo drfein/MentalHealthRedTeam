@@ -27,6 +27,8 @@ required_files=(
   paper/iclr2026/artifacts/user_assistant_trajectories/summary.json
   paper/iclr2026/artifacts/context_ablation/summary.json
   paper/iclr2026/artifacts/context_truncation/summary.json
+  paper/iclr2026/artifacts/assistant_history_substitution/summary.json
+  paper/iclr2026/artifacts/assistant_history_substitution/substitution_effect_by_model.csv
   paper/iclr2026/artifacts/mini_model_hypothesis/summary.json
   paper/iclr2026/artifacts/discovery_route_benchmark/summary.json
   paper/iclr2026/artifacts/jspace/context_intervention/paired_effects.csv
@@ -39,6 +41,7 @@ required_files=(
   paper/iclr2026/figures/response_longitudinal.pdf
   paper/iclr2026/figures/context_ablation.pdf
   paper/iclr2026/figures/context_truncation.pdf
+  paper/iclr2026/figures/assistant_history_substitution.pdf
 )
 
 for path in "${required_files[@]}"; do

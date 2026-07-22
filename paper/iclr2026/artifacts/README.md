@@ -9,8 +9,9 @@ Top-level JSON and CSV files characterize dataset construction, verification,
 release integrity, and the earlier human transfer audit. Subdirectories contain
 the ten-model taxonomy/LDA summaries, observed-reply trajectories, judge-context
 sensitivity, user/assistant trajectories, matched context ablations, truncation
-sweeps, discovery-route checks, descriptive mini-model comparisons, and the
-exploratory J-space controls reported in the paper.
+sweeps, assistant-history substitution, discovery-route checks, descriptive
+mini-model comparisons, and the exploratory J-space controls reported in the
+paper.
 
 `../CLAIM_AUDIT.md` maps every manuscript result to these files.
 `../../../configs/paper_experiments.json` maps each result family to its source

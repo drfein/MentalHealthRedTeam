@@ -13,6 +13,7 @@
     "paired response-judge context sensitivity",
     "aligned user and assistant trajectories",
     "context truncation dose response",
+    "assistant-history substitution and coherence sensitivity",
     "mini-model paired comparisons",
     "discovery-route response sensitivity",
     "J-space intervention, indicator, placebo, and hard-negative controls",

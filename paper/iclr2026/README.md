@@ -3,7 +3,8 @@
 The anonymous ICLR 2026-format manuscript introduces `WildDelusion`, a
 context-verified wild-conversation benchmark, and reports a ten-model response
 benchmark, observed production-reply trajectories, behavioral context
-ablations, descriptive SPIRALS/LDA analyses, and an exploratory Qwen
+ablations including assistant-history substitution, descriptive SPIRALS/LDA
+analyses, and an exploratory Qwen
 Jacobian-lens audit.
 
 ## Reproducibility entry points

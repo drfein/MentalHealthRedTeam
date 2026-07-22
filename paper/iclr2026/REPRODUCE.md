@@ -43,6 +43,8 @@ text-free aggregates into `paper/iclr2026/artifacts/`.
 reasoning effort, thresholds, random seeds, context windows, and output paths
 for data mining, response generation, judging, LDA, trajectories, context
 ablations, and the Qwen Jacobian-lens audit.
+The context recipes include both prefix ablation/truncation and the
+three-arm assistant-history substitution experiment.
 
 The machine-readable coverage map is
 `configs/paper_experiments.json`. Validate it with:

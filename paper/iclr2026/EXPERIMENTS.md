@@ -175,7 +175,56 @@ preparation and analysis scripts are
 `prepare_context_truncation_judgments.py` and
 `analyze_context_truncation.py`.
 
-## 5. Discovery-route sensitivity
+## 5. Assistant-history substitution
+
+The fixed specification is `configs/assistant_history_substitution.json`. The
+input builder selects targets where the immediately preceding assistant reply
+is itself preceded by a user turn, and constructs a causal GPT-5.2 replacement
+request from at most 32 earlier source messages. The replacement cannot see the
+original assistant reply, target, or future conversation.
+
+```bash
+uv run python scripts/build_assistant_history_replacement_inputs.py
+wild-delusion-miner generate-post-delusion-responses \
+  --input-path data/assistant_history_substitution/replacement_inputs.parquet \
+  --out-path data/assistant_history_substitution/gpt52_replacements_k32.jsonl \
+  --model gpt-5.2-2025-12-11 \
+  --reasoning-effort low --max-output-tokens 4000 --max-workers 40
+uv run python scripts/build_assistant_history_intervention_inputs.py
+wild-delusion-miner generate-post-delusion-responses \
+  --input-path data/assistant_history_substitution/intervention_arms.parquet \
+  --out-path data/assistant_history_substitution/downstream_responses_k32.jsonl \
+  --reasoning-effort low --max-output-tokens 2000 --max-workers 40 \
+  --model gpt-3.5-turbo-0125 \
+  --model gpt-4-turbo-2024-04-09 \
+  --model gpt-4o-2024-05-13 \
+  --model gpt-4o-mini-2024-07-18 \
+  --model o1-2024-12-17 \
+  --model o3-mini-2025-01-31 \
+  --model gpt-4.1-mini-2025-04-14 \
+  --model gpt-5-mini-2025-08-07 \
+  --model gpt-5.2-2025-12-11 \
+  --model gpt-5.5-2026-04-23
+uv run python scripts/prepare_assistant_history_intervention_judgments.py
+uv run python scripts/judge_generated_responses_with_package.py \
+  --input results/assistant_history_substitution/judge_inputs.jsonl \
+  --output results/assistant_history_substitution/package_judgments.jsonl \
+  --model gpt-5.4-mini --reasoning-effort low --concurrency 40
+uv run python scripts/judge_assistant_history_substitution_coherence.py
+uv run --extra paper python scripts/analyze_assistant_history_substitution.py
+```
+
+The analysis retains complete three-arm model--target sets. The primary
+estimand is substituted minus contemporaneous original context; deletion is a
+secondary active control. The exact package endpoint is score at least 7. A
+separate GPT-5.4-mini/low coherence judge uses a 7/10 threshold only for the
+post-treatment sensitivity subset. All intervals use 10,000 source-conversation
+bootstrap draws and seed `20260722`. Failed or truncated generations are
+resumed by generation ID with `--retry-errors`; the archived run raised output
+limits to at most 8,000 tokens for replacements and 16,000 downstream tokens
+before retaining only the latest successful attempt.
+
+## 6. Discovery-route sensitivity
 
 ```bash
 uv run python scripts/build_discovery_split_benchmark.py \
@@ -187,7 +236,7 @@ Generate the same ten-model continuations, then use
 `analyze_discovery_route_sensitivity.py`. The route comparison uses 10,000
 independent route-specific conversation bootstrap draws and seed `20260722`.
 
-## 6. Qwen J-space audit
+## 7. Qwen J-space audit
 
 Install the pinned CUDA environment:
 

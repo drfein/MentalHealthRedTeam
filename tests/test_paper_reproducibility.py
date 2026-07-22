@@ -25,7 +25,7 @@ def test_paper_experiment_manifest_paths_exist() -> None:
 
     experiment_ids = [experiment["id"] for experiment in manifest["experiments"]]
     assert len(experiment_ids) == len(set(experiment_ids))
-    assert len(experiment_ids) == 6
+    assert len(experiment_ids) == 7
 
     for experiment in manifest["experiments"]:
         assert experiment["paper_sections"]
