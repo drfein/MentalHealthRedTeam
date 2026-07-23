@@ -6,6 +6,11 @@ import re
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
+
+from wild_delusion_miner.assistant_responses import generation_id
+from wild_delusion_miner.text import stable_json
+
 
 ENDPOINT_PATTERN = re.compile(r":prior_(?:0|all)$")
 
@@ -17,19 +22,16 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
         return [json.loads(line) for line in handle if line.strip()]
 
 
-def latest_by_key(
-    rows: list[dict[str, Any]], key: str, *, require_success: bool
-) -> list[dict[str, Any]]:
-    latest: dict[str, dict[str, Any]] = {}
-    for row in rows:
-        if not ENDPOINT_PATTERN.search(str(row.get("message_hash", ""))):
-            continue
-        if require_success and (
-            row.get("error_type") or not str(row.get("response_text") or "").strip()
-        ):
-            continue
-        latest[str(row[key])] = row
-    return list(latest.values())
+def canonical_messages(messages: list[dict[str, Any]]) -> str:
+    return stable_json(
+        [
+            {
+                "role": str(message["role"]),
+                "content": str(message["content"]),
+            }
+            for message in messages
+        ]
+    )
 
 
 def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
@@ -54,6 +56,16 @@ def main() -> None:
         default=Path("results/context_dose_response/package_judgments.jsonl"),
     )
     parser.add_argument(
+        "--inputs",
+        type=Path,
+        default=Path("data/combined_context_endpoints/inputs.parquet"),
+    )
+    parser.add_argument(
+        "--release",
+        type=Path,
+        default=Path("data/releases/WildDelusionCombined/train.parquet"),
+    )
+    parser.add_argument(
         "--output-responses",
         type=Path,
         default=Path("data/combined_context_endpoints/responses.jsonl"),
@@ -65,13 +77,69 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    responses = latest_by_key(
-        read_jsonl(args.source_responses), "generation_id", require_success=True
-    )
-    judgments = latest_by_key(
-        read_jsonl(args.source_judgments), "generation_id", require_success=False
-    )
-    judgments = [row for row in judgments if not row.get("judge_error")]
+    inputs = pd.read_parquet(args.inputs)
+    input_by_hash = {
+        str(row["message_hash"]): row for row in inputs.to_dict(orient="records")
+    }
+    release = pd.read_parquet(args.release).reset_index(names="original_row_idx")
+    release_by_hash = {
+        str(row["message_hash"]): row for row in release.to_dict(orient="records")
+    }
+
+    source_responses = read_jsonl(args.source_responses)
+    response_key_by_old_id: dict[str, tuple[str, str]] = {}
+    responses_by_key: dict[tuple[str, str], dict[str, Any]] = {}
+    for row in source_responses:
+        message_hash = str(row.get("message_hash", ""))
+        if not ENDPOINT_PATTERN.search(message_hash):
+            continue
+        if row.get("error_type") or not str(row.get("response_text") or "").strip():
+            continue
+        model = str(row["model"])
+        prompt = input_by_hash.get(message_hash)
+        if prompt is None:
+            continue
+        if canonical_messages(row["input_messages"]) != canonical_messages(prompt["messages"]):
+            raise ValueError(f"Cached prompt does not match combined input: {message_hash}")
+        response_key_by_old_id[str(row["generation_id"])] = (message_hash, model)
+        remapped = dict(row)
+        remapped["generation_id"] = generation_id(
+            prompt, model, str(row["prompt_version"])
+        )
+        responses_by_key[(message_hash, model)] = remapped
+    responses = list(responses_by_key.values())
+
+    judgments_by_key: dict[tuple[str, str], dict[str, Any]] = {}
+    for row in read_jsonl(args.source_judgments):
+        if row.get("judge_error"):
+            continue
+        key = response_key_by_old_id.get(str(row.get("generation_id", "")))
+        if key is None:
+            continue
+        message_hash, model = key
+        prompt = input_by_hash[message_hash]
+        arm_match = ENDPOINT_PATTERN.search(message_hash)
+        assert arm_match is not None
+        original_hash = message_hash[: arm_match.start()]
+        source = release_by_hash[original_hash]
+        remapped = dict(row)
+        remapped.update(
+            {
+                "generation_id": generation_id(
+                    prompt, model, str(responses_by_key[key]["prompt_version"])
+                ),
+                "original_row_idx": int(source["original_row_idx"]),
+                "intervention_arm": str(prompt["context_arm"]),
+                "model_id": model,
+                "source": str(source["source"]),
+                "conversation_id": str(source["conversation_id"]),
+                "discovery_split": str(source["discovery_split"]),
+                "message_hash": original_hash,
+            }
+        )
+        judgments_by_key[key] = remapped
+    judgments = list(judgments_by_key.values())
+
     write_jsonl(args.output_responses, responses)
     write_jsonl(args.output_judgments, judgments)
     summary = {
