@@ -7,61 +7,17 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from wild_delusion_miner.cluster_inference import (
+    holm_adjust,
+    paired_cluster_inference,
+)
 from wild_delusion_miner.plot_style import MODEL_LABELS, MODEL_ORDER
 
 
 ENDPOINT_ARMS = ("prior_0", "prior_all")
 
 
-def holm_adjust(p_values: np.ndarray) -> np.ndarray:
-    order = np.argsort(p_values)
-    adjusted = np.empty(len(p_values), dtype=float)
-    running_max = 0.0
-    for rank, index in enumerate(order):
-        candidate = (len(p_values) - rank) * float(p_values[index])
-        running_max = max(running_max, candidate)
-        adjusted[index] = min(running_max, 1.0)
-    return adjusted
-
-
-def cluster_inference(
-    deltas: pd.DataFrame,
-    *,
-    bootstrap_draws: int,
-    permutation_draws: int,
-    seed: int,
-) -> dict[str, float]:
-    clusters = deltas.groupby("conversation_id")["delta"].agg(["sum", "count"])
-    sums = clusters["sum"].to_numpy(dtype=float)
-    counts = clusters["count"].to_numpy(dtype=float)
-    observed = float(sums.sum() / counts.sum())
-    rng = np.random.default_rng(seed)
-
-    sampled = rng.integers(
-        0,
-        len(clusters),
-        size=(bootstrap_draws, len(clusters)),
-    )
-    bootstrap = sums[sampled].sum(axis=1) / counts[sampled].sum(axis=1)
-    ci_low, ci_high = np.quantile(bootstrap, [0.025, 0.975])
-
-    observed_sum = abs(sums.sum())
-    extreme = 0
-    chunk_size = 10_000
-    for start in range(0, permutation_draws, chunk_size):
-        draws = min(chunk_size, permutation_draws - start)
-        signs = rng.choice((-1.0, 1.0), size=(draws, len(clusters)))
-        permuted = np.abs(signs @ sums)
-        extreme += int((permuted >= observed_sum - 1e-12).sum())
-    p_value = (extreme + 1) / (permutation_draws + 1)
-
-    return {
-        "difference": observed,
-        "ci_low": float(ci_low),
-        "ci_high": float(ci_high),
-        "p_value": float(p_value),
-        "conversations": int(len(clusters)),
-    }
+cluster_inference = paired_cluster_inference
 
 
 def paired_endpoints(judgments: pd.DataFrame) -> pd.DataFrame:
