@@ -16,6 +16,9 @@ from wild_delusion_miner.plot_style import (  # noqa: E402
     apply_paper_style,
 )
 
+DOSE_ARM_ORDER = ["prior_0", "prior_1", "prior_2", "prior_4", "prior_8", "prior_all"]
+DOSE_ARM_LABELS = ["0", "1", "2", "4", "8", "All"]
+
 
 def plot_panel(
     ax: plt.Axes,
@@ -75,6 +78,35 @@ def plot_panel(
     ax.grid(axis="x")
     ax.set_axisbelow(True)
     ax.set_xlabel("Increase in delusion endorsement rate (percent)")
+    ax.set_title("A. Full-history effect", loc="left", pad=10)
+
+
+def plot_dose_response(ax: plt.Axes, frame: pd.DataFrame) -> None:
+    models = [model for model in MODEL_ORDER if model in set(frame["model"])]
+    x = range(len(DOSE_ARM_ORDER))
+    for model in models:
+        group = (
+            frame[frame["model"] == model]
+            .set_index("arm")
+            .reindex(DOSE_ARM_ORDER)
+        )
+        ax.plot(
+            x,
+            group["endorsement_rate"] * 100,
+            color=MODEL_COLORS[model],
+            marker="o",
+            markersize=5.5,
+            linewidth=2.0,
+            zorder=3,
+        )
+    ax.set_xticks(list(x), DOSE_ARM_LABELS)
+    ax.set_xlabel("Prior messages retained")
+    ax.set_ylabel("Delusion endorsement rate (%)")
+    ax.set_ylim(0, 22)
+    ax.set_yticks([0, 5, 10, 15, 20])
+    ax.grid(axis="y")
+    ax.set_axisbelow(True)
+    ax.set_title("B. Context dose-response", loc="left", pad=10)
 
 
 def main() -> None:
@@ -102,14 +134,28 @@ def main() -> None:
             "results/combined_context_endpoints/analysis/context_endpoint_forest.png"
         ),
     )
+    parser.add_argument(
+        "--dose-response",
+        type=Path,
+        default=Path(
+            "results/context_dose_response/endorsement_by_model_and_context.csv"
+        ),
+    )
     args = parser.parse_args()
 
     frame = pd.read_csv(args.inference)
     omnibus = pd.read_csv(args.omnibus)
+    dose_response = pd.read_csv(args.dose_response)
     apply_paper_style()
-    fig, ax = plt.subplots(figsize=(7.2, 5.2))
-    plot_panel(ax, frame, omnibus, "combined")
-    fig.subplots_adjust(top=0.98, bottom=0.13, left=0.23, right=0.96)
+    fig, (effect_ax, dose_ax) = plt.subplots(
+        1,
+        2,
+        figsize=(12.6, 5.4),
+        gridspec_kw={"width_ratios": [1.05, 1]},
+    )
+    plot_panel(effect_ax, frame, omnibus, "combined")
+    plot_dose_response(dose_ax, dose_response)
+    fig.subplots_adjust(top=0.92, bottom=0.14, left=0.13, right=0.98, wspace=0.26)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(args.output, dpi=300)
     fig.savefig(args.output.with_suffix(".pdf"))
