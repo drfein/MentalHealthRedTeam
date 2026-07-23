@@ -26,12 +26,23 @@ MODEL_COLORS = {
 MODEL_ORDER = ["Qwen2.5-7B", "Llama-3.1-8B-Instruct", "Gemma-3-1B-IT"]
 
 
-def read_jsonl(path: Path) -> list[dict[str, Any]]:
-    return [
-        json.loads(line)
-        for line in path.read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
+def read_token_metadata(
+    path: Path,
+    token_ids: np.ndarray,
+) -> dict[int, dict[str, Any]]:
+    """Read only requested rows from the token-id-ordered JSONL vocabulary."""
+    wanted = {int(token_id) for token_id in token_ids}
+    metadata: dict[int, dict[str, Any]] = {}
+    with path.open(encoding="utf-8") as handle:
+        for token_id, line in enumerate(handle):
+            if token_id in wanted:
+                metadata[token_id] = json.loads(line)
+                if len(metadata) == len(wanted):
+                    break
+    missing = wanted.difference(metadata)
+    if missing:
+        raise ValueError(f"Missing {len(missing)} token rows from {path}")
+    return metadata
 
 
 def display_token(decoded: str) -> str:
@@ -62,9 +73,9 @@ def top_tokens(cache_dir: Path, top_k: int, pool_size: int) -> pd.DataFrame:
         mmap_mode="r",
     )
     mean_logits = np.asarray(logits, dtype=np.float32).mean(axis=0)
-    metadata = read_jsonl(cache_dir / "tokens.jsonl")
     candidate_ids = np.argpartition(mean_logits, -pool_size)[-pool_size:]
     candidate_ids = candidate_ids[np.argsort(mean_logits[candidate_ids])[::-1]]
+    metadata = read_token_metadata(cache_dir / "tokens.jsonl", candidate_ids)
 
     rows: list[dict[str, Any]] = []
     seen: set[str] = set()
