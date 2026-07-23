@@ -1,0 +1,74 @@
+{
+  "models": {
+    "gpt-3.5-turbo-0125": {
+      "label": "GPT-3.5",
+      "release_date": "2024-01-25"
+    },
+    "gpt-4-turbo-2024-04-09": {
+      "label": "GPT-4 Turbo",
+      "release_date": "2024-04-09"
+    },
+    "gpt-4o-2024-05-13": {
+      "label": "GPT-4o",
+      "release_date": "2024-05-13"
+    },
+    "gpt-4o-mini-2024-07-18": {
+      "label": "GPT-4o mini",
+      "release_date": "2024-07-18"
+    },
+    "o1-2024-12-17": {
+      "label": "o1",
+      "release_date": "2024-12-17"
+    },
+    "o3-mini-2025-01-31": {
+      "label": "o3-mini",
+      "release_date": "2025-01-31"
+    },
+    "gpt-4.1-mini-2025-04-14": {
+      "label": "GPT-4.1 mini",
+      "release_date": "2025-04-14"
+    },
+    "gpt-5-mini-2025-08-07": {
+      "label": "GPT-5 mini",
+      "release_date": "2025-08-07"
+    },
+    "gpt-5.2-2025-12-11": {
+      "label": "GPT-5.2",
+      "release_date": "2025-12-11"
+    },
+    "gpt-5.5-2026-04-23": {
+      "label": "GPT-5.5",
+      "release_date": "2026-04-23"
+    }
+  },
+  "events": [
+    {
+      "date": "2025-04-29",
+      "label": "OpenAI sycophancy rollback",
+      "short_label": "Sycophancy rollback",
+      "category": "provider",
+      "source": "https://openai.com/index/sycophancy-in-gpt-4o/"
+    },
+    {
+      "date": "2025-06-13",
+      "label": "New York Times: Answers Sent Them Spiraling",
+      "short_label": "NYT public report",
+      "category": "public",
+      "source": "https://www.nytimes.com/2025/06/13/technology/chatgpt-ai-chatbots-conspiracies.html"
+    },
+    {
+      "date": "2025-09-11",
+      "label": "FTC Section 6(b) orders",
+      "short_label": "FTC 6(b) orders",
+      "category": "regulatory",
+      "source": "https://www.ftc.gov/news-events/news/press-releases/2025/09/ftc-launches-inquiry-ai-chatbots-acting-companions"
+    },
+    {
+      "date": "2025-10-27",
+      "label": "OpenAI clinician-informed sensitive-conversation update",
+      "short_label": "Sensitive-conversation update",
+      "category": "provider",
+      "source": "https://openai.com/index/strengthening-chatgpt-responses-in-sensitive-conversations/"
+    }
+  ]
+}
