@@ -517,6 +517,7 @@ def generate_post_delusion_responses(
     temperature: float | None = None,
     reasoning_effort: str | None = None,
     system_prompt: str | None = None,
+    no_system_prompt: bool = typer.Option(False, "--no-system-prompt"),
     resume: bool = True,
     retry_errors: bool = False,
 ) -> None:
@@ -539,7 +540,11 @@ def generate_post_delusion_responses(
         max_output_tokens=max_output_tokens,
         temperature=temperature,
         reasoning_effort=reasoning_effort,
-        system_prompt=system_prompt or DEFAULT_ASSISTANT_RESPONSE_SYSTEM_PROMPT,
+        system_prompt=(
+            None
+            if no_system_prompt
+            else system_prompt or DEFAULT_ASSISTANT_RESPONSE_SYSTEM_PROMPT
+        ),
         resume=resume,
         retry_errors=retry_errors,
     )

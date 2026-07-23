@@ -48,7 +48,7 @@ class GenerationParams:
     max_output_tokens: int = 800
     temperature: float | None = None
     reasoning_effort: str | None = None
-    system_prompt: str = DEFAULT_ASSISTANT_RESPONSE_SYSTEM_PROMPT
+    system_prompt: str | None = DEFAULT_ASSISTANT_RESPONSE_SYSTEM_PROMPT
     prompt_version: str = POST_DELUSION_RESPONSE_PROMPT_VERSION
 
 
@@ -129,7 +129,7 @@ def generate_post_delusion_responses(
     max_output_tokens: int = 800,
     temperature: float | None = None,
     reasoning_effort: str | None = None,
-    system_prompt: str = DEFAULT_ASSISTANT_RESPONSE_SYSTEM_PROMPT,
+    system_prompt: str | None = DEFAULT_ASSISTANT_RESPONSE_SYSTEM_PROMPT,
     resume: bool = True,
     retry_errors: bool = False,
 ) -> dict[str, Any]:
@@ -239,13 +239,15 @@ def resolve_generation_models(
 def build_post_delusion_input(
     row: dict[str, Any],
     *,
-    system_prompt: str = DEFAULT_ASSISTANT_RESPONSE_SYSTEM_PROMPT,
+    system_prompt: str | None = DEFAULT_ASSISTANT_RESPONSE_SYSTEM_PROMPT,
 ) -> list[dict[str, str]]:
     messages = list(row["messages"])
     target_index = int(row["target_message_index"])
     if target_index < 0 or target_index >= len(messages):
         raise ValueError(f"target_message_index out of range: {target_index}")
-    input_messages = [{"role": "system", "content": system_prompt}]
+    input_messages = []
+    if system_prompt:
+        input_messages.append({"role": "system", "content": system_prompt})
     for message in messages[: target_index + 1]:
         role = str(message.get("role", "")).lower()
         if role not in {"user", "assistant", "system"}:
