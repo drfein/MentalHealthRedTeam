@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
+import sys
 
 import matplotlib
 import matplotlib.dates as mdates
@@ -13,6 +15,9 @@ import pandas as pd
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from wild_delusion_miner.plot_style import (  # noqa: E402
     MODEL_COLORS,
@@ -30,6 +35,7 @@ EVENT_COLORS = {
 
 def load_timeline(
     rates_path: Path,
+    route_rates_path: Path,
     config_path: Path,
 ) -> tuple[pd.DataFrame, list[dict[str, str]], dict]:
     config = json.loads(config_path.read_text(encoding="utf-8"))
@@ -44,6 +50,33 @@ def load_timeline(
             f"Model mismatch: missing={sorted(expected - observed)}, "
             f"unexpected={sorted(observed - expected)}"
         )
+    route_rates = pd.read_csv(route_rates_path)
+    route_observed = set(route_rates["model"])
+    if route_observed != expected:
+        raise ValueError(
+            f"Route model mismatch: missing={sorted(expected - route_observed)}, "
+            f"unexpected={sorted(route_observed - expected)}"
+        )
+    route_rates["historical_positive"] = (
+        route_rates["historical_n"] * route_rates["historical_rate"]
+    ).round().astype(int)
+    rates = rates.merge(
+        route_rates[["model", "historical_n", "historical_positive"]],
+        on="model",
+        validate="one_to_one",
+    )
+    rates = rates.rename(
+        columns={"positive": "primary_positive", "total": "primary_n"}
+    )
+    rates["positive"] = rates["primary_positive"] + rates["historical_positive"]
+    rates["total"] = rates["primary_n"] + rates["historical_n"]
+    rates["rate"] = rates["positive"] / rates["total"]
+    intervals = [
+        wilson_interval(int(row.positive), int(row.total))
+        for row in rates.itertuples(index=False)
+    ]
+    rates["wilson_lower"] = [interval[0] for interval in intervals]
+    rates["wilson_upper"] = [interval[1] for interval in intervals]
     rates["model_label"] = rates["model"].map(
         lambda model: config["models"][model]["label"]
     )
@@ -54,6 +87,28 @@ def load_timeline(
     )
     rates = rates.sort_values("release_date").reset_index(drop=True)
     return rates, config["events"], config
+
+
+def wilson_interval(
+    positive: int,
+    total: int,
+    z: float = 1.959963984540054,
+) -> tuple[float, float]:
+    """Return a two-sided Wilson score interval for a binomial proportion."""
+    if total == 0:
+        return math.nan, math.nan
+    proportion = positive / total
+    denominator = 1 + z * z / total
+    center = (proportion + z * z / (2 * total)) / denominator
+    half_width = (
+        z
+        * math.sqrt(
+            proportion * (1 - proportion) / total
+            + z * z / (4 * total * total)
+        )
+        / denominator
+    )
+    return center - half_width, center + half_width
 
 
 def plot_timeline(
@@ -108,7 +163,7 @@ def plot_timeline(
     for row in rates.itertuples(index=False):
         dx, dy = label_offsets[row.model]
         ax.annotate(
-            row.model_label,
+            f"{row.model_label}\n{row.release_date:%b %-d, %Y}",
             (row.release_date, row.rate * 100),
             xytext=(dx, dy),
             textcoords="offset points",
@@ -143,11 +198,13 @@ def plot_timeline(
             color=color,
         )
 
-    ax.set_xlim(pd.Timestamp("2023-12-15"), pd.Timestamp("2026-06-01"))
+    ax.set_xlim(pd.Timestamp("2024-01-01"), pd.Timestamp("2026-05-15"))
     ax.set_ylim(0, 26)
     ax.set_xlabel("Model release date")
     ax.set_ylabel("Delusion endorsement rate (%)")
-    ax.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
+    ax.xaxis.set_major_locator(
+        mdates.MonthLocator(bymonth=[1, 4, 7, 10], bymonthday=1)
+    )
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%b\n%Y"))
     ax.grid(axis="y")
     ax.set_axisbelow(True)
@@ -169,6 +226,14 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--route-rates",
+        type=Path,
+        default=Path(
+            "paper/iclr2026/artifacts/discovery_route_benchmark/"
+            "endorsement_by_discovery_route.csv"
+        ),
+    )
+    parser.add_argument(
         "--config",
         type=Path,
         default=Path("configs/model_endorsement_timeline.json"),
@@ -180,17 +245,25 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    rates, events, config = load_timeline(args.rates, args.config)
+    rates, events, config = load_timeline(
+        args.rates,
+        args.route_rates,
+        args.config,
+    )
     plot_timeline(rates, events, args.output_dir)
     rates.to_csv(args.output_dir / "model_endorsement_timeline.csv", index=False)
     (args.output_dir / "hparams.json").write_text(
         json.dumps(
             {
                 "rates": str(args.rates),
+                "route_rates": str(args.route_rates),
                 "config": str(args.config),
                 "endpoint": ENDORSEMENT_FLAG,
                 "positive_cutoff": 7,
                 "judge": "GPT-5.4-mini with the pinned SPIRALS package prompt",
+                "cohort": (
+                    "All usable primary and historical discovery-route responses"
+                ),
                 "interval": "Pointwise 95% Wilson score interval",
                 "events": config["events"],
                 "interpretation": (

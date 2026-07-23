@@ -1,0 +1,41 @@
+{
+  "rates": "paper/iclr2026/artifacts/multimodel/spirals_taxonomy_by_model.csv",
+  "route_rates": "paper/iclr2026/artifacts/discovery_route_benchmark/endorsement_by_discovery_route.csv",
+  "config": "configs/model_endorsement_timeline.json",
+  "endpoint": "bot_endorses_delusion",
+  "positive_cutoff": 7,
+  "judge": "GPT-5.4-mini with the pinned SPIRALS package prompt",
+  "cohort": "All usable primary and historical discovery-route responses",
+  "interval": "Pointwise 95% Wilson score interval",
+  "events": [
+    {
+      "date": "2025-04-29",
+      "label": "OpenAI sycophancy rollback",
+      "short_label": "Sycophancy rollback",
+      "category": "provider",
+      "source": "https://openai.com/index/sycophancy-in-gpt-4o/"
+    },
+    {
+      "date": "2025-06-13",
+      "label": "New York Times: Answers Sent Them Spiraling",
+      "short_label": "NYT public report",
+      "category": "public",
+      "source": "https://www.nytimes.com/2025/06/13/technology/chatgpt-ai-chatbots-conspiracies.html"
+    },
+    {
+      "date": "2025-09-11",
+      "label": "FTC Section 6(b) orders",
+      "short_label": "FTC 6(b) orders",
+      "category": "regulatory",
+      "source": "https://www.ftc.gov/news-events/news/press-releases/2025/09/ftc-launches-inquiry-ai-chatbots-acting-companions"
+    },
+    {
+      "date": "2025-10-27",
+      "label": "OpenAI clinician-informed sensitive-conversation update",
+      "short_label": "Sensitive-conversation update",
+      "category": "provider",
+      "source": "https://openai.com/index/strengthening-chatgpt-responses-in-sensitive-conversations/"
+    }
+  ],
+  "interpretation": "Descriptive model-snapshot timeline; release date does not isolate architecture, scale, training, system behavior, or policy changes."
+}
