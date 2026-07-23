@@ -173,12 +173,19 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--model-id", required=True)
     parser.add_argument("--model-revision", default=None)
+    parser.add_argument("--model-cache-dir", type=Path, default=None)
     parser.add_argument("--lens-repo", default="neuronpedia/jacobian-lens")
     parser.add_argument(
         "--lens-revision",
         default="a4114d7752d11eb546e6cf372213d7e75526d3a1",
     )
     parser.add_argument("--lens-file", required=True)
+    parser.add_argument(
+        "--lens-path",
+        type=Path,
+        default=None,
+        help="Use an existing local lens file instead of downloading it.",
+    )
     parser.add_argument("--layer", type=int, required=True)
     parser.add_argument("--arm", default="direct_assertion")
     parser.add_argument("--max-seq-len", type=int, default=4096)
@@ -192,17 +199,27 @@ def main() -> None:
         args.model_id,
         revision=args.model_revision,
         trust_remote_code=True,
+        cache_dir=args.model_cache_dir,
     )
-    lens_path = hf_hub_download(
-        args.lens_repo,
-        args.lens_file,
-        revision=args.lens_revision,
+    lens_path = (
+        args.lens_path
+        if args.lens_path is not None
+        else Path(
+            hf_hub_download(
+                args.lens_repo,
+                args.lens_file,
+                revision=args.lens_revision,
+            )
+        )
     )
+    if not lens_path.is_file():
+        raise FileNotFoundError(f"Lens file does not exist: {lens_path}")
     lens = jlens.JacobianLens.load(lens_path)
     hf_model = load_hf_model(
         args.model_id,
         quantize_4bit=args.quantize_4bit,
         revision=args.model_revision,
+        cache_dir=args.model_cache_dir,
     )
     model = jlens.from_hf(hf_model, tokenizer, force_bos=False)
     vocab_size = int(hf_model.config.vocab_size)

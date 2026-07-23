@@ -327,6 +327,7 @@ def load_hf_model(
     model_id: str,
     quantize_4bit: bool,
     revision: str | None = None,
+    cache_dir: str | Path | None = None,
 ) -> Any:
     kwargs: dict[str, Any] = {
         "dtype": torch.bfloat16,
@@ -335,10 +336,13 @@ def load_hf_model(
     }
     if revision is not None:
         kwargs["revision"] = revision
+    if cache_dir is not None:
+        kwargs["cache_dir"] = str(cache_dir)
     config = AutoConfig.from_pretrained(
         model_id,
         trust_remote_code=True,
         revision=revision,
+        cache_dir=str(cache_dir) if cache_dir is not None else None,
     )
     has_native_quantization = getattr(config, "quantization_config", None) is not None
     if quantize_4bit and not has_native_quantization:
