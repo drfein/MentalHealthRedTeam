@@ -23,15 +23,50 @@ PANELS = [
 ]
 
 
-def plot_panel(ax: plt.Axes, frame: pd.DataFrame, split: str, title: str) -> None:
+def plot_panel(
+    ax: plt.Axes,
+    frame: pd.DataFrame,
+    omnibus: pd.DataFrame,
+    split: str,
+    title: str,
+) -> None:
     subset = frame[frame["discovery_split"] == split].set_index("model").reindex(MODEL_ORDER)
-    y = list(range(len(subset)))
+    summary = omnibus[omnibus["discovery_split"] == split].iloc[0]
+    ax.plot(
+        [summary["ci_low_pp"], summary["ci_high_pp"]],
+        [0, 0],
+        color="#111827",
+        linewidth=2.4,
+        solid_capstyle="round",
+    )
+    ax.scatter(
+        summary["difference_pp"],
+        0,
+        marker="D",
+        s=66,
+        color="#111827",
+        zorder=4,
+    )
+    ax.annotate(
+        f"{summary['difference_pp']:+.1f}",
+        (summary["ci_high_pp"], 0),
+        xytext=(6, 0),
+        textcoords="offset points",
+        ha="left",
+        va="center",
+        fontsize=8.5,
+        fontweight="bold",
+        color="#111827",
+    )
+    ax.axhline(0.6, color="#D1D5DB", linewidth=0.9)
+
     for index, (model, row) in enumerate(subset.iterrows()):
+        position = index + 1
         color = MODEL_COLORS[model]
         significant = bool(row["significant_holm_0_05"])
         ax.plot(
             [row["ci_low_pp"], row["ci_high_pp"]],
-            [index, index],
+            [position, position],
             color=color,
             linewidth=2.0,
             solid_capstyle="round",
@@ -39,7 +74,7 @@ def plot_panel(ax: plt.Axes, frame: pd.DataFrame, split: str, title: str) -> Non
         )
         ax.scatter(
             row["difference_pp"],
-            index,
+            position,
             s=58,
             facecolor=color if significant else "white",
             edgecolor=color,
@@ -51,7 +86,7 @@ def plot_panel(ax: plt.Axes, frame: pd.DataFrame, split: str, title: str) -> Non
             label += "*"
         ax.annotate(
             label,
-            (row["ci_high_pp"], index),
+            (row["ci_high_pp"], position),
             xytext=(6, 0),
             textcoords="offset points",
             ha="left",
@@ -61,7 +96,10 @@ def plot_panel(ax: plt.Axes, frame: pd.DataFrame, split: str, title: str) -> Non
         )
 
     ax.axvline(0, color="#6B7280", linewidth=1.0)
-    ax.set_yticks(y, [MODEL_LABELS[model] for model in subset.index])
+    ax.set_yticks(
+        range(len(subset) + 1),
+        ["All model-target pairs", *[MODEL_LABELS[model] for model in subset.index]],
+    )
     ax.invert_yaxis()
     ax.set_xlim(-5, 25)
     ax.set_xticks([-5, 0, 5, 10, 15, 20, 25])
@@ -83,6 +121,13 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--omnibus",
+        type=Path,
+        default=Path(
+            "results/combined_context_endpoints/analysis/omnibus_inference.csv"
+        ),
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         default=Path(
@@ -92,12 +137,13 @@ def main() -> None:
     args = parser.parse_args()
 
     frame = pd.read_csv(args.inference)
+    omnibus = pd.read_csv(args.omnibus)
     apply_paper_style()
     fig, axes = plt.subplots(1, 2, figsize=(13.2, 6.4), sharey=True)
     for ax, (split, title) in zip(axes, PANELS, strict=True):
-        plot_panel(ax, frame, split, title)
+        plot_panel(ax, frame, omnibus, split, title)
     fig.suptitle(
-        "Conversation Context Increases Delusion Endorsement for Several Models",
+        "Effect of Conversation Context on Delusion Endorsement",
         x=0.07,
         y=0.985,
         ha="left",
@@ -109,8 +155,8 @@ def main() -> None:
         0.07,
         0.94,
         (
-            "Points are paired changes; bars are 95% source-conversation cluster "
-            "bootstrap intervals. Filled points and * pass Holm correction."
+            "Full history versus target turn alone. Bars are 95% conversation-cluster "
+            "bootstrap intervals; filled circles and * pass Holm correction."
         ),
         ha="left",
         fontsize=10,
