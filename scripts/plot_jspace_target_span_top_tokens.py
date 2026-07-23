@@ -81,8 +81,13 @@ def top_tokens(cache_dir: Path, top_k: int, pool_size: int) -> pd.DataFrame:
     seen: set[str] = set()
     for token_id in candidate_ids:
         token = metadata[int(token_id)]
-        decoded = display_token(str(token["decoded"]))
-        if token["is_special"] or not lexical_token(decoded) or decoded in seen:
+        raw_decoded = str(token["decoded"])
+        decoded = display_token(raw_decoded)
+        if (
+            token["is_special"]
+            or not lexical_token(raw_decoded.strip())
+            or decoded in seen
+        ):
             continue
         seen.add(decoded)
         rows.append(
