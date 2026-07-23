@@ -78,7 +78,15 @@ def plot_panel(
     ax.grid(axis="x")
     ax.set_axisbelow(True)
     ax.set_xlabel("Increase in delusion endorsement rate (percent)")
-    ax.set_title("A. Full-history effect", loc="left", pad=10)
+    ax.text(
+        0,
+        1.02,
+        "A",
+        transform=ax.transAxes,
+        ha="left",
+        va="bottom",
+        fontweight="bold",
+    )
 
 
 def plot_dose_response(ax: plt.Axes, frame: pd.DataFrame) -> None:
@@ -106,7 +114,15 @@ def plot_dose_response(ax: plt.Axes, frame: pd.DataFrame) -> None:
     ax.set_yticks([0, 5, 10, 15, 20])
     ax.grid(axis="y")
     ax.set_axisbelow(True)
-    ax.set_title("B. Context dose-response", loc="left", pad=10)
+    ax.text(
+        0,
+        1.02,
+        "B",
+        transform=ax.transAxes,
+        ha="left",
+        va="bottom",
+        fontweight="bold",
+    )
 
 
 def main() -> None:
