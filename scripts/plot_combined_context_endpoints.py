@@ -17,20 +17,15 @@ from wild_delusion_miner.plot_style import (  # noqa: E402
 )
 
 
-PANELS = [
-    ("combined", "A. Combined release"),
-    ("openai_embedding_whitened", "B. Primary retrieval cohort"),
-]
-
-
 def plot_panel(
     ax: plt.Axes,
     frame: pd.DataFrame,
     omnibus: pd.DataFrame,
     split: str,
-    title: str,
 ) -> None:
-    subset = frame[frame["discovery_split"] == split].set_index("model").reindex(MODEL_ORDER)
+    split_frame = frame[frame["discovery_split"] == split].set_index("model")
+    model_order = [model for model in MODEL_ORDER if model in split_frame.index]
+    subset = split_frame.reindex(model_order)
     summary = omnibus[omnibus["discovery_split"] == split].iloc[0]
     ax.plot(
         [summary["ci_low_pp"], summary["ci_high_pp"]],
@@ -81,32 +76,17 @@ def plot_panel(
             linewidth=1.6,
             zorder=3,
         )
-        label = f"{row['difference_pp']:+.1f}"
-        if significant:
-            label += "*"
-        ax.annotate(
-            label,
-            (row["ci_high_pp"], position),
-            xytext=(6, 0),
-            textcoords="offset points",
-            ha="left",
-            va="center",
-            fontsize=8.5,
-            color="#374151",
-        )
-
     ax.axvline(0, color="#6B7280", linewidth=1.0)
     ax.set_yticks(
         range(len(subset) + 1),
-        ["All model-target pairs", *[MODEL_LABELS[model] for model in subset.index]],
+        ["Overall", *[MODEL_LABELS[model] for model in subset.index]],
     )
     ax.invert_yaxis()
     ax.set_xlim(-5, 25)
     ax.set_xticks([-5, 0, 5, 10, 15, 20, 25])
     ax.grid(axis="x")
     ax.set_axisbelow(True)
-    ax.set_title(title, loc="left", pad=10)
-    ax.set_xlabel("Full context minus target only (percentage points)")
+    ax.set_xlabel("Full history - target only (percentage points)")
 
 
 def main() -> None:
@@ -139,30 +119,9 @@ def main() -> None:
     frame = pd.read_csv(args.inference)
     omnibus = pd.read_csv(args.omnibus)
     apply_paper_style()
-    fig, axes = plt.subplots(1, 2, figsize=(13.2, 6.4), sharey=True)
-    for ax, (split, title) in zip(axes, PANELS, strict=True):
-        plot_panel(ax, frame, omnibus, split, title)
-    fig.suptitle(
-        "Effect of Conversation Context on Delusion Endorsement",
-        x=0.07,
-        y=0.985,
-        ha="left",
-        fontsize=17,
-        fontweight="bold",
-        color="#111827",
-    )
-    fig.text(
-        0.07,
-        0.94,
-        (
-            "Full history versus target turn alone. Bars are 95% conversation-cluster "
-            "bootstrap intervals; filled circles and * pass Holm correction."
-        ),
-        ha="left",
-        fontsize=10,
-        color="#4B5563",
-    )
-    fig.subplots_adjust(top=0.84, bottom=0.13, left=0.12, right=0.97, wspace=0.18)
+    fig, ax = plt.subplots(figsize=(7.2, 5.2))
+    plot_panel(ax, frame, omnibus, "combined")
+    fig.subplots_adjust(top=0.98, bottom=0.13, left=0.23, right=0.96)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(args.output, dpi=300)
     fig.savefig(args.output.with_suffix(".pdf"))
