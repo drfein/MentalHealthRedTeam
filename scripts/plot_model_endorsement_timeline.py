@@ -30,6 +30,7 @@ EVENT_COLORS = {
     "provider": "#4477AA",
     "public": "#6B7280",
     "regulatory": "#AA3377",
+    "research": "#228833",
 }
 
 
@@ -153,11 +154,11 @@ def plot_timeline(
         "gpt-4-turbo-2024-04-09": (8, 8),
         "gpt-4o-2024-05-13": (8, 8),
         "gpt-4o-mini-2024-07-18": (8, -17),
-        "o1-2024-12-17": (-8, -18),
+        "o1-2024-12-17": (-8, 9),
         "o3-mini-2025-01-31": (8, 8),
         "gpt-4.1-mini-2025-04-14": (-8, 9),
-        "gpt-5-mini-2025-08-07": (8, -18),
-        "gpt-5.2-2025-12-11": (-8, 9),
+        "gpt-5-mini-2025-08-07": (8, 12),
+        "gpt-5.2-2025-12-11": (-8, 12),
         "gpt-5.5-2026-04-23": (-8, 9),
     }
     for row in rates.itertuples(index=False):
@@ -174,8 +175,7 @@ def plot_timeline(
             zorder=4,
         )
 
-    event_label_y = [25.5, 23.7, 25.5, 23.7]
-    for event, label_y in zip(events, event_label_y, strict=True):
+    for event in events:
         date = pd.Timestamp(event["date"])
         color = EVENT_COLORS[event["category"]]
         ax.axvline(
@@ -188,7 +188,7 @@ def plot_timeline(
         )
         ax.annotate(
             event["short_label"],
-            xy=(date, label_y),
+            xy=(date, event["label_y"]),
             xytext=(4, 0),
             textcoords="offset points",
             rotation=90,
@@ -198,7 +198,7 @@ def plot_timeline(
             color=color,
         )
 
-    ax.set_xlim(pd.Timestamp("2024-01-01"), pd.Timestamp("2026-05-15"))
+    ax.set_xlim(pd.Timestamp("2023-02-01"), pd.Timestamp("2026-05-15"))
     ax.set_ylim(0, 26)
     ax.set_xlabel("Model release date")
     ax.set_ylabel("Delusion endorsement rate (%)")
@@ -264,6 +264,7 @@ def main() -> None:
                 "cohort": (
                     "All usable primary and historical discovery-route responses"
                 ),
+                "model_date_basis": config["model_date_basis"],
                 "interval": "Pointwise 95% Wilson score interval",
                 "events": config["events"],
                 "interpretation": (

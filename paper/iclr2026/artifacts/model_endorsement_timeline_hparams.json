@@ -6,13 +6,23 @@
   "positive_cutoff": 7,
   "judge": "GPT-5.4-mini with the pinned SPIRALS package prompt",
   "cohort": "All usable primary and historical discovery-route responses",
+  "model_date_basis": "First public release of the evaluated named model family or non-preview version, rather than the date encoded in a later pinned API snapshot.",
   "interval": "Pointwise 95% Wilson score interval",
   "events": [
+    {
+      "date": "2023-11-29",
+      "label": "\u00d8stergaard: Will Generative AI Chatbots Generate Delusions?",
+      "short_label": "Early clinical commentary",
+      "category": "research",
+      "label_y": 23.7,
+      "source": "https://pubmed.ncbi.nlm.nih.gov/37625027/"
+    },
     {
       "date": "2025-04-29",
       "label": "OpenAI sycophancy rollback",
       "short_label": "Sycophancy rollback",
       "category": "provider",
+      "label_y": 25.5,
       "source": "https://openai.com/index/sycophancy-in-gpt-4o/"
     },
     {
@@ -20,6 +30,7 @@
       "label": "New York Times: Answers Sent Them Spiraling",
       "short_label": "NYT public report",
       "category": "public",
+      "label_y": 23.7,
       "source": "https://www.nytimes.com/2025/06/13/technology/chatgpt-ai-chatbots-conspiracies.html"
     },
     {
@@ -27,6 +38,7 @@
       "label": "FTC Section 6(b) orders",
       "short_label": "FTC 6(b) orders",
       "category": "regulatory",
+      "label_y": 25.5,
       "source": "https://www.ftc.gov/news-events/news/press-releases/2025/09/ftc-launches-inquiry-ai-chatbots-acting-companions"
     },
     {
@@ -34,6 +46,7 @@
       "label": "OpenAI clinician-informed sensitive-conversation update",
       "short_label": "Sensitive-conversation update",
       "category": "provider",
+      "label_y": 23.7,
       "source": "https://openai.com/index/strengthening-chatgpt-responses-in-sensitive-conversations/"
     }
   ],
