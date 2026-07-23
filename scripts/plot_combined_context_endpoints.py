@@ -42,23 +42,11 @@ def plot_panel(
         color="#111827",
         zorder=4,
     )
-    ax.annotate(
-        f"{summary['difference_pp']:+.1f}",
-        (summary["ci_high_pp"], 0),
-        xytext=(6, 0),
-        textcoords="offset points",
-        ha="left",
-        va="center",
-        fontsize=8.5,
-        fontweight="bold",
-        color="#111827",
-    )
     ax.axhline(0.6, color="#D1D5DB", linewidth=0.9)
 
     for index, (model, row) in enumerate(subset.iterrows()):
         position = index + 1
         color = MODEL_COLORS[model]
-        significant = bool(row["significant_holm_0_05"])
         ax.plot(
             [row["ci_low_pp"], row["ci_high_pp"]],
             [position, position],
@@ -71,7 +59,7 @@ def plot_panel(
             row["difference_pp"],
             position,
             s=58,
-            facecolor=color if significant else "white",
+            facecolor=color,
             edgecolor=color,
             linewidth=1.6,
             zorder=3,
