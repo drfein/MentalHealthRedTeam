@@ -12,6 +12,8 @@ import pandas as pd
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
+from wild_delusion_miner.plot_style import MODEL_COLORS, apply_paper_style  # noqa: E402
+
 
 ARM_ORDER = ["target_only", "last_1", "last_3", "last_7", "full_context"]
 ARM_LABELS = ["0", "1", "3", "7", "All"]
@@ -128,10 +130,10 @@ def main() -> None:
         json.dumps(summary, indent=2), encoding="utf-8"
     )
 
+    apply_paper_style()
     fig, ax = plt.subplots(figsize=(7.6, 4.8), constrained_layout=True)
     x = np.arange(len(ARM_ORDER))
-    colors = ["#176B87", "#C8553D"]
-    for model_index, (model, label) in enumerate(MODEL_LABELS.items()):
+    for model, label in MODEL_LABELS.items():
         group = results[results["model"] == model].set_index("arm").loc[ARM_ORDER]
         ax.errorbar(
             x,
@@ -144,7 +146,7 @@ def main() -> None:
             ),
             marker="o",
             capsize=3,
-            color=colors[model_index],
+            color=MODEL_COLORS[model],
             label=label,
         )
     ax.set_xticks(x, ARM_LABELS)
