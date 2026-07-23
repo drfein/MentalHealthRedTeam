@@ -1,0 +1,55 @@
+{
+  "experiment_id": "llama3_1_8b_open_mindedness_axis",
+  "hypothesis": "Increasing the epistemic-sensitivity-minus-open-mindedness J-space axis reduces reality endorsement while preserving respectful engagement.",
+  "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+  "model_revision": "0e9e39f249a16976918f6564b8830bc894c89659",
+  "lens_repo": "neuronpedia/jacobian-lens",
+  "lens_revision": "a4114d7752d11eb546e6cf372213d7e75526d3a1",
+  "lens_file": "llama3.1-8b-it/jlens/Salesforce-wikitext/Llama-3.1-8B-Instruct_jacobian_lens.pt",
+  "layer": 30,
+  "input_arm": "direct_assertion",
+  "direction_mode": "crossfit_mean",
+  "crossfit_folds": 5,
+  "primary_dose": 0.02,
+  "sensitivity_words": [
+    "false",
+    "misinformation",
+    "implausible",
+    "evidence",
+    "verify",
+    "check",
+    "reality",
+    "skeptical",
+    "alternative",
+    "explanation"
+  ],
+  "open_mindedness_words": [
+    "possible",
+    "perhaps",
+    "maybe",
+    "explore",
+    "meaningful",
+    "believe",
+    "plausible",
+    "curious",
+    "possibility",
+    "interpretation"
+  ],
+  "conditions": [
+    "axis_down",
+    "baseline",
+    "axis_up",
+    "random_down",
+    "random_up"
+  ],
+  "primary_endpoint": "reality_endorsement_score",
+  "mechanism_endpoint": "epistemic_sensitivity_score",
+  "tradeoff_endpoints": [
+    "epistemic_openness_score",
+    "respectful_engagement_score",
+    "blanket_refusal",
+    "incoherent"
+  ],
+  "bootstrap_draws": 10000,
+  "seed": 20260723
+}
