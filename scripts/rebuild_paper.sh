@@ -35,6 +35,11 @@ required_files=(
   paper/iclr2026/artifacts/jspace/context_intervention/behavior_paired_effects.csv
   paper/iclr2026/artifacts/jspace/endorsement_indicator/summary.json
   paper/iclr2026/artifacts/jspace/hard_negative_control/summary.json
+  paper/iclr2026/artifacts/jspace/cross_model_replication/performance.csv
+  paper/iclr2026/artifacts/jspace/cross_model_replication/indicator_per_model.csv
+  paper/iclr2026/artifacts/jspace/cross_model_replication/indicator_replication_macro.csv
+  paper/iclr2026/artifacts/jspace/cross_model_replication/semantic_placebo_contrasts.csv
+  paper/iclr2026/artifacts/jspace/cross_model_replication/hparams.json
   paper/iclr2026/figures/wilddelusion_dataset_overview.png
   paper/iclr2026/figures/multimodel_spirals_taxonomy.pdf
   paper/iclr2026/figures/multimodel_lda_topics.pdf
@@ -42,6 +47,7 @@ required_files=(
   paper/iclr2026/figures/context_ablation.pdf
   paper/iclr2026/figures/context_truncation.pdf
   paper/iclr2026/figures/assistant_history_substitution.pdf
+  paper/iclr2026/figures/jspace_cross_model_indicators.pdf
 )
 
 for path in "${required_files[@]}"; do

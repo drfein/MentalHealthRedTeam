@@ -11,7 +11,9 @@ the ten-model taxonomy/LDA summaries, observed-reply trajectories, judge-context
 sensitivity, user/assistant trajectories, matched context ablations, truncation
 sweeps, assistant-history substitution, discovery-route checks, descriptive
 mini-model comparisons, and the exploratory J-space controls reported in the
-paper.
+paper. The J-space cross-model directory contains only aggregate performance,
+frozen settings, and text-free indicator comparisons; row-level messages,
+generations, and readouts are intentionally excluded.
 
 `../CLAIM_AUDIT.md` maps every manuscript result to these files.
 `../../../configs/paper_experiments.json` maps each result family to its source

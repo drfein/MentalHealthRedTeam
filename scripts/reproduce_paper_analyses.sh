@@ -27,6 +27,26 @@ required_inputs=(
   results/jspace_controls/qwen2_5_7b_probe_free_misunderstanding/jspace_layer_readouts.jsonl
   results/jspace_controls/qwen2_5_7b_probe_free_misunderstanding/prompt_variants.csv
   results/jspace_controls/qwen2_5_7b_hard_negative_full/jspace_layer_readouts.jsonl
+  results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/generations_complete.jsonl
+  results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/holdout_jspace_readouts.jsonl
+  results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/holdout_openai_framing_judgments.jsonl
+  results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/holdout_openai_package_judgments.jsonl
+  results/jspace_semantic_specificity/gpt_oss_20b_counterfactuals/generations_merged.jsonl
+  results/jspace_semantic_specificity/gpt_oss_20b_counterfactuals/readouts_layers11_22.jsonl
+  results/jspace_semantic_specificity/gpt_oss_20b_counterfactuals/framing_judgments.jsonl
+  results/jspace_semantic_specificity/gpt_oss_20b_counterfactuals/package_judgments.jsonl
+  results/jspace_semantic_specificity/qwen3_5_0_8b_replication/generations.jsonl
+  results/jspace_semantic_specificity/qwen3_5_0_8b_replication/readouts.jsonl
+  results/jspace_semantic_specificity/qwen3_5_0_8b_replication/framing_judgments.jsonl
+  results/jspace_semantic_specificity/qwen3_5_0_8b_replication/package_judgments.jsonl
+  results/jspace_semantic_specificity/gemma3_1b_it_replication/generations.jsonl
+  results/jspace_semantic_specificity/gemma3_1b_it_replication/readouts.jsonl
+  results/jspace_semantic_specificity/gemma3_1b_it_replication/framing_judgments.jsonl
+  results/jspace_semantic_specificity/gemma3_1b_it_replication/package_judgments.jsonl
+  results/jspace_semantic_specificity/llama3_1_8b_it_replication/generations.jsonl
+  results/jspace_semantic_specificity/llama3_1_8b_it_replication/readouts.jsonl
+  results/jspace_semantic_specificity/llama3_1_8b_it_replication/framing_judgments.jsonl
+  results/jspace_semantic_specificity/llama3_1_8b_it_replication/package_judgments.jsonl
   data/verification/whitened_top3k_verified_gpt54mini.jsonl
 )
 
@@ -98,6 +118,12 @@ run_python scripts/analyze_jspace_hard_negative_control.py \
   --cv-folds 10 \
   --bootstrap-draws 5000 \
   --seed 20260715
+run_python scripts/analyze_jspace_cross_model_replication.py \
+  --config configs/jspace_cross_model_replication.json \
+  --output-dir results/jspace_cross_model_replication
+run_python scripts/analyze_jspace_cross_model_indicator_panel.py \
+  --config configs/jspace_cross_model_replication.json \
+  --output-dir results/jspace_cross_model_indicator_panel
 
 copy_group() {
   local destination="$1"
@@ -160,6 +186,17 @@ copy_group paper/iclr2026/artifacts/jspace/endorsement_indicator \
 copy_group paper/iclr2026/artifacts/jspace/hard_negative_control \
   results/jspace_controls/qwen2_5_7b_hard_negative_full/analysis_misinformation_filtered/summary.json \
   results/jspace_controls/qwen2_5_7b_hard_negative_full/analysis_misinformation_filtered/hparams.json
+copy_group paper/iclr2026/artifacts/jspace/cross_model_replication \
+  results/jspace_cross_model_replication/performance.csv \
+  results/jspace_cross_model_indicator_panel/indicator_per_model.csv \
+  results/jspace_cross_model_indicator_panel/indicator_replication_macro.csv \
+  results/jspace_cross_model_indicator_panel/semantic_placebo_contrasts.csv
+cp configs/jspace_cross_model_replication.json \
+  paper/iclr2026/artifacts/jspace/cross_model_replication/hparams.json
+cp results/jspace_cross_model_indicator_panel/indicator_replication_macro.pdf \
+  paper/iclr2026/figures/jspace_cross_model_indicators.pdf
+cp results/jspace_cross_model_indicator_panel/indicator_replication_macro.png \
+  paper/iclr2026/figures/jspace_cross_model_indicators.png
 
 uv run python scripts/verify_paper_claims.py
 printf 'Refreshed paper aggregates from raw experiment outputs.\n'

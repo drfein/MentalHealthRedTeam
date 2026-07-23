@@ -138,14 +138,27 @@
         "scripts/analyze_jspace_context_interventions.py",
         "scripts/analyze_jspace_behavior_link.py",
         "scripts/analyze_jspace_endorsement_gate.py",
-        "scripts/analyze_jspace_hard_negative_control.py"
+        "scripts/analyze_jspace_hard_negative_control.py",
+        "scripts/generate_jspace_matched_responses.py",
+        "scripts/run_jspace_semantic_counterfactuals.py",
+        "scripts/judge_semantic_counterfactual_responses_openai.py",
+        "scripts/run_jspace_cross_model_replication.py",
+        "scripts/analyze_jspace_cross_model_replication.py",
+        "scripts/analyze_jspace_cross_model_indicator_panel.py",
+        "configs/jspace_cross_model_replication.json"
       ],
       "artifacts": [
         "paper/iclr2026/artifacts/jspace/context_intervention/paired_effects.csv",
         "paper/iclr2026/artifacts/jspace/context_intervention/behavior_paired_effects.csv",
         "paper/iclr2026/artifacts/jspace/endorsement_indicator/summary.json",
         "paper/iclr2026/artifacts/jspace/endorsement_indicator/token_placebo_ranking.csv",
-        "paper/iclr2026/artifacts/jspace/hard_negative_control/summary.json"
+        "paper/iclr2026/artifacts/jspace/hard_negative_control/summary.json",
+        "paper/iclr2026/artifacts/jspace/cross_model_replication/performance.csv",
+        "paper/iclr2026/artifacts/jspace/cross_model_replication/indicator_per_model.csv",
+        "paper/iclr2026/artifacts/jspace/cross_model_replication/indicator_replication_macro.csv",
+        "paper/iclr2026/artifacts/jspace/cross_model_replication/semantic_placebo_contrasts.csv",
+        "paper/iclr2026/artifacts/jspace/cross_model_replication/hparams.json",
+        "paper/iclr2026/figures/jspace_cross_model_indicators.pdf"
       ]
     }
   ]

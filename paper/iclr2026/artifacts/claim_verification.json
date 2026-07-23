@@ -17,6 +17,7 @@
     "mini-model paired comparisons",
     "discovery-route response sensitivity",
     "J-space intervention, indicator, placebo, and hard-negative controls",
+    "cross-model same-model J-space replication and placebo comparison",
     "manuscript rendering strings and pending validation markers"
   ],
   "artifact_root": "paper/iclr2026/artifacts",

@@ -35,7 +35,7 @@ Language models can validate a user's false premise instead of challenging it. I
 
 We introduce \dataset{}, a public benchmark of 522 target user turns from 321 WildChat and ShareChat conversations. The dataset is enriched for difficult cases rather than sampled to estimate population prevalence. Every released row passes two automatic inclusion stages: the exact \texttt{user-endorses-delusion} rubric from the pinned \texttt{llm-delusions-annotations} package \citep{moore2026spirals}, followed by a conversation-level verifier that removes role-play, fiction, translation, quotation, joking, and ordinary plausible content. The release retains the target turn, the available conversation history, source and discovery provenance, judge outputs, and stable identifiers. No LMSYS-Chat-1M text is redistributed.
 
-The primary contribution is the dataset and its verification evidence. We additionally recover original in-the-wild assistant replies, compare ten OpenAI model snapshots on a uniform next-response task, and causally intervene on prior conversational context, including direct replacement of an assistant turn. We annotate 4,316 controlled responses with eight SPIRALS assistant-response rubrics and fit a conventional 40-topic LDA model to the assistant text. These complementary views describe both explicit risk-relevant behaviors and broader response styles. We then report a smaller mechanistic case study using the public Jacobian lens on Qwen2.5-7B-Instruct, with paired counterfactual context, lexical placebos, grouped cross-validation, and contextual hard negatives.
+The primary contribution is the dataset and its verification evidence. We additionally recover original in-the-wild assistant replies, compare ten OpenAI model snapshots on a uniform next-response task, and causally intervene on prior conversational context, including direct replacement of an assistant turn. We annotate 4,316 controlled responses with eight SPIRALS assistant-response rubrics and fit a conventional 40-topic LDA model to the assistant text. These complementary views describe both explicit risk-relevant behaviors and broader response styles. We then report a smaller mechanistic case study using the public Jacobian lens, with paired counterfactual context, lexical placebos, grouped cross-validation, contextual hard negatives, and same-model replication across four additional open models.
 
 Our contributions are:
 \begin{enumerate}
@@ -292,7 +292,9 @@ Because a synthetic replacement may not fit the later user turn, a separate GPT-
 
 We use \dataset{} to test whether decoded epistemic coordinates behave as reliable monitors of endorsement. A public Jacobian lens is applied to Qwen2.5-7B-Instruct at the assistant-response boundary for 417 valid targets. Paired validating, neutral, or reality-testing prefixes causally move the internal readouts: validating rather than reality-testing context reduces the \emph{misinformation} loading by 0.300 [0.255, 0.346] in magnitude, the reality-testing composite by 0.109 [0.093, 0.125], and the falsity-concern composite by 0.046 [0.031, 0.062]. Yet the same intervention changes explicit SPIRALS endorsement by only $-0.24$ percentage points [${-}2.40$, 1.92]. The central result is a representation--behavior dissociation: context can substantially move a decoded coordinate without moving average behavior.
 
-The readouts still contain predictive information. Across held-out messages, adding the misinformation coordinate to measured covariates raises grouped ten-fold \auc{} from 0.596 to 0.732, an improvement of 0.135 [0.028, 0.249], and predefined epistemic-confusion tokens outperform neutral lexical placebos on average. However, prompt-fixed regressions among the 32 behaviorally varying items do not establish gating, and on contextual hard negatives the incremental \auc{} is only 0.019 [${-}0.005$, 0.044]. Named token directions therefore track endorsement-prone claim geometry but are not demonstrated causal switches or reliable stand-alone monitors.
+The readouts still contain predictive information. Across held-out messages, adding the misinformation coordinate to measured covariates raises grouped ten-fold \auc{} from 0.596 to 0.732, an improvement of 0.135 [0.028, 0.249], and predefined epistemic-confusion tokens outperform neutral lexical placebos on average. However, prompt-fixed regressions among the 32 behaviorally varying items do not establish gating, and on contextual hard negatives the incremental \auc{} is only 0.019 [${-}0.005$, 0.044].
+
+We next freeze six token--summary indicators from a separate Qwen2.5 discovery split and test them on same-model generations from GPT-OSS-20B, Qwen3.5-0.8B, Gemma-3-1B-IT, and Llama-3.1-8B-Instruct. The six-coordinate semantic panel has macro \auc{} 0.603 [0.546, 0.657] across these four replications, and inverse \emph{misinformation} rank has macro \auc{} 0.601 [0.544, 0.656]. Transfer is heterogeneous: Llama is the clearest individual replication, whereas Qwen3.5 also gives a strong capacity-matched placebo panel. The semantic-minus-placebo macro contrast is only 0.052 [${-}0.019$, 0.121]. Named token directions therefore carry modest cross-model predictive information, but these experiments do not establish a semantically specific universal monitor. Full per-model results and the frozen specification appear in Appendix~\ref{app:jspace-replication}.
 
 \section{Discussion}
 
@@ -302,7 +304,7 @@ The ten-model response corpus illustrates why a single endorsement rate is insuf
 
 Context is behaviorally consequential. Removing the prefix cuts average endorsement by more than half, and the identical-input control makes simple run drift an unlikely explanation. The assistant-history experiment goes further: on its selected 94-conversation cohort, substituting a causally generated GPT-5.2 reply reduces subsequent endorsement relative to retaining or deleting the original reply, with a similar estimate among coherent replacements. This establishes downstream influence of the immediately preceding assistant turn in that cohort, but not a universal GPT-5.2 guardrail or a particular linguistic mechanism. All-turn production trajectories also rise substantially across the 27 recoverable repeated conversations. User endorsement rises less and non-monotonically, and contemporaneous user labels do not eliminate the assistant progress coefficient, but controlled generations at retained targets do not show a universal monotonic effect. This combination is consistent with escalation in selected deployed interactions without establishing a general production mechanism.
 
-The J-space audit provides a limited but useful bridge between representation and behavior. Epistemic coordinates carry predictive information beyond measured covariates and lexical placebos, yet paired counterfactual context can move those coordinates without changing mean endorsement. This dissociation argues against treating a single named logit as a behavioral gate. The stronger next experiment is matched, same-model intervention with enough within-item outcome variation and predefined semantic and random-direction controls.
+The J-space audit provides a limited but useful bridge between representation and behavior. Epistemic coordinates carry predictive information beyond measured covariates, yet paired counterfactual context can move those coordinates without changing mean endorsement. The cross-model replication further shows that a frozen semantic panel predicts above chance on average but does not clearly outperform an optimized placebo panel. This combination argues against treating a single named logit as a behavioral gate or assuming that a token label gives a model-invariant interpretation.
 
 \section{Limitations}
 
@@ -310,7 +312,7 @@ The benchmark is selected by enriched retrieval and automatic judges, so it is n
 
 Only 27 of the 62 repeated-target conversations have alternating source turns that can be reconstructed unambiguously, so the all-turn trajectory estimate need not generalize to the other repeated conversations. The observed increase may reflect changing user content, assistant influence, or selection into long conversations; the user-label adjustment is descriptive rather than causal mediation. Only 295/522 target-adjacent original replies can be recovered unambiguously, reply availability differs by source and discovery route, and exact production snapshots are usually unknown. Fourteen primary-cohort full-prefix generations and one target-only generation are missing, and the model snapshots differ in more than release date. Response rates are judge-sensitive: adding preceding context changes the strict label by +6.0 points on the same 166 replies, so estimates from the two protocols are not interchangeable. Human calibration of the response flags is pending. The truncation sweep covers two post-hoc-selected models and only long histories; it narrows the all-or-nothing intervention but still does not identify a causal turn, role, or discourse feature. The substitution experiment covers only 94 selected conversations, changes only the immediately preceding assistant turn, and uses one GPT-5.2 replacement policy with a 32-message window. Only 70/94 replacements pass the coherence threshold; that coherent-only estimate is a post-treatment sensitivity analysis, not the primary estimand. GPT-3.5 contributes 78 rather than 94 complete sets because of its context limit. LDA is sensitive to preprocessing, topic count, random seed, and label interpretation. Its hard assignments discard posterior uncertainty, and the displayed Wilson intervals do not account for repeated prompts or model-fit uncertainty.
 
-The J-space analysis studies one open-weight model, one public lens, a selected layer, and named token directions. The predictive result may reflect item-level plausibility or other latent content. Prompt-fixed analyses are underpowered because only 32 items vary behaviorally across arms, and hard-negative discrimination is weak. No result supports diagnosing users or claiming access to a model's subjective mental state.
+The primary J-space intervention studies one open-weight model and a selected layer. The replication adds four model families but reuses the same 146 messages, evaluates one mid and one late relative-depth layer per model, and relies on model-specific public lenses. The Qwen2.5 source-model revision was not recorded in the original run; replication revisions and the lens revision are pinned. GPT-OSS uses its native MXFP4 checkpoint while the other replications use bfloat16. The predictive result may reflect item-level plausibility, lexical geometry, or other latent content; the capacity-matched placebo contrast includes zero. Prompt-fixed analyses are underpowered because only 32 items vary behaviorally across arms, and hard-negative discrimination is weak. No result supports diagnosing users or claiming access to a model's subjective mental state.
 
 \section{Ethics and Data Governance}
 \label{sec:ethics}
@@ -498,6 +500,40 @@ Grounded Metaphysical Reflection & 134 & 3.10\% \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\section{Cross-Model J-Space Replication}
+\label{app:jspace-replication}
+
+We reuse the 146 conversation-disjoint held-out direct-assertion messages from the semantic-counterfactual experiment. Each replication model generates its own assistant reply and is evaluated with its own public Jacobian lens at the assistant-response boundary; outcomes are therefore same-model rather than responses from one model scored in another model's J-space. The primary framing-aware endpoint is a GPT-5.4-mini/low score of at least 4 on a rubric that distinguishes reality endorsement from emotional validation. The exact package's \texttt{bot-endorses-delusion} score of at least 7 is a secondary endpoint.
+
+The frozen single-coordinate test is the negative maximum loading of \emph{misinformation}. The broader semantic panel averages within-model standardized, orientation-frozen values for inverse \emph{conspiracy} mean, positive \emph{absolutely} rank strength, inverse \emph{misinformation} rank strength and maximum, inverse \emph{misinterpretation} maximum, and inverse \emph{hallucination} mean. These six candidates were selected on a prior 219-message Qwen2.5 discovery split before the cross-model runs. A capacity-matched placebo panel uses six lexical coordinates optimized on the same discovery split. Neither tokens nor layers are tuned per replication outcome. Mid/late layers are 11/22 for GPT-OSS and Qwen3.5, 12/24 for Gemma, and 15/30 for Llama. Percentile intervals use 5,000 item bootstrap draws with seed 20260722.
+
+\begin{table}[h]
+\caption{Framing-aware same-model replication on 146 held-out messages. Entries are \auc{}; Qwen2.5 is the source analysis and is excluded from replication macro averages. ``Semantic'' and ``placebo'' are equal-size panels frozen before the four new runs.}
+\label{tab:jspace-cross-model}
+\centering
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Model & Pos. & Inv. misinformation max & Semantic & Placebo \\
+\midrule
+Qwen2.5-7B (source) & 23 & .704 & .799 & .711 \\
+GPT-OSS-20B & 27 & .579 & .604 & .439 \\
+Qwen3.5-0.8B & 37 & .542 & .624 & .701 \\
+Gemma-3-1B-IT & 30 & .540 & .540 & .523 \\
+Llama-3.1-8B-Instruct & 47 & .616 & .644 & .542 \\
+\midrule
+Replication macro & -- & .569 & .603 & .551 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/jspace_cross_model_indicators.pdf}
+    \caption{Macro \auc{} across the four replication models for frozen semantic indicators and the capacity-matched optimized placebo panel. Bars are 95\% item-bootstrap intervals. Shared messages make this a model-family replication, not an independent-data replication.}
+    \label{fig:jspace-cross-model}
+\end{figure}
 
 \section{Reference Benchmark Protocol}
 

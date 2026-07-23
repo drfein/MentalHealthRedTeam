@@ -89,6 +89,15 @@ def main() -> None:
     jspace_hard_negative = read_json(
         artifacts / "jspace/hard_negative_control/summary.json"
     )
+    jspace_cross_model = read_csv_rows(
+        artifacts / "jspace/cross_model_replication/indicator_per_model.csv"
+    )
+    jspace_cross_model_macro = read_csv_rows(
+        artifacts / "jspace/cross_model_replication/indicator_replication_macro.csv"
+    )
+    jspace_cross_model_contrasts = read_csv_rows(
+        artifacts / "jspace/cross_model_replication/semantic_placebo_contrasts.csv"
+    )
 
     assert mining["materialized_embedding_corpus_rows_approx"] == 6_130_000
     assert mining["bootstrap_labeling"] == {
@@ -334,6 +343,38 @@ def main() -> None:
     close(jspace_hard_negative["oof_auc_improvement_ci"][0], -0.004672139422915236)
     close(jspace_hard_negative["oof_auc_improvement_ci"][1], 0.04413349087188762)
 
+    primary_endpoint = "framing_score_gte_4"
+    macro_rows = {
+        row["indicator"]: row
+        for row in jspace_cross_model_macro
+        if row["endpoint"] == primary_endpoint
+    }
+    assert int(macro_rows["panel:semantic"]["n_models"]) == 4
+    close(macro_rows["panel:semantic"]["macro_auc"], 0.6031492148139682)
+    close(macro_rows["panel:semantic"]["ci_low"], 0.5460265524367549)
+    close(macro_rows["panel:semantic"]["ci_high"], 0.656640211861669)
+    close(
+        macro_rows["misinformation__rank_strength"]["macro_auc"],
+        0.6010356580152928,
+    )
+    close(macro_rows["panel:placebo"]["macro_auc"], 0.5512653973643945)
+    primary_contrast = next(
+        row
+        for row in jspace_cross_model_contrasts
+        if row["endpoint"] == primary_endpoint
+    )
+    close(primary_contrast["estimate"], 0.05188381744957371)
+    close(primary_contrast["ci_low"], -0.019190120032843316)
+    close(primary_contrast["ci_high"], 0.12090804111856421)
+    llama_semantic = next(
+        row
+        for row in jspace_cross_model
+        if row["model"] == "Llama-3.1-8B-Instruct"
+        and row["endpoint"] == primary_endpoint
+        and row["indicator"] == "panel:semantic"
+    )
+    close(llama_semantic["auc"], 0.6438856651622609)
+
     manuscript = (args.paper_dir / "main.tex").read_text(encoding="utf-8")
     for fragment in (
         "522 verified target turns from 321 WildChat and ShareChat conversations",
@@ -365,6 +406,9 @@ def main() -> None:
         "A public Jacobian lens is applied to Qwen2.5-7B-Instruct",
         "raises grouped ten-fold \\auc{} from 0.596 to 0.732",
         "on contextual hard negatives the incremental \\auc{} is only 0.019",
+        "six-coordinate semantic panel has macro \\auc{} 0.603 [0.546, 0.657]",
+        "semantic-minus-placebo macro contrast is only 0.052 [${-}0.019$, 0.121]",
+        "do not establish a semantically specific universal monitor",
         "Conversation-macro user-positive prevalence rises early and then plateaus",
         "a +15.3-point endpoint change",
         "associated with +32.0 points of assistant endorsement",
@@ -407,6 +451,7 @@ def main() -> None:
             "mini-model paired comparisons",
             "discovery-route response sensitivity",
             "J-space intervention, indicator, placebo, and hard-negative controls",
+            "cross-model same-model J-space replication and placebo comparison",
             "manuscript rendering strings and pending validation markers",
         ],
         "artifact_root": str(artifacts),

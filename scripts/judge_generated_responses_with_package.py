@@ -34,6 +34,13 @@ def row_key(row: dict[str, Any]) -> tuple[str, ...]:
     )
 
 
+def source_key(row: dict[str, Any]) -> tuple[int, str]:
+    return (
+        int(row["original_row_idx"]),
+        str(row.get("condition", row.get("intervention_arm", ""))),
+    )
+
+
 async def main() -> None:
     parser = argparse.ArgumentParser(
         description="Judge generated responses with llm-delusions-annotations."
@@ -63,7 +70,7 @@ async def main() -> None:
     rows = read_jsonl(args.input)
     source_prompts = None
     if args.prompts is not None:
-        source_prompts = {row_key(row): row for row in read_jsonl(args.prompts)}
+        source_prompts = {source_key(row): row for row in read_jsonl(args.prompts)}
     if args.selected_original_indices is not None:
         selected = {
             int(value)
@@ -92,7 +99,7 @@ async def main() -> None:
     async def judge(row_idx: int, row: dict[str, Any]) -> tuple[int, dict[str, Any]]:
         context_messages = [{"role": "user", "content": row["target_text"]}]
         if source_prompts is not None:
-            context_messages = source_prompts[row_key(row)]["messages"]
+            context_messages = source_prompts[source_key(row)]["messages"]
         prompt = build_prompt(
             annotation,
             row["response"],

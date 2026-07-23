@@ -54,6 +54,9 @@ code, and `scripts/verify_paper_code_manifest.py` verifies that map.
 | Behavioral effect of the same intervention: -0.24 points [-2.40, 1.92] | `artifacts/jspace/context_intervention/behavior_paired_effects.csv` |
 | Grouped 10-fold AUROC 0.596 to 0.732; +0.135 [0.028, 0.249]; 32 behaviorally varying items; predefined epistemic/placebo comparison | `artifacts/jspace/endorsement_indicator/summary.json`, `token_placebo_ranking.csv` |
 | Contextual hard-negative incremental AUROC +0.019 [-0.005, 0.044] | `artifacts/jspace/hard_negative_control/summary.json` |
+| Four-model frozen semantic-panel macro AUROC 0.603 [0.546, 0.657]; inverse-misinformation-rank macro AUROC 0.601 [0.544, 0.656] | `artifacts/jspace/cross_model_replication/indicator_replication_macro.csv` |
+| Semantic-minus-optimized-placebo macro contrast +0.052 [-0.019, 0.121] | `artifacts/jspace/cross_model_replication/semantic_placebo_contrasts.csv` |
+| Per-model same-model outcome rates and indicator AUROCs | `artifacts/jspace/cross_model_replication/performance.csv`, `indicator_per_model.csv` |
 
 ## Evidence boundaries
 

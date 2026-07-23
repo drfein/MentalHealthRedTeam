@@ -236,7 +236,7 @@ Generate the same ten-model continuations, then use
 `analyze_discovery_route_sensitivity.py`. The route comparison uses 10,000
 independent route-specific conversation bootstrap draws and seed `20260722`.
 
-## 7. Qwen J-space audit
+## 7. J-space audit and cross-model replication
 
 Install the pinned CUDA environment:
 
@@ -291,6 +291,32 @@ The local gate metadata corresponds exactly to Hugging Face revision
 `6cc1293e352eb1ed44a0d38ba4a2bff1a5774a97` of
 `danielfein/WildDelusionVerified`. The local archival input is preferred so a
 mutable dataset head cannot change covariate alignment.
+
+The same-model replication is specified entirely by
+`configs/jspace_cross_model_replication.json`. The Qwen2.5 source run is kept
+separate from the four replication models. Each new model generates its own
+146 direct-assertion responses, receives its own public Jacobian lens at fixed
+mid/late relative-depth layers, and is judged by both the framing-aware rubric
+and the exact package rubric.
+
+Run one model and then refresh the cross-model aggregates with:
+
+```bash
+uv run --extra jspace --extra paper python \
+  scripts/run_jspace_cross_model_replication.py \
+  --model "Llama-3.1-8B-Instruct"
+
+uv run --extra paper python \
+  scripts/run_jspace_cross_model_replication.py --aggregate-only
+```
+
+Valid replication names are `GPT-OSS-20B`, `Qwen3.5-0.8B`,
+`Gemma-3-1B-IT`, and `Llama-3.1-8B-Instruct`. The lens revision, model
+revisions, layers, precision, six frozen semantic coordinates, six optimized
+placebo coordinates, bootstrap draws, and random seed are all in the config.
+The framing-aware endpoint is primary; exact SPIRALS is secondary. Macro
+averages include only the four replication models and use paired item
+bootstrap draws because all models share the same 146 messages.
 
 ## Final deterministic refresh
 

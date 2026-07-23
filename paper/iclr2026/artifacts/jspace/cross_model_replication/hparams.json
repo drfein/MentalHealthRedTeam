@@ -1,0 +1,103 @@
+{
+  "indicator": "inverse_misinformation_max",
+  "primary_endpoint": "framing_score_gte_4",
+  "bootstrap_draws": 5000,
+  "seed": 20260722,
+  "expected_items": 146,
+  "lens_repo": "neuronpedia/jacobian-lens",
+  "lens_revision": "a4114d7752d11eb546e6cf372213d7e75526d3a1",
+  "prompt_path": "data/jspace/semantic_counterfactuals.jsonl",
+  "holdout_ids_path": "results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/holdout_ids_146.txt",
+  "indicator_screen": {
+    "selection_source": "results/jspace_indicator_panel/expanded_vocabulary_holdout",
+    "selection_protocol": "Frozen from the prior 219-prompt discovery split; evaluated there on 217 held-out prompts before these cross-model runs.",
+    "semantic": [
+      {"token": "conspiracy", "metric": "mean_logit", "direction": -1},
+      {"token": "absolutely", "metric": "rank_strength", "direction": 1},
+      {"token": "misinformation", "metric": "rank_strength", "direction": -1},
+      {"token": "misinformation", "metric": "max_logit", "direction": -1},
+      {"token": "misinterpretation", "metric": "max_logit", "direction": -1},
+      {"token": "hallucination", "metric": "mean_logit", "direction": -1}
+    ],
+    "placebo": [
+      {"token": "weather", "metric": "mean_logit", "direction": -1},
+      {"token": "morning", "metric": "rank_strength", "direction": 1},
+      {"token": "answer", "metric": "rank_strength", "direction": 1},
+      {"token": "window", "metric": "rank_strength", "direction": 1},
+      {"token": "coffee", "metric": "max_logit", "direction": -1},
+      {"token": "number", "metric": "rank_strength", "direction": 1}
+    ]
+  },
+  "models": [
+    {
+      "name": "Qwen2.5-7B (source)",
+      "role": "indicator_source_model",
+      "model_id": "Qwen/Qwen2.5-7B-Instruct",
+      "model_revision": "unrecorded_in_original_run",
+      "lens_file": "qwen2.5-7b-it/jlens/Salesforce-wikitext/Qwen2.5-7B-Instruct_jacobian_lens.pt",
+      "generation_path": "results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/generations_complete.jsonl",
+      "readout_path": "results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/holdout_jspace_readouts.jsonl",
+      "framing_judgment_path": "results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/holdout_openai_framing_judgments.jsonl",
+      "package_judgment_path": "results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/holdout_openai_package_judgments.jsonl",
+      "mid_layer": 12,
+      "late_layer": 26,
+      "weight_precision": "bfloat16"
+    },
+    {
+      "name": "GPT-OSS-20B",
+      "role": "replication_model",
+      "model_id": "openai/gpt-oss-20b",
+      "model_revision": "6cee5e81ee83917806bbde320786a8fb61efebee",
+      "lens_file": "gpt-oss-20b/jlens/Salesforce-wikitext/gpt-oss-20b_jacobian_lens.pt",
+      "generation_path": "results/jspace_semantic_specificity/gpt_oss_20b_counterfactuals/generations_merged.jsonl",
+      "readout_path": "results/jspace_semantic_specificity/gpt_oss_20b_counterfactuals/readouts_layers11_22.jsonl",
+      "framing_judgment_path": "results/jspace_semantic_specificity/gpt_oss_20b_counterfactuals/framing_judgments.jsonl",
+      "package_judgment_path": "results/jspace_semantic_specificity/gpt_oss_20b_counterfactuals/package_judgments.jsonl",
+      "mid_layer": 11,
+      "late_layer": 22,
+      "weight_precision": "native MXFP4"
+    },
+    {
+      "name": "Qwen3.5-0.8B",
+      "role": "replication_model",
+      "model_id": "Qwen/Qwen3.5-0.8B",
+      "model_revision": "2fc06364715b967f1860aea9cf38778875588b17",
+      "lens_file": "qwen3.5-0.8b/jlens/Salesforce-wikitext/Qwen3.5-0.8B_jacobian_lens.pt",
+      "generation_path": "results/jspace_semantic_specificity/qwen3_5_0_8b_replication/generations.jsonl",
+      "readout_path": "results/jspace_semantic_specificity/qwen3_5_0_8b_replication/readouts.jsonl",
+      "framing_judgment_path": "results/jspace_semantic_specificity/qwen3_5_0_8b_replication/framing_judgments.jsonl",
+      "package_judgment_path": "results/jspace_semantic_specificity/qwen3_5_0_8b_replication/package_judgments.jsonl",
+      "mid_layer": 11,
+      "late_layer": 22,
+      "weight_precision": "bfloat16"
+    },
+    {
+      "name": "Gemma-3-1B-IT",
+      "role": "replication_model",
+      "model_id": "google/gemma-3-1b-it",
+      "model_revision": "dcc83ea841ab6100d6b47a070329e1ba4cf78752",
+      "lens_file": "gemma-3-1b-it/jlens/Salesforce-wikitext/gemma-3-1b-it_jacobian_lens.pt",
+      "generation_path": "results/jspace_semantic_specificity/gemma3_1b_it_replication/generations.jsonl",
+      "readout_path": "results/jspace_semantic_specificity/gemma3_1b_it_replication/readouts.jsonl",
+      "framing_judgment_path": "results/jspace_semantic_specificity/gemma3_1b_it_replication/framing_judgments.jsonl",
+      "package_judgment_path": "results/jspace_semantic_specificity/gemma3_1b_it_replication/package_judgments.jsonl",
+      "mid_layer": 12,
+      "late_layer": 24,
+      "weight_precision": "bfloat16"
+    },
+    {
+      "name": "Llama-3.1-8B-Instruct",
+      "role": "replication_model",
+      "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+      "model_revision": "0e9e39f249a16976918f6564b8830bc894c89659",
+      "lens_file": "llama3.1-8b-it/jlens/Salesforce-wikitext/Llama-3.1-8B-Instruct_jacobian_lens.pt",
+      "generation_path": "results/jspace_semantic_specificity/llama3_1_8b_it_replication/generations.jsonl",
+      "readout_path": "results/jspace_semantic_specificity/llama3_1_8b_it_replication/readouts.jsonl",
+      "framing_judgment_path": "results/jspace_semantic_specificity/llama3_1_8b_it_replication/framing_judgments.jsonl",
+      "package_judgment_path": "results/jspace_semantic_specificity/llama3_1_8b_it_replication/package_judgments.jsonl",
+      "mid_layer": 15,
+      "late_layer": 30,
+      "weight_precision": "bfloat16"
+    }
+  ]
+}

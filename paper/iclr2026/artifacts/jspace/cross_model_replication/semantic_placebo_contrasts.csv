@@ -1,0 +1,3 @@
+endpoint,contrast,estimate,ci_low,ci_high
+framing_score_gte_4,semantic_panel_minus_placebo_panel,0.05188381744957371,-0.019190120032843316,0.12090804111856421
+exact_spirals_score_gte_7,semantic_panel_minus_placebo_panel,0.04706572743601245,-0.0890257476501834,0.18527558824145388
