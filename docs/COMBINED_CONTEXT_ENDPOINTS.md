@@ -24,6 +24,12 @@ python scripts/seed_combined_context_endpoint_cache.py
 The seed command copies completed `prior_0` and `prior_all` rows from the earlier
 six-arm experiment. Deterministic generation IDs let the generator skip those calls.
 
+Audit the exact cached and pending inventory without making API calls:
+
+```bash
+python scripts/audit_combined_context_endpoint_run.py
+```
+
 ## Generate
 
 Run the following command once per model in
@@ -45,6 +51,16 @@ wild-delusion-miner generate-post-delusion-responses \
 Models with shorter context windows can legitimately reject some historical
 conversations. Preserve those errors and report the model-specific complete-pair
 cohort; do not truncate source context silently.
+
+On RunPod, the complete resumable generation, judging, and analysis sequence is:
+
+```bash
+bash scripts/run_combined_context_endpoints.sh
+```
+
+The launcher refuses to run unless `OPENAI_API_KEY` is present. It saves a preflight
+inventory before its first API call, runs one model at a time, and keeps per-model
+logs under `results/combined_context_endpoints/logs`.
 
 ## Judge and analyze
 
