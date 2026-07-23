@@ -1,0 +1,29 @@
+{
+  "models": [
+    {
+      "name": "Qwen2.5-7B",
+      "cache_dir": "results/jspace_full_vocabulary/qwen2_5_7b",
+      "judgments": "results/jspace_semantic_specificity/qwen2_5_7b_counterfactuals/holdout_openai_framing_judgments.jsonl"
+    },
+    {
+      "name": "GPT-OSS-20B",
+      "cache_dir": "results/jspace_full_vocabulary/gpt_oss_20b",
+      "judgments": "results/jspace_semantic_specificity/gpt_oss_20b_counterfactuals/framing_judgments.jsonl"
+    },
+    {
+      "name": "Qwen3.5-0.8B",
+      "cache_dir": "results/jspace_full_vocabulary/qwen3_5_0_8b",
+      "judgments": "results/jspace_semantic_specificity/qwen3_5_0_8b_replication/framing_judgments.jsonl"
+    },
+    {
+      "name": "Gemma-3-1B-IT",
+      "cache_dir": "results/jspace_full_vocabulary/gemma3_1b_it",
+      "judgments": "results/jspace_semantic_specificity/gemma3_1b_it_replication/framing_judgments.jsonl"
+    },
+    {
+      "name": "Llama-3.1-8B-Instruct",
+      "cache_dir": "results/jspace_full_vocabulary/llama3_1_8b_it",
+      "judgments": "results/jspace_semantic_specificity/llama3_1_8b_it_replication/framing_judgments.jsonl"
+    }
+  ]
+}
