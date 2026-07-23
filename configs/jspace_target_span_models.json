@@ -1,0 +1,28 @@
+{
+  "models": [
+    {
+      "name": "Qwen2.5-7B",
+      "model_id": "Qwen/Qwen2.5-7B-Instruct",
+      "model_revision": "a09a35458c702b33eeacc393d103063234e8bc28",
+      "lens_file": "qwen2.5-7b-it/jlens/Salesforce-wikitext/Qwen2.5-7B-Instruct_jacobian_lens.pt",
+      "layer": 26,
+      "output_dir": "results/jspace_target_span/qwen2_5_7b"
+    },
+    {
+      "name": "Gemma-3-1B-IT",
+      "model_id": "google/gemma-3-1b-it",
+      "model_revision": "dcc83ea841ab6100d6b47a070329e1ba4cf78752",
+      "lens_file": "gemma-3-1b-it/jlens/Salesforce-wikitext/gemma-3-1b-it_jacobian_lens.pt",
+      "layer": 24,
+      "output_dir": "results/jspace_target_span/gemma3_1b_it"
+    },
+    {
+      "name": "Llama-3.1-8B-Instruct",
+      "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+      "model_revision": "0e9e39f249a16976918f6564b8830bc894c89659",
+      "lens_file": "llama3.1-8b-it/jlens/Salesforce-wikitext/Llama-3.1-8B-Instruct_jacobian_lens.pt",
+      "layer": 30,
+      "output_dir": "results/jspace_target_span/llama3_1_8b_it"
+    }
+  ]
+}
