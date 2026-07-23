@@ -34,7 +34,6 @@ uv run wild-delusion-miner generate-post-delusion-responses \
   --model gpt-4-turbo-2024-04-09 \
   --model gpt-4o-2024-05-13 \
   --model gpt-4o-mini-2024-07-18 \
-  --model o1-2024-12-17 \
   --model o3-mini-2025-01-31 \
   --model gpt-4.1-mini-2025-04-14 \
   --model gpt-5-mini-2025-08-07 \
@@ -42,7 +41,7 @@ uv run wild-delusion-miner generate-post-delusion-responses \
   --model gpt-5.5-2026-04-23
 ```
 
-This requests 16,140 generations. Resume incomplete runs with the same command
+This requests 14,526 generations. Resume incomplete runs with the same command
 and add `--retry-errors`.
 
 ## Judge responses
