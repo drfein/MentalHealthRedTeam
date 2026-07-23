@@ -86,7 +86,7 @@ def plot_panel(
     ax.set_xticks([-5, 0, 5, 10, 15, 20, 25])
     ax.grid(axis="x")
     ax.set_axisbelow(True)
-    ax.set_xlabel("Full history - target only (percentage points)")
+    ax.set_xlabel("Increase in delusion endorsement rate (percent)")
 
 
 def main() -> None:
