@@ -86,6 +86,40 @@ def route_results(
     return rows
 
 
+def omnibus_results(
+    paired: pd.DataFrame,
+    *,
+    splits: list[str],
+    bootstrap_draws: int,
+    permutation_draws: int,
+    seed: int,
+) -> pd.DataFrame:
+    rows = []
+    for split_index, split in enumerate(splits):
+        subset = paired if split == ALL_SPLIT else paired[paired["discovery_split"] == split]
+        inference = paired_cluster_inference(
+            subset.rename(columns={"cluster_id": "conversation_id"})[
+                ["conversation_id", "delta"]
+            ],
+            bootstrap_draws=bootstrap_draws,
+            permutation_draws=permutation_draws,
+            seed=seed + split_index,
+        )
+        rows.append(
+            {
+                "discovery_split": split,
+                "model_target_pairs": int(len(subset)),
+                "models": int(subset["model_id"].nunique()),
+                "source_conversations": inference["conversations"],
+                "difference_pp": 100 * inference["difference"],
+                "ci_low_pp": 100 * inference["ci_low"],
+                "ci_high_pp": 100 * inference["ci_high"],
+                "p_value": inference["p_value"],
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Analyze target-only versus full-context endpoints by discovery route."
@@ -126,11 +160,23 @@ def main() -> None:
             )
         )
     results = pd.DataFrame(rows)
+    omnibus = omnibus_results(
+        paired,
+        splits=splits,
+        bootstrap_draws=args.bootstrap_draws,
+        permutation_draws=args.permutation_draws,
+        seed=args.seed + 1_000,
+    )
     args.out_dir.mkdir(parents=True, exist_ok=True)
     paired.to_csv(args.out_dir / "paired_endpoints.csv", index=False)
     results.to_csv(args.out_dir / "endpoint_inference.csv", index=False)
+    omnibus.to_csv(args.out_dir / "omnibus_inference.csv", index=False)
     manifest = {
         "estimand": "Full-context minus target-only endorsement probability.",
+        "omnibus_estimand": (
+            "Target-pair-weighted difference across the fixed set of observed models; "
+            "inference generalizes over source conversations, not over models."
+        ),
         "subgroups": splits,
         "pairing_unit": "Verified target within model.",
         "cluster_unit": "Composite source plus conversation_id.",
@@ -146,6 +192,8 @@ def main() -> None:
         json.dumps(manifest, indent=2), encoding="utf-8"
     )
     print(results.to_string(index=False))
+    print("\nOmnibus summary\n")
+    print(omnibus.to_string(index=False))
 
 
 if __name__ == "__main__":
