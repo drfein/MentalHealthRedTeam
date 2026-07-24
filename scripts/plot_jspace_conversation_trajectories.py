@@ -26,6 +26,7 @@ WORD_COLORS = {
     "misinformation": "#D55E00",
     "vision": "#0072B2",
     "conspiracy": "#009E73",
+    "delusion": "#CC79A7",
 }
 
 
