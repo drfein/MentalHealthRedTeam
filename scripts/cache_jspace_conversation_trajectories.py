@@ -33,23 +33,34 @@ def load_config(path: Path, model_key: str) -> tuple[dict[str, Any], dict[str, A
     return config, matches[0]
 
 
+def normalize_role(role: Any) -> str | None:
+    normalized = str(role).lower()
+    if normalized == "user":
+        return "user"
+    if normalized in {"assistant", "llm"}:
+        return "assistant"
+    return None
+
+
 def merge_same_role_messages(
-    messages: list[dict[str, Any]],
-) -> tuple[list[dict[str, str]], dict[int, int]]:
-    merged: list[dict[str, str]] = []
-    original_to_merged: dict[int, int] = {}
-    for original_index, message in enumerate(messages):
-        role = str(message.get("role", "")).lower()
-        content = str(message.get("content", ""))
-        if role not in {"user", "assistant"} or not content:
-            continue
+    messages: list[dict[str, str]],
+) -> list[dict[str, Any]]:
+    merged: list[dict[str, Any]] = []
+    for message in messages:
+        role = message["role"]
+        content = message["content"]
         if merged and merged[-1]["role"] == role:
+            merged[-1]["segments"].append(content)
             merged[-1]["content"] += "\n\n" + content
-            original_to_merged[original_index] = len(merged) - 1
         else:
-            merged.append({"role": role, "content": content})
-            original_to_merged[original_index] = len(merged) - 1
-    return merged, original_to_merged
+            merged.append(
+                {
+                    "role": role,
+                    "content": content,
+                    "segments": [content],
+                }
+            )
+    return merged
 
 
 def token_ids_for_words(
@@ -109,34 +120,53 @@ def select_target_prefix(
     messages: list[dict[str, Any]],
     target_message_index: int,
     max_prior_user_turns: int,
-) -> tuple[list[dict[str, str]], int]:
-    merged, original_to_merged = merge_same_role_messages(messages)
-    if target_message_index not in original_to_merged:
-        raise ValueError("Target message was removed while cleaning messages")
-    target_index = original_to_merged[target_message_index]
-    if merged[target_index]["role"] != "user":
+) -> tuple[list[dict[str, Any]], int]:
+    if not 0 <= target_message_index < len(messages):
+        raise ValueError("Target message index is outside the conversation")
+    if normalize_role(messages[target_message_index].get("role")) != "user":
         raise ValueError("Target message must have role=user")
+
+    prefix: list[dict[str, str]] = []
+    for message in messages[: target_message_index + 1]:
+        role = normalize_role(message.get("role"))
+        content = str(message.get("content", ""))
+        if role is not None and content:
+            prefix.append({"role": role, "content": content})
+    if not prefix or prefix[-1]["role"] != "user":
+        raise ValueError("Target message was removed while cleaning messages")
+
     user_indices = [
         index
-        for index, message in enumerate(merged[: target_index + 1])
+        for index, message in enumerate(prefix)
         if message["role"] == "user"
     ]
     kept_user_indices = user_indices[-(max_prior_user_turns + 1) :]
     start = kept_user_indices[0]
-    return merged[start : target_index + 1], len(kept_user_indices) - 1
+    return merge_same_role_messages(prefix[start:]), len(kept_user_indices) - 1
 
 
 def render_with_user_positions(
     tokenizer: Any,
-    messages: list[dict[str, str]],
+    messages: list[dict[str, Any]],
     max_seq_len: int,
 ) -> tuple[str, list[int], int, int]:
-    kept = list(messages)
+    kept = [
+        {
+            "role": message["role"],
+            "content": message["content"],
+            "segments": list(message["segments"]),
+        }
+        for message in messages
+    ]
     dropped_user_turns = 0
     truncated_target_tokens = 0
     while True:
+        template_messages = [
+            {"role": message["role"], "content": message["content"]}
+            for message in kept
+        ]
         prompt = tokenizer.apply_chat_template(
-            kept,
+            template_messages,
             tokenize=False,
             add_generation_prompt=False,
             enable_thinking=False,
@@ -149,6 +179,11 @@ def render_with_user_positions(
         if len(encoded["input_ids"]) <= max_seq_len:
             break
         if len(kept) == 1:
+            if len(kept[0]["segments"]) > 1:
+                kept[0]["segments"].pop(0)
+                kept[0]["content"] = "\n\n".join(kept[0]["segments"])
+                dropped_user_turns += 1
+                continue
             original_content = kept[0]["content"]
             original_token_count = len(
                 tokenizer(
@@ -159,7 +194,12 @@ def render_with_user_positions(
             low, high = 1, len(original_content) - 1
             while low < high:
                 midpoint = (low + high) // 2
-                candidate = [{**kept[0], "content": original_content[midpoint:]}]
+                candidate = [
+                    {
+                        "role": kept[0]["role"],
+                        "content": original_content[midpoint:],
+                    }
+                ]
                 candidate_prompt = tokenizer.apply_chat_template(
                     candidate,
                     tokenize=False,
@@ -179,6 +219,7 @@ def render_with_user_positions(
             kept[0] = {
                 **kept[0],
                 "content": original_content[low:],
+                "segments": [original_content[low:]],
             }
             retained_token_count = len(
                 tokenizer(
@@ -189,7 +230,7 @@ def render_with_user_positions(
             truncated_target_tokens += original_token_count - retained_token_count
             continue
         if kept[0]["role"] == "user":
-            dropped_user_turns += 1
+            dropped_user_turns += len(kept[0]["segments"])
         kept.pop(0)
         if kept and kept[0]["role"] == "assistant":
             kept.pop(0)
@@ -197,14 +238,25 @@ def render_with_user_positions(
     cursor = 0
     user_spans: list[tuple[int, int]] = []
     for message in kept:
-        content = message["content"].strip()
-        start = prompt.find(content, cursor)
-        if start < 0:
-            raise ValueError("Rendered prompt does not contain a source message verbatim")
-        end = start + len(content)
-        cursor = end
         if message["role"] == "user":
-            user_spans.append((start, end))
+            for segment in message["segments"]:
+                content = segment.strip()
+                start = prompt.find(content, cursor)
+                if start < 0:
+                    raise ValueError(
+                        "Rendered prompt does not contain a user message verbatim"
+                    )
+                end = start + len(content)
+                cursor = end
+                user_spans.append((start, end))
+        else:
+            content = message["content"].strip()
+            start = prompt.find(content, cursor)
+            if start < 0:
+                raise ValueError(
+                    "Rendered prompt does not contain an assistant message verbatim"
+                )
+            cursor = start + len(content)
 
     offsets = encoded["offset_mapping"]
     positions = []
