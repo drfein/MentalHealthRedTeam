@@ -13,7 +13,12 @@ import pandas as pd
 import torch
 from huggingface_hub import hf_hub_download
 from tqdm import tqdm
-from transformers import AutoTokenizer
+from transformers import (
+    AutoConfig,
+    AutoModelForCausalLM,
+    AutoModelForImageTextToText,
+    AutoTokenizer,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
@@ -58,6 +63,46 @@ def token_ids_for_words(
             ids.update(tokenizer.encode(form, add_special_tokens=False))
         token_ids[word] = sorted(ids)
     return token_ids
+
+
+def load_hf_model(
+    model_id: str,
+    quantize_4bit: bool,
+    revision: str,
+    cache_dir: Path | None,
+) -> Any:
+    kwargs: dict[str, Any] = {
+        "dtype": torch.bfloat16,
+        "device_map": "auto",
+        "trust_remote_code": True,
+        "revision": revision,
+    }
+    if cache_dir is not None:
+        kwargs["cache_dir"] = str(cache_dir)
+    config = AutoConfig.from_pretrained(
+        model_id,
+        trust_remote_code=True,
+        revision=revision,
+        cache_dir=str(cache_dir) if cache_dir is not None else None,
+    )
+    if quantize_4bit and getattr(config, "quantization_config", None) is None:
+        from transformers import BitsAndBytesConfig
+
+        kwargs["quantization_config"] = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_use_double_quant=True,
+        )
+    try:
+        return AutoModelForCausalLM.from_pretrained(model_id, **kwargs)
+    except Exception as causal_error:
+        print(
+            "AutoModelForCausalLM failed; trying AutoModelForImageTextToText: "
+            f"{causal_error}",
+            flush=True,
+        )
+        return AutoModelForImageTextToText.from_pretrained(model_id, **kwargs)
 
 
 def select_target_prefix(
@@ -161,8 +206,6 @@ def main() -> None:
     args = parser.parse_args()
 
     import jlens
-    from run_jspace_context_ablation import load_hf_model
-
     config, model_config = load_config(args.config, args.model_key)
     output_dir = args.output_root / args.model_key
     output_dir.mkdir(parents=True, exist_ok=True)
