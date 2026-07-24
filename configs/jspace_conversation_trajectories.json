@@ -1,0 +1,48 @@
+{
+  "dataset": "data/releases/WildDelusionCombined/train.parquet",
+  "words": [
+    "misinformation",
+    "vision",
+    "conspiracy"
+  ],
+  "max_prior_user_turns": 8,
+  "max_seq_len": 4096,
+  "lens_repo": "neuronpedia/jacobian-lens",
+  "lens_revision": "a4114d7752d11eb546e6cf372213d7e75526d3a1",
+  "models": [
+    {
+      "key": "qwen2_5_7b",
+      "label": "Qwen2.5-7B-Instruct",
+      "model_id": "Qwen/Qwen2.5-7B-Instruct",
+      "model_revision": "a09a35458c702b33eeacc393d103063234e8bc28",
+      "lens_file": "qwen2.5-7b-it/jlens/Salesforce-wikitext/Qwen2.5-7B-Instruct_jacobian_lens.pt",
+      "layer": 26
+    },
+    {
+      "key": "llama3_1_8b_it",
+      "label": "Llama-3.1-8B-Instruct",
+      "model_id": "meta-llama/Llama-3.1-8B-Instruct",
+      "model_revision": "0e9e39f249a16976918f6564b8830bc894c89659",
+      "lens_file": "llama3.1-8b-it/jlens/Salesforce-wikitext/Llama-3.1-8B-Instruct_jacobian_lens.pt",
+      "layer": 30
+    },
+    {
+      "key": "gemma3_1b_it",
+      "label": "Gemma-3-1B-IT",
+      "model_id": "google/gemma-3-1b-it",
+      "model_revision": "dcc83ea841ab6100d6b47a070329e1ba4cf78752",
+      "lens_file": "gemma-3-1b-it/jlens/Salesforce-wikitext/gemma-3-1b-it_jacobian_lens.pt",
+      "layer": 24
+    }
+  ],
+  "score": {
+    "position": "last tokenizer position overlapping each user message's literal content",
+    "word_forms": "word, leading-space word, capitalized word, and leading-space capitalized word",
+    "aggregation": "maximum raw J-space logit over token IDs found in the four word forms"
+  },
+  "plot": {
+    "bootstrap_draws": 5000,
+    "seed": 20260723,
+    "standardization": "Within each model and word after averaging repeated target alignments within conversation and relative turn"
+  }
+}
