@@ -41,7 +41,7 @@ def merge_same_role_messages(
     for original_index, message in enumerate(messages):
         role = str(message.get("role", "")).lower()
         content = str(message.get("content", ""))
-        if role not in {"system", "user", "assistant"} or not content:
+        if role not in {"user", "assistant"} or not content:
             continue
         if merged and merged[-1]["role"] == role:
             merged[-1]["content"] += "\n\n" + content
