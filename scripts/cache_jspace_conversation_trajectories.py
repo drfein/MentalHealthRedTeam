@@ -130,9 +130,10 @@ def render_with_user_positions(
     tokenizer: Any,
     messages: list[dict[str, str]],
     max_seq_len: int,
-) -> tuple[str, list[int], int]:
+) -> tuple[str, list[int], int, int]:
     kept = list(messages)
     dropped_user_turns = 0
+    truncated_target_tokens = 0
     while True:
         prompt = tokenizer.apply_chat_template(
             kept,
@@ -145,8 +146,29 @@ def render_with_user_positions(
             add_special_tokens=True,
             return_offsets_mapping=True,
         )
-        if len(encoded["input_ids"]) <= max_seq_len or len(kept) == 1:
+        if len(encoded["input_ids"]) <= max_seq_len:
             break
+        if len(kept) == 1:
+            content_ids = tokenizer(
+                kept[0]["content"],
+                add_special_tokens=False,
+            )["input_ids"]
+            tokens_to_drop = min(
+                len(content_ids) - 1,
+                len(encoded["input_ids"]) - max_seq_len + 16,
+            )
+            if tokens_to_drop <= 0:
+                raise ValueError("Unable to fit the target user message")
+            kept[0] = {
+                **kept[0],
+                "content": tokenizer.decode(
+                    content_ids[tokens_to_drop:],
+                    skip_special_tokens=False,
+                    clean_up_tokenization_spaces=False,
+                ),
+            }
+            truncated_target_tokens += tokens_to_drop
+            continue
         if kept[0]["role"] == "user":
             dropped_user_turns += 1
         kept.pop(0)
@@ -174,7 +196,9 @@ def render_with_user_positions(
         if not overlapping:
             raise ValueError("User message maps to no tokenizer positions")
         positions.append(overlapping[-1])
-    return prompt, positions, dropped_user_turns
+    if max(positions) >= len(encoded["input_ids"]):
+        raise ValueError("Saved user position exceeds the rendered prompt")
+    return prompt, positions, dropped_user_turns, truncated_target_tokens
 
 
 def completed_rows(path: Path) -> set[int]:
@@ -262,7 +286,12 @@ def main() -> None:
                 int(row["target_message_index"]),
                 int(config["max_prior_user_turns"]),
             )
-            prompt, positions, dropped_user_turns = render_with_user_positions(
+            (
+                prompt,
+                positions,
+                dropped_user_turns,
+                truncated_target_tokens,
+            ) = render_with_user_positions(
                 tokenizer,
                 messages,
                 int(config["max_seq_len"]),
@@ -311,6 +340,7 @@ def main() -> None:
                 "prompt_tokens": len(tokenizer(prompt, add_special_tokens=True)["input_ids"]),
                 "expected_prior_user_turns": expected_prior_turns,
                 "dropped_user_turns_for_length": dropped_user_turns,
+                "truncated_target_tokens_for_length": truncated_target_tokens,
                 "readouts": records,
             }
             handle.write(json.dumps(result, ensure_ascii=False) + "\n")
