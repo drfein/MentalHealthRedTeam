@@ -108,6 +108,47 @@ def summarize(
     return conversation_turn, pd.DataFrame(summary_rows)
 
 
+def summarize_target_shift(
+    conversation_turn: pd.DataFrame,
+    draws: int,
+    seed: int,
+) -> pd.DataFrame:
+    rng = np.random.default_rng(seed)
+    rows = []
+    for keys, group in conversation_turn.groupby(
+        ["model_key", "model_label", "layer", "word"],
+        sort=False,
+    ):
+        paired = (
+            group[group["relative_user_turn"].isin([-1, 0])]
+            .pivot(
+                index="conversation_id",
+                columns="relative_user_turn",
+                values="z_loading",
+            )
+            .dropna()
+        )
+        differences = (paired[0] - paired[-1]).to_numpy(dtype=float)
+        sampled = rng.choice(
+            differences,
+            size=(draws, len(differences)),
+            replace=True,
+        ).mean(axis=1)
+        rows.append(
+            {
+                "model_key": keys[0],
+                "model_label": keys[1],
+                "layer": keys[2],
+                "word": keys[3],
+                "n_paired_conversations": len(differences),
+                "mean_target_minus_previous_z": float(differences.mean()),
+                "ci_low": float(np.quantile(sampled, 0.025)),
+                "ci_high": float(np.quantile(sampled, 0.975)),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def plot(summary: pd.DataFrame, config: dict[str, Any], output_dir: Path) -> None:
     apply_paper_style()
     models = config["models"]
@@ -201,6 +242,11 @@ def main() -> None:
         int(config["plot"]["bootstrap_draws"]),
         int(config["plot"]["seed"]),
     )
+    target_shift = summarize_target_shift(
+        conversation_turn,
+        int(config["plot"]["bootstrap_draws"]),
+        int(config["plot"]["seed"]),
+    )
     plot(summary, config, args.output_dir)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     raw.to_parquet(args.output_dir / "readouts_long.parquet", index=False)
@@ -209,6 +255,10 @@ def main() -> None:
         index=False,
     )
     summary.to_csv(args.output_dir / "trajectory_summary.csv", index=False)
+    target_shift.to_csv(
+        args.output_dir / "target_vs_previous_paired.csv",
+        index=False,
+    )
     (args.output_dir / "hparams.json").write_text(
         json.dumps(
             {
