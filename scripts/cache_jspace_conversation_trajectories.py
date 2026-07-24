@@ -191,6 +191,8 @@ def render_with_user_positions(
         if kept[0]["role"] == "user":
             dropped_user_turns += 1
         kept.pop(0)
+        if kept and kept[0]["role"] == "assistant":
+            kept.pop(0)
 
     cursor = 0
     user_spans: list[tuple[int, int]] = []
