@@ -4,7 +4,7 @@
     "misinformation",
     "vision",
     "conspiracy",
-    "delusion"
+    "psychosis"
   ],
   "max_prior_user_turns": 8,
   "max_seq_len": 4096,
