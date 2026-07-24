@@ -149,25 +149,44 @@ def render_with_user_positions(
         if len(encoded["input_ids"]) <= max_seq_len:
             break
         if len(kept) == 1:
-            content_ids = tokenizer(
-                kept[0]["content"],
-                add_special_tokens=False,
-            )["input_ids"]
-            tokens_to_drop = min(
-                len(content_ids) - 1,
-                len(encoded["input_ids"]) - max_seq_len + 16,
+            original_content = kept[0]["content"]
+            original_token_count = len(
+                tokenizer(
+                    original_content,
+                    add_special_tokens=False,
+                )["input_ids"]
             )
-            if tokens_to_drop <= 0:
-                raise ValueError("Unable to fit the target user message")
+            low, high = 1, len(original_content) - 1
+            while low < high:
+                midpoint = (low + high) // 2
+                candidate = [{**kept[0], "content": original_content[midpoint:]}]
+                candidate_prompt = tokenizer.apply_chat_template(
+                    candidate,
+                    tokenize=False,
+                    add_generation_prompt=False,
+                    enable_thinking=False,
+                )
+                candidate_length = len(
+                    tokenizer(
+                        candidate_prompt,
+                        add_special_tokens=True,
+                    )["input_ids"]
+                )
+                if candidate_length > max_seq_len:
+                    low = midpoint + 1
+                else:
+                    high = midpoint
             kept[0] = {
                 **kept[0],
-                "content": tokenizer.decode(
-                    content_ids[tokens_to_drop:],
-                    skip_special_tokens=False,
-                    clean_up_tokenization_spaces=False,
-                ),
+                "content": original_content[low:],
             }
-            truncated_target_tokens += tokens_to_drop
+            retained_token_count = len(
+                tokenizer(
+                    kept[0]["content"],
+                    add_special_tokens=False,
+                )["input_ids"]
+            )
+            truncated_target_tokens += original_token_count - retained_token_count
             continue
         if kept[0]["role"] == "user":
             dropped_user_turns += 1
