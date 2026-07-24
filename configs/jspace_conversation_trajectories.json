@@ -38,7 +38,7 @@
   "score": {
     "position": "last tokenizer position overlapping each user message's literal content",
     "word_forms": "word, leading-space word, capitalized word, and leading-space capitalized word",
-    "aggregation": "maximum raw J-space logit over token IDs found in the four word forms"
+    "aggregation": "maximum raw J-space logit over complete single-token forms; multi-token forms are excluded"
   },
   "plot": {
     "bootstrap_draws": 5000,

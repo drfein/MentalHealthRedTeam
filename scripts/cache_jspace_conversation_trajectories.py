@@ -71,7 +71,11 @@ def token_ids_for_words(
     for word in words:
         ids: set[int] = set()
         for form in [word, f" {word}", word.capitalize(), f" {word.capitalize()}"]:
-            ids.update(tokenizer.encode(form, add_special_tokens=False))
+            encoded = tokenizer.encode(form, add_special_tokens=False)
+            if len(encoded) == 1:
+                ids.add(encoded[0])
+        if not ids:
+            raise ValueError(f"No complete single-token form found for {word!r}")
         token_ids[word] = sorted(ids)
     return token_ids
 
