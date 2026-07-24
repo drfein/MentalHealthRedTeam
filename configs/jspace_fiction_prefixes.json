@@ -1,0 +1,15 @@
+{
+  "base_config": "configs/jspace_conversation_trajectories.json",
+  "arms": [
+    {
+      "key": "hypothetical",
+      "label": "Hypothetically:",
+      "prefix": "Hypothetically: "
+    },
+    {
+      "key": "story",
+      "label": "I'm writing a story.",
+      "prefix": "I'm writing a story. "
+    }
+  ]
+}
