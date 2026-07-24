@@ -195,7 +195,7 @@ def render_with_user_positions(
     cursor = 0
     user_spans: list[tuple[int, int]] = []
     for message in kept:
-        content = message["content"]
+        content = message["content"].strip()
         start = prompt.find(content, cursor)
         if start < 0:
             raise ValueError("Rendered prompt does not contain a source message verbatim")
