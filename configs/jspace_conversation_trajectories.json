@@ -11,12 +11,12 @@
   "lens_revision": "a4114d7752d11eb546e6cf372213d7e75526d3a1",
   "models": [
     {
-      "key": "qwen2_5_7b",
-      "label": "Qwen2.5-7B-Instruct",
-      "model_id": "Qwen/Qwen2.5-7B-Instruct",
-      "model_revision": "a09a35458c702b33eeacc393d103063234e8bc28",
-      "lens_file": "qwen2.5-7b-it/jlens/Salesforce-wikitext/Qwen2.5-7B-Instruct_jacobian_lens.pt",
-      "layer": 26
+      "key": "qwen3_5_0_8b",
+      "label": "Qwen3.5-0.8B",
+      "model_id": "Qwen/Qwen3.5-0.8B",
+      "model_revision": "2fc06364715b967f1860aea9cf38778875588b17",
+      "lens_file": "qwen3.5-0.8b/jlens/Salesforce-wikitext/Qwen3.5-0.8B_jacobian_lens.pt",
+      "layer": 22
     },
     {
       "key": "llama3_1_8b_it",
